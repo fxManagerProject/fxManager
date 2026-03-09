@@ -1,3 +1,5 @@
+import { ApiError } from "@/types/api";
+
 const HOSTNAME = import.meta.env.DEV ? 'localhost:4000' : window.location.host;
 const IS_SECURE = window.location.protocol === 'https:';
 
@@ -18,6 +20,7 @@ export async function QueryService({
   try {
     const response = await fetch(url, {
       method,
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...headers,
@@ -26,7 +29,20 @@ export async function QueryService({
     });
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: response.statusText };
+      }
+
+      console.log(response);
+
+      throw new ApiError(
+        errorData.message || `Request failed with status ${response.status}`,
+        response.status,
+        errorData
+      );
     }
 
     return await response.json();
