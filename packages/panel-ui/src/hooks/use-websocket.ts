@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import type { WSEvent, ServerState, ConsoleOutputEvent } from '@fivem-panel/types'
+import type { WSEvent, ServerState, ConsoleOutputEvent } from '@fxmanager/types'
 
 interface PanelWSState {
     serverState: ServerState | null
