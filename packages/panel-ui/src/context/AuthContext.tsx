@@ -4,10 +4,7 @@ import type { AuthUser } from '@/types/auth';
 import { useState, useEffect, useCallback } from 'react';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>({
-    id: 420,
-    username: 'string',
-  });
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [configured, setConfigured] = useState(true);
   const [loading, setLoading] = useState(true);
 
@@ -28,19 +25,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
-    const res = await QueryService({
+    await QueryService({
       endpoint: '/auth/login',
       method: 'POST',
-      body: JSON.stringify({ username, password }),
-    });
-    console.log(res.ok);
-    if (!res.ok) throw new Error((await res.json()).error ?? 'Login failed');
-    const me = await QueryService({
-      endpoint: '/auth/me',
-      method: 'GET',
-    });
-    console.log(me.ok);
-    if (me.ok) setUser(await me.json());
+      body: { username, password },
+    })
+    const me = await QueryService({ endpoint: '/auth/me', method: 'GET' })
+    setUser(me)
   }, []);
 
   const setup = useCallback(async (username: string, password: string) => {
