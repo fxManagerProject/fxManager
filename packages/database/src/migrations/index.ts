@@ -1,4 +1,5 @@
 import { migration_0001_initial } from './migrations/0001_initial_migration';
+import { migration_0002_auth } from './migrations/0002_add_auth';
 import type { Migration } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,4 +23,4 @@ import type { Migration } from './types';
 // - CONSISTENCY: Ensure `version` matches the filename prefix.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const migrations: Migration[] = [migration_0001_initial];
+export const migrations: Migration[] = [migration_0001_initial, migration_0002_auth];

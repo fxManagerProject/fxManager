@@ -69,3 +69,32 @@ export const apiTokens = sqliteTable(
   },
   (t) => [index('tokens_token_idx').on(t.token)],
 );
+
+// ─── Admin Users ──────────────────────────────────────────────────────────────
+
+export const adminUsers = sqliteTable(
+  'admin_users',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    username: text('username').notNull().unique(),
+    passwordHash: text('password_hash').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
+  },
+  (t) => [index('admin_username_idx').on(t.username)],
+);
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
+
+export const sessions = sqliteTable(
+  'sessions',
+  {
+    id: text('id').primaryKey(),
+    adminId: integer('admin_id')
+      .notNull()
+      .references(() => adminUsers.id),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  },
+  (t) => [index('sessions_admin_idx').on(t.adminId)],
+);

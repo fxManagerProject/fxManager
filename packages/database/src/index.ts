@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { Database } from 'bun:sqlite';
 import { mkdirSync, existsSync } from 'fs';
-import { dirname } from 'path';
+import { dirname, resolve } from 'path';
 import * as schema from './schema';
 import { runMigrations } from './migrations/runner';
 import { migrations } from './migrations/index';
@@ -10,6 +10,7 @@ import { createBansRepository } from './repositories/bans';
 import { createAuditRepository } from './repositories/audit';
 import { createSettingsRepository } from './repositories/settings';
 import { createApiTokensRepository } from './repositories/api-tokens';
+import { createAuthRepository } from './repositories/auth';
 
 export * from './schema';
 export type { Migration } from './migrations/types';
@@ -45,4 +46,5 @@ export const repo = {
   audit: createAuditRepository(db),
   settings: createSettingsRepository(db),
   apiTokens: createApiTokensRepository(db),
+  auth:      createAuthRepository(db),
 };
