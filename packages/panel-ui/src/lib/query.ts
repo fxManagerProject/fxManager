@@ -1,4 +1,4 @@
-const HOSTNAME = process.env.NODE_ENV === 'development'
+const HOSTNAME = import.meta.env.DEV
     ? 'localhost:4000'
     : window.location.host;
 const IS_SECURE = window.location.protocol === 'https:';
