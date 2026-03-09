@@ -37,6 +37,12 @@ export function startPanel(pm: IProcessManager) {
 
   if (isDev) {
     console.log('[panel] Dev mode — Vite client on http://localhost:5173');
+
+    // app.onBeforeHandle(({ request, body }) => {
+    //   console.log('[panel - req] Method:', request.method)
+    //   console.log('[panel - req] Raw Headers:', request.headers.get('content-type'))
+    //   console.log('[panel - req] Parsed Body:', typeof body, body)
+    // });
   } else {
     const publicDir = resolvePublicDir();
 
