@@ -1,3 +1,5 @@
+import './config/env';
+
 import { applyMigrations } from '@fxmanager/database';
 import { processManager } from './process/manager';
 import { startPanel } from '../../panel/src/index';
