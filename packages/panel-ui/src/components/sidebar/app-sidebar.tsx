@@ -1,9 +1,9 @@
-"use client"
+'use client';
 
-import * as React from "react"
+import * as React from 'react';
 
-import { NavMain } from "@/components/sidebar/nav-main"
-import { NavUser } from "@/components/sidebar/nav-user"
+import { NavMain } from '@/components/sidebar/nav-main';
+import { NavUser } from '@/components/sidebar/nav-user';
 import {
   Sidebar,
   SidebarContent,
@@ -11,8 +11,8 @@ import {
   SidebarHeader,
   SidebarMenuButton,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { Server } from "lucide-react"
+} from '@/components/ui/sidebar';
+import { Server } from 'lucide-react';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -37,5 +37,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

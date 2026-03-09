@@ -1,6 +1,6 @@
-import { useAuth } from "@/hooks/use-auth";
-import type { ProtectedRouteProps } from "@/types/auth";
-import { Navigate } from "react-router-dom";
+import { useAuth } from '@/hooks/use-auth';
+import type { ProtectedRouteProps } from '@/types/auth';
+import { Navigate } from 'react-router-dom';
 
 export function ProtectedRoute({ element: Element }: ProtectedRouteProps) {
   const { user } = useAuth();

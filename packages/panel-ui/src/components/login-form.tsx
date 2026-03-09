@@ -1,44 +1,32 @@
-"use client"
+'use client';
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { GalleryVerticalEndIcon } from "lucide-react"
-import { useState } from "react"
-import { useAuth } from "@/hooks/use-auth"
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Field, FieldGroup, FieldLabel, FieldSeparator } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { GalleryVerticalEndIcon } from 'lucide-react';
+import { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
   const { login } = useAuth();
   const [formData, setData] = useState<{ username: string; password: string }>({
-    username: "",
-    password: "",
+    username: '',
+    password: '',
   });
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    login(formData.username, formData.password)
-    .catch(err => setError((err as Error).message));
+    login(formData.username, formData.password).catch((err) => setError((err as Error).message));
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn('flex flex-col gap-6', className)} {...props}>
       <form onSubmit={(e) => handleSubmit(e)}>
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
-            <a
-              href="#"
-              className="flex flex-col items-center gap-2 font-medium"
-            >
+            <a href="#" className="flex flex-col items-center gap-2 font-medium">
               <div className="flex size-8 items-center justify-center rounded-md">
                 <GalleryVerticalEndIcon className="size-6" />
               </div>
@@ -53,9 +41,7 @@ export function LoginForm({
               type="text"
               placeholder="john_doe"
               value={formData.username}
-              onChange={(e) =>
-                setData((prev) => ({ ...prev, username: e.target.value }))
-              }
+              onChange={(e) => setData((prev) => ({ ...prev, username: e.target.value }))}
               required
             />
           </Field>
@@ -66,9 +52,7 @@ export function LoginForm({
               type="password"
               placeholder="password"
               value={formData.password}
-              onChange={(e) =>
-                setData((prev) => ({ ...prev, password: e.target.value }))
-              }
+              onChange={(e) => setData((prev) => ({ ...prev, password: e.target.value }))}
               required
             />
           </Field>
@@ -102,5 +86,5 @@ export function LoginForm({
       </form>
       <span className="text-red-500 text-center">{error}</span>
     </div>
-  )
+  );
 }

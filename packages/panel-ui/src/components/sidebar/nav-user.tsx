@@ -5,13 +5,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { SidebarMenu, SidebarMenuButton } from "@/components/ui/sidebar"
-import { useAuth } from "@/hooks/use-auth"
-import { User2, ChevronUp, LogOut, X } from "lucide-react"
+} from '@/components/ui/dropdown-menu';
+import { SidebarMenu, SidebarMenuButton } from '@/components/ui/sidebar';
+import { useAuth } from '@/hooks/use-auth';
+import { User2, ChevronUp, LogOut, X } from 'lucide-react';
 
 export function NavUser() {
-  const { user, logout } = useAuth()
+  const { user, logout } = useAuth();
 
   return (
     <SidebarMenu>
@@ -26,21 +26,15 @@ export function NavUser() {
         </DropdownMenuTrigger>
         <DropdownMenuContent side="top" align="center" className="w-48">
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-            Signed in as{" "}
-            <span className="font-semibold text-foreground">
-              {user?.username}
-            </span>
+            Signed in as <span className="font-semibold text-foreground">{user?.username}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={logout}
-            className="text-destructive focus:text-destructive"
-          >
+          <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </SidebarMenu>
-  )
+  );
 }

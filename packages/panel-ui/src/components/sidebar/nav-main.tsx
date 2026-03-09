@@ -1,8 +1,4 @@
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -14,26 +10,22 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import type { NavItem } from "@/types/sidebar"
-import { ChevronRightIcon, ExternalLink, MoreHorizontal } from "lucide-react"
+} from '@/components/ui/sidebar';
+import type { NavItem } from '@/types/sidebar';
+import { ChevronRightIcon, ExternalLink, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu"
-import { NAV } from "@/static/navigation"
+} from '../ui/dropdown-menu';
+import { NAV } from '@/static/navigation';
 
 function NavItemWithSubItems({ item }: { item: NavItem }) {
-  const NavIcon = item.icon
+  const NavIcon = item.icon;
 
   return (
-    <Collapsible
-      asChild
-      defaultOpen={item.isActive}
-      className="group/collapsible"
-    >
+    <Collapsible asChild defaultOpen={item.isActive} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip={item.title}>
@@ -57,11 +49,11 @@ function NavItemWithSubItems({ item }: { item: NavItem }) {
         </CollapsibleContent>
       </SidebarMenuItem>
     </Collapsible>
-  )
+  );
 }
 
 export function NavItemNoItems({ item }: { item: NavItem }) {
-  const { isMobile } = useSidebar()
+  const { isMobile } = useSidebar();
 
   return (
     <SidebarMenuItem>
@@ -82,8 +74,8 @@ export function NavItemNoItems({ item }: { item: NavItem }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent
           className="w-48 rounded-lg"
-          side={isMobile ? "bottom" : "right"}
-          align={isMobile ? "end" : "start"}
+          side={isMobile ? 'bottom' : 'right'}
+          align={isMobile ? 'end' : 'start'}
         >
           <DropdownMenuItem>
             <ExternalLink className="text-muted-foreground" />
@@ -92,7 +84,7 @@ export function NavItemNoItems({ item }: { item: NavItem }) {
         </DropdownMenuContent>
       </DropdownMenu>
     </SidebarMenuItem>
-  )
+  );
 }
 
 export function NavMain() {
@@ -101,10 +93,10 @@ export function NavMain() {
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
         {NAV.map((item) => {
-          const subItems = !!item.items
+          const subItems = !!item.items;
 
-          if (subItems) return <NavItemWithSubItems item={item} key={item.url} />
-          return <NavItemNoItems item={item} key={item.url} />
+          if (subItems) return <NavItemWithSubItems item={item} key={item.url} />;
+          return <NavItemNoItems item={item} key={item.url} />;
 
           // return (
           //   <Collapsible
@@ -140,5 +132,5 @@ export function NavMain() {
         })}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }
