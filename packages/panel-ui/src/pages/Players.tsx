@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Users, ShieldBan } from 'lucide-react'
-import type { Player } from '@fivem-panel/types'
+import type { Player } from '@fxmanager/types'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'

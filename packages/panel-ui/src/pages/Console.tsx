@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Terminal, SendHorizonal } from 'lucide-react'
-import type { ConsoleOutputEvent } from '@fivem-panel/types'
+import type { ConsoleOutputEvent } from '@fxmanager/types'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
