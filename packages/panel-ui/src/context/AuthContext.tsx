@@ -34,20 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me)
   }, []);
 
-  const setup = useCallback(async (username: string, password: string) => {
-    const res = await QueryService({
-      endpoint: '/auth/setup',
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error ?? 'Setup failed');
-    setConfigured(true);
-    const me = await QueryService({
-      endpoint: '/auth/me',
-      method: 'GET',
-    });
-    if (me.ok) setUser(await me.json());
-  }, []);
 
   const logout = useCallback(async () => {
     await QueryService({
@@ -58,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, configured, loading, login, setup, logout }}>
+    <AuthContext.Provider value={{ user, configured, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -10,7 +10,6 @@ export interface AuthContextValue {
   configured: boolean;
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
-  setup: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
