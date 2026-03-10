@@ -6,14 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { QueryService } from '@/lib/query';
 import { formatUptime } from '@/lib/utils';
 import { STATUS_VARIANT } from '@/static/server-state';
-import type { ServerState } from '@fxmanager/types';
-
-const serverState: ServerState = {
-  status: 'stopped',
-  restarts: 5,
-};
+import { useServerStateSocket } from '@/hooks/use-ws-channels';
 
 export default function Dashboard() {
+  const {
+    state: { serverState },
+  } = useServerStateSocket();
   const status = serverState?.status ?? 'stopped';
   const isRunning = status === 'running';
   const canStart = status === 'stopped' || status === 'crashed';
@@ -28,7 +26,7 @@ export default function Dashboard() {
     { label: 'Restarts', value: serverState?.restarts ?? 0, icon: RotateCcw },
     {
       label: 'Uptime',
-      value: serverState?.startedAt ? formatUptime(serverState.startedAt) : '—',
+      value: serverState?.startedAt ? formatUptime(serverState.startedAt, false) : '—',
       icon: Clock,
     },
   ];
@@ -36,7 +34,7 @@ export default function Dashboard() {
   async function handleAction(action: 'start' | 'stop' | 'restart') {
     try {
       await QueryService({
-        endpoint: `/serer/${action}`,
+        endpoint: `/server/${action}`,
         method: 'POST',
       });
     } catch (err) {
