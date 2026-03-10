@@ -1,4 +1,5 @@
 import type { EventEmitter } from 'events';
+import { ConsoleOutputEvent } from './socket';
 
 export type ServerStatus = 'stopped' | 'starting' | 'running' | 'stopping' | 'crashed';
 
@@ -25,4 +26,5 @@ export interface IProcessManager extends EventEmitter {
   stop(): Promise<void>;
   restart(): Promise<void>;
   sendCommand(command: string): void;
+  getConsoleContent(): ConsoleOutputEvent[];
 }

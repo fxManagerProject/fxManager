@@ -1,12 +1,22 @@
-export type WSEventType = 'server:status' | 'server:log' | 'players:update' | 'console:output';
+export type ChannelName = 'server' | 'console' | 'playerlist' | `report:${string}`;
 
-export interface WSEvent<T = unknown> {
-  type: WSEventType;
-  payload: T;
+export interface WSEnvelope {
+  channel: ChannelName;
+  type: string;
+  payload: unknown;
   ts: number;
 }
 
+export interface LogSegment {
+  text: string;
+  color?: string;
+  bold?: boolean;
+}
+
 export interface ConsoleOutputEvent {
-  line: string;
+  id: number;
+  line: string; // raw line with ANSI
+  segments: LogSegment[]; // structured line
   source: 'stdout' | 'stderr';
+  ts: number;
 }
