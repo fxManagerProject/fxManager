@@ -19,7 +19,9 @@ export async function fetchNui<T = unknown>(
     body: JSON.stringify(data),
   };
 
-  const resourceName = window.GetParentResourceName ? window.GetParentResourceName() : 'nui-frame-app';
+  const resourceName = window.GetParentResourceName
+    ? window.GetParentResourceName()
+    : 'nui-frame-app';
   const resp = await fetch(`https://${resourceName}/${eventName}`, options);
 
   return (await resp.json()) as T;
