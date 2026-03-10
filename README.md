@@ -1,4 +1,4 @@
-# FiveM Panel
+# fxManager
 
 A self-contained, cross-platform admin panel for FiveM & RedM servers.  
 Single binary deployment - no runtime dependencies required on the target machine.
