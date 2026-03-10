@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from './components/sidebar';
 import { ProtectedRoute } from './components/protected-route';
+import { useAuth } from './hooks/use-auth';
+
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
@@ -8,10 +10,12 @@ import Players from './pages/Players';
 import Console from './pages/Console';
 
 export function App() {
+  const { user } = useAuth();
+  
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
+      <Route path="/login" element={<ProtectedRoute element={LoginPage} auth={false} />} />
 
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
