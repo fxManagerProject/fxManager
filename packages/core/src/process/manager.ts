@@ -111,11 +111,11 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
 
   private async onExit(code: number | null) {
     const config = loadConfig();
-    const crashed = code !== 0 && code !== null;
+    const crashed = code !== 143 && code !== 0 && code !== null && this.state.status !== 'stopping';
 
     if (crashed) {
-      this.setState('crashed', { lastCrashAt: new Date() });
       console.warn(`[core] FiveM process exited with code ${code}`);
+      this.setState('crashed', { lastCrashAt: new Date() });
 
       if (config.autoRestart && this.state.restarts < config.maxRestarts) {
         const delay = config.restartDelayMs;
@@ -129,6 +129,7 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
         this.setState('stopped');
       }
     } else {
+      console.log('[core] FiveM process exited')
       this.setState('stopped');
     }
 
