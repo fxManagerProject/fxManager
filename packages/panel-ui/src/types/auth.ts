@@ -7,12 +7,12 @@ export interface AuthUser {
 
 export interface AuthContextValue {
   user: AuthUser | null;
-  configured: boolean;
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
 export interface ProtectedRouteProps {
+  auth?: boolean;
   element: ElementType;
 }

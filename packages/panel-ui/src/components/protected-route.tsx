@@ -3,12 +3,12 @@ import type { ProtectedRouteProps } from '@/types/auth';
 import { Navigate } from 'react-router-dom';
 import { LoadingScreen } from './loading';
 
-export function ProtectedRoute({ element: Element }: ProtectedRouteProps) {
+export function ProtectedRoute({ auth = true, element: Element }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
 
   if (loading) return <LoadingScreen message='Loading session' />;
 
-  if (!user) {
+  if (!user && auth) {
     return <Navigate to="/login" replace />;
   }
 
