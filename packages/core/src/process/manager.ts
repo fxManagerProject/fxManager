@@ -9,10 +9,6 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
   private proc: ReturnType<typeof Bun.spawn> | null = null;
   private state: ServerState = { status: 'stopped', restarts: 0 };
   private restartTimer: Timer | null = null;
-  private stdoutReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-  private stderrReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-  private stdinWriter: WritableStreamDefaultWriter<Uint8Array> | null = null;
-  private encoder = new TextEncoder();
   private logs = new LogBuffer(5_000);
   private outputIdx = 0;
 
