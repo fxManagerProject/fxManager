@@ -7,18 +7,13 @@ import { useNavigate } from 'react-router-dom';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [configured, setConfigured] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function init() {
       try {
-        const status = await fetch('/auth/status').then((r) => r.json());
-        setConfigured(status.configured);
-        if (status.configured) {
-          const me = await fetch('/auth/me');
-          if (me.ok) setUser(await me.json());
-        }
+        const me = await QueryService({ endpoint: '/auth/me', method: 'GET' })
+        setUser(me)
       } finally {
         setLoading(false);
       }
@@ -47,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, configured, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
