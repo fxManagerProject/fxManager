@@ -14,7 +14,7 @@ Single binary deployment - no runtime dependencies required on the target machin
 | Linting       | Biome (lint + format + imports) |                     |
 | Process Mgr   |                                 | `packages/core`     |
 | Web Server    | ElysiaJS                        | `packages/panel`    |
-| Frontend      | React + Vite SPA                | `packages/panel`    |
+| Frontend      | React + Vite SPA                | `packages/panel-ui` |
 | Database      | SQLite + Drizzle ORM            | `packages/database` |
 | FiveM Bridge  | Lua resource                    | `packages/resource` |
 
