@@ -1,22 +1,22 @@
 # FiveM Panel
 
 A self-contained, cross-platform admin panel for FiveM & RedM servers.  
-Single binary deployment — no runtime dependencies required on the target machine.
+Single binary deployment - no runtime dependencies required on the target machine.
 
 ---
 
 ## Stack
 
-| Layer        | Tech                               |
-|--------------|------------------------------------|
-| Runtime      | Bun (compiled into binary)         |
-| Monorepo     | Turbo + Bun Workspaces             |
-| Linting      | Biome (lint + format + imports)    |
-| Process Mgr  | `packages/core`                    |
-| Web Server   | ElysiaJS — `packages/panel`        |
-| Frontend     | React + Vite SPA                   |
-| Database     | SQLite + Drizzle ORM               |
-| FiveM Bridge | Lua resource — `packages/resource` |
+| Layer         | Tech                            | Location            |
+|---------------|---------------------------------|---------------------|
+| Runtime       | Bun (compiled into binary)      |                     |
+| Monorepo      | Turbo + Bun Workspaces          |                     |
+| Linting       | Biome (lint + format + imports) |                     |
+| Process Mgr   |                                 | `packages/core`     |
+| Web Server    | ElysiaJS                        | `packages/panel`    |
+| Frontend      | React + Vite SPA                | `packages/panel`    |
+| Database      | SQLite + Drizzle ORM            | `packages/database` |
+| FiveM Bridge  | Lua resource                    | `packages/resource` |
 
 ---
 
@@ -24,12 +24,13 @@ Single binary deployment — no runtime dependencies required on the target mach
 
 ```
 packages/
-  core/       — Process manager: spawns & supervises FiveM/RedM
-  panel/      — ElysiaJS API + React SPA
-  database/   — Drizzle schema, migrations, repositories
-  resource/   — Drop-in FiveM/RedM Lua resource
+  core/       - Process manager: spawns & supervises FiveM/RedM
+  panel/      - ElysiaJS API
+  panel-ui/   - React SPA
+  database/   - Drizzle schema, migrations, repositories
+  resource/   - Drop-in FiveM/RedM Lua resource
 shared/
-  types/      — Shared TypeScript types across all packages
+  types/      - Shared TypeScript types across all packages
 ```
 
 ---
@@ -40,7 +41,7 @@ shared/
 # Install dependencies
 bun install
 
-# Start everything — migrations run automatically on first boot
+# Start everything
 bun dev
 ```
 
@@ -48,7 +49,7 @@ Or run packages individually:
 
 ```bash
 bun dev:core    # process manager only
-bun dev:panel   # panel server + Vite client
+bun dev:panel   # panel server + vite client
 ```
 
 The React dev server runs on `:5173` and proxies API/WS calls to Elysia on `:4000`.
@@ -81,7 +82,7 @@ Edit `packages/database/src/migrations/index.ts` and append to the array:
 
 Migrations run automatically on next startup. No CLI commands needed.
 
-Biome handles everything ESLint + Prettier would — faster, single config at the root.
+Biome handles everything ESLint + Prettier would - faster, single config at the root.
 
 ---
 
@@ -96,7 +97,7 @@ bun run build.ts --target=linux
 bun run build.ts --target=windows
 ```
 
-Turbo caches build outputs — subsequent builds only rebuild what changed.
+Turbo caches build outputs - subsequent builds only rebuild what changed.
 
 Output in `dist/`:
 
@@ -104,10 +105,8 @@ Output in `dist/`:
 dist/
   fxmanager-linux          ← Linux binary
   fxmanager-windows.exe    ← Windows binary
-  public/                    ← UI assets — must stay next to the binary
-    index.html
-    assets/
-  resource/                  ← Drop into your server's resources/ folder
+  public/                  ← UI assets - must stay next to the binary
+  resource/                ← Drop into your server's resources/ folder
 ```
 
 > ⚠️ The `public/` folder must remain in the same directory as the binary when deploying. The server resolves it relative to its own location at runtime.
@@ -126,7 +125,6 @@ your-deploy-folder/
 ```
 
 ```bash
-cp .env.example .env   # fill in your paths
 ./fxmanager-linux    # or fxmanager-windows.exe
 ```
 
