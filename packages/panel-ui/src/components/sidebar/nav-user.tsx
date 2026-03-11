@@ -8,10 +8,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/use-auth';
-import { User2, ChevronUp, LogOut, X } from 'lucide-react';
+import { User2, ChevronUp, LogOut, X, Moon, Sun } from 'lucide-react';
+import { useTheme } from '../theme-provider';
+import { Switch } from '../ui/switch';
+import { useState } from 'react';
 
 export function NavUser() {
   const { user, logout } = useAuth();
+  const { setTheme, theme } = useTheme();
+  const [toggleState, setToggleState] = useState<boolean>(theme === 'light');
+
+  const toggleTheme = (checked: boolean) => {
+    setToggleState(checked);
+    setTheme(checked ? "light" : "dark");
+  };
 
   return (
     <SidebarMenu>
@@ -28,7 +38,23 @@ export function NavUser() {
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
             Signed in as <span className="font-semibold text-foreground">{user?.username}</span>
           </DropdownMenuLabel>
+
           <DropdownMenuSeparator />
+          
+          <div className="flex items-center justify-between px-1.5 py-1">
+            <div className="flex items-center gap-2">
+              {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              <span className="text-sm">{theme === 'dark' ? 'Dark' : 'Light'} Mode</span>
+            </div>
+            <Switch
+              id="theme-mode" 
+              checked={toggleState} 
+              onCheckedChange={toggleTheme}
+            />
+          </div>
+
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
