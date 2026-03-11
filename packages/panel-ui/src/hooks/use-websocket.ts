@@ -62,7 +62,6 @@ function getManager(): WSManager {
       };
     },
     send: (envelope) => {
-      console.log('Sending message down websocket', envelope);
       if (ws?.readyState === WebSocket.OPEN)
         ws.send(JSON.stringify({ ...envelope, ts: Date.now() }));
       else
@@ -111,7 +110,6 @@ export function usePanelWS<TState>(
 
   const send = useCallback(
     (type: string, payload: unknown) => {
-      console.log('[send] Sending ws command', { channel, type, payload });
       getManager().send({ channel, type, payload });
     },
     [channel],
