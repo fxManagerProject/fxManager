@@ -15,7 +15,7 @@ export const migration_0002_auth: Migration = {
     `CREATE INDEX admin_username_idx ON admin_users (username)`,
     `CREATE TABLE sessions (
         id         TEXT    PRIMARY KEY,
-        admin_id   INTEGER NOT NULL REFERENCES admin_users (id),
+        admin_id   INTEGER NOT NULL REFERENCES admin_users (id) ON DELETE CASCADE,
         created_at INTEGER NOT NULL,
         expires_at INTEGER NOT NULL
       )`,
