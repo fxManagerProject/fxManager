@@ -1,6 +1,7 @@
 import Elysia from 'elysia';
 import type { ChannelName, IProcessManager, WSEnvelope } from '@fxmanager/types';
 import type { ServerState, ConsoleOutputEvent } from '@fxmanager/types';
+import { sessionAuth } from '../middleware/session-auth';
 
 type SocketData = { _subs: Map<ChannelName, () => void> };
 
@@ -103,66 +104,68 @@ function resolveChannelSubscriber(
 // region elysia route
 
 export const wsRoutes = (pm: IProcessManager) =>
-  new Elysia().ws('/ws', {
-    open(ws) {
-      (ws.data as unknown as SocketData)._subs = new Map();
+  new Elysia()
+    .use(sessionAuth)  
+    .ws('/ws', {
+      open(ws) {
+        (ws.data as unknown as SocketData)._subs = new Map();
 
-      // Auto-subscribe all global channels on connect
-      const globalChannels: ChannelName[] = ['server', 'console', 'playerlist'];
-      for (const ch of globalChannels) {
-        const cleanup = resolveChannelSubscriber(ch, ws, pm);
-        if (cleanup) (ws.data as unknown as SocketData)._subs.set(ch, cleanup);
-      }
-    },
+        // Auto-subscribe all global channels on connect
+        const globalChannels: ChannelName[] = ['server', 'console', 'playerlist'];
+        for (const ch of globalChannels) {
+          const cleanup = resolveChannelSubscriber(ch, ws, pm);
+          if (cleanup) (ws.data as unknown as SocketData)._subs.set(ch, cleanup);
+        }
+      },
 
-    close(ws) {
-      const subs = (ws.data as unknown as SocketData)._subs;
-      subs?.forEach((cleanup) => cleanup());
-      subs?.clear();
-    },
-
-    message(ws, msg) {
-      try {
-        const { channel, type, payload } = msg as WSEnvelope;
+      close(ws) {
         const subs = (ws.data as unknown as SocketData)._subs;
+        subs?.forEach((cleanup) => cleanup());
+        subs?.clear();
+      },
 
-        // ── Channel subscription management ──────────────────────────────────
-        if (type === 'channel:subscribe' && !subs.has(channel)) {
-          const cleanup = resolveChannelSubscriber(channel, ws, pm);
-          if (cleanup) subs.set(channel, cleanup);
-          return;
-        }
+      message(ws, msg) {
+        try {
+          const { channel, type, payload } = msg as WSEnvelope;
+          const subs = (ws.data as unknown as SocketData)._subs;
 
-        if (type === 'channel:unsubscribe') {
-          subs.get(channel)?.();
-          subs.delete(channel);
-          return;
-        }
+          // ── Channel subscription management ──────────────────────────────────
+          if (type === 'channel:subscribe' && !subs.has(channel)) {
+            const cleanup = resolveChannelSubscriber(channel, ws, pm);
+            if (cleanup) subs.set(channel, cleanup);
+            return;
+          }
 
-        // ── Inbound channel messages ──────────────────────────────────────────
-        if (
-          channel === 'console' &&
-          type === 'console:input' &&
-          pm.getState().status === 'running'
-        ) {
-          console.log('[panel] sending command to process');
-          pm.sendCommand((payload as any).command);
-        }
+          if (type === 'channel:unsubscribe') {
+            subs.get(channel)?.();
+            subs.delete(channel);
+            return;
+          }
 
-        if (channel.startsWith('report:') && type === 'report:message') {
-          const reportId = channel.slice('report:'.length);
-          // pm.sendReportMessage?.(reportId, (payload as any).body);
-          console.log('[panel] - ToDo: trigger process manager to update report data');
-        }
+          // ── Inbound channel messages ──────────────────────────────────────────
+          if (
+            channel === 'console' &&
+            type === 'console:input' &&
+            pm.getState().status === 'running'
+          ) {
+            console.log('[panel] sending command to process');
+            pm.sendCommand((payload as any).command);
+          }
 
-        if (channel.startsWith('report:') && type === 'report:close') {
-          const reportId = channel.slice('report:'.length);
-          // pm.closeReport?.(reportId);
-          console.log('[panel] - ToDo: trigger process manager to close report');
+          if (channel.startsWith('report:') && type === 'report:message') {
+            const reportId = channel.slice('report:'.length);
+            // pm.sendReportMessage?.(reportId, (payload as any).body);
+            console.log('[panel] - ToDo: trigger process manager to update report data');
+          }
+
+          if (channel.startsWith('report:') && type === 'report:close') {
+            const reportId = channel.slice('report:'.length);
+            // pm.closeReport?.(reportId);
+            console.log('[panel] - ToDo: trigger process manager to close report');
+          }
+        } catch (err) {
+          console.error('[panel] Error occured within message reception of WS', err);
+          /* ignore malformed */
         }
-      } catch (err) {
-        console.error('[panel] Error occured within message reception of WS', err);
-        /* ignore malformed */
-      }
-    },
+      },
   });
