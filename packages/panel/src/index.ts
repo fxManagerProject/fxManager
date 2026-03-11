@@ -10,7 +10,6 @@ import { resourceRoutes } from './routes/resource';
 import { wsRoutes } from './ws';
 import { authRoutes } from './routes/auth';
 
-const PORT = Number(process.env.PANEL_PORT ?? 4000);
 const isDev = process.env.NODE_ENV !== 'production';
 
 // Resolve public dir relative to the running binary in production,
@@ -23,7 +22,12 @@ function resolvePublicDir(): string {
   return join(dirname(process.execPath), 'public');
 }
 
-export function startPanel(pm: IProcessManager) {
+interface PanelStartParams {
+  pm: IProcessManager;
+  port?: number;
+}
+
+export function startPanel({ pm, port = 4000 }: PanelStartParams) {
   const app = new Elysia()
     .use(cors())
 
@@ -57,8 +61,8 @@ export function startPanel(pm: IProcessManager) {
     }
   }
 
-  app.listen(PORT, () => {
-    console.log(`[panel] Web panel running at http://localhost:${PORT}`);
+  app.listen(port, () => {
+    console.log(`[panel] Web panel running at http://localhost:${port}`);
   });
 
   return app;

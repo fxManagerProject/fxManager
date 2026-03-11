@@ -3,6 +3,7 @@ import './config/env';
 import { applyMigrations } from '@fxmanager/database';
 import { processManager } from './process/manager';
 import { startPanel } from '../../panel/src/index';
+import { loadConfig } from './config';
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
@@ -12,7 +13,11 @@ console.log('[core] FiveM Panel starting...');
 applyMigrations();
 
 // 2. Start the web panel
-startPanel(processManager);
+const { webServerPort } = loadConfig();
+startPanel({
+  port: webServerPort,
+  pm: processManager
+});
 
 // 3. Graceful shutdown
 process.on('SIGINT', () => shutdown('SIGINT'));
