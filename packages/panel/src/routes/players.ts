@@ -1,7 +1,10 @@
 import Elysia, { t } from 'elysia';
 import { repo } from '@fxmanager/database';
+import { sessionAuth } from '../middleware/session-auth';
 
 export const playerRoutes = new Elysia({ prefix: '/players' })
+
+  .use(sessionAuth)
 
   .get(
     '/',

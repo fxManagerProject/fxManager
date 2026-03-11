@@ -20,9 +20,12 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     '/setup',
     async ({ body, cookie, status }) => {
       if (repo.auth.countUsers() > 0) return status(403, { error: 'Setup already completed' });
+      
       const user = await repo.auth.createUser(body.username, body.password);
       const session = repo.auth.createSession(user!.id);
+
       cookie[COOKIE_NAME].set({ value: session!.id, ...COOKIE_OPTS });
+
       return { success: true, username: user!.username };
     },
     {
@@ -37,9 +40,12 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     '/login',
     async ({ body, cookie, status }) => {
       const user = await repo.auth.verifyPassword(body.username, body.password);
+
       if (!user) return status(401, { error: 'Invalid credentials' });
+
       const session = repo.auth.createSession(user.id);
       cookie[COOKIE_NAME].set({ value: session!.id, ...COOKIE_OPTS });
+
       return { success: true, username: user.username };
     },
     {
@@ -57,7 +63,9 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   .get('/me', ({ cookie, status }) => {
     const sessionId = cookie[COOKIE_NAME].value as string;
     if (!sessionId) return status(401, { error: 'Not authenticated' });
+
     const result = repo.auth.validateSession(sessionId);
     if (!result) return status(401, { error: 'Session expired' });
+
     return { username: result.user.username, id: result.user.id };
   });
