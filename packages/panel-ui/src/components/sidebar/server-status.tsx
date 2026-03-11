@@ -1,4 +1,9 @@
-import { SidebarGroup, SidebarGroupLabel, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenuButton,
+  useSidebar,
+} from '@/components/ui/sidebar';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { useServerStateSocket } from '@/hooks/use-ws-channels';
@@ -46,20 +51,20 @@ export function ServerStatusCard() {
     state: { serverState },
   } = useServerStateSocket();
   const { state, setOpen } = useSidebar();
-  const isCollapsed = state === "collapsed";
+  const isCollapsed = state === 'collapsed';
   const status = serverState?.status ?? ('stopped' satisfies ServerStatus);
   const isRunning = status === 'running';
   const canStart = status === 'stopped' || status === 'crashed';
 
   if (isCollapsed) {
     return (
-      <div className='flex flex-col items-center'>
+      <div className="flex flex-col items-center">
         <SidebarMenuButton tooltip="View server status" onClick={() => setOpen(true)}>
           <MonitorCog />
         </SidebarMenuButton>
       </div>
-    )
-  };
+    );
+  }
 
   return (
     <SidebarGroup>

@@ -20,7 +20,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     '/setup',
     async ({ body, cookie, status }) => {
       if (repo.auth.countUsers() > 0) return status(403, { error: 'Setup already completed' });
-      
+
       const user = await repo.auth.createUser(body.username, body.password);
       const session = repo.auth.createSession(user!.id);
 

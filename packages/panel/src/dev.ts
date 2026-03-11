@@ -17,7 +17,7 @@ class MockProcessManager extends EventEmitter implements IProcessManager {
   }
 
   getConsoleContent() {
-    return []
+    return [];
   }
 
   private updateStatus(newStatus: ServerStatus) {

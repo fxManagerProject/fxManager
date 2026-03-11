@@ -20,7 +20,7 @@ export function NavUser() {
 
   const toggleTheme = (checked: boolean) => {
     setToggleState(checked);
-    setTheme(checked ? "light" : "dark");
+    setTheme(checked ? 'light' : 'dark');
   };
 
   return (
@@ -40,17 +40,13 @@ export function NavUser() {
           </DropdownMenuLabel>
 
           <DropdownMenuSeparator />
-          
+
           <div className="flex items-center justify-between px-1.5 py-1">
             <div className="flex items-center gap-2">
               {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               <span className="text-sm">{theme === 'dark' ? 'Dark' : 'Light'} Mode</span>
             </div>
-            <Switch
-              id="theme-mode" 
-              checked={toggleState} 
-              onCheckedChange={toggleTheme}
-            />
+            <Switch id="theme-mode" checked={toggleState} onCheckedChange={toggleTheme} />
           </div>
 
           <DropdownMenuSeparator />
