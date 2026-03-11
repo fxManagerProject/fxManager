@@ -16,6 +16,10 @@ class MockProcessManager extends EventEmitter implements IProcessManager {
     return this.state;
   }
 
+  getConsoleContent() {
+    return []
+  }
+
   private updateStatus(newStatus: ServerStatus) {
     this.state = {
       ...this.state,
@@ -58,4 +62,4 @@ class MockProcessManager extends EventEmitter implements IProcessManager {
 
 const mockProcess = new MockProcessManager();
 
-startPanel(mockProcess);
+startPanel({ pm: mockProcess });
