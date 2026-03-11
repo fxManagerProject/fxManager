@@ -24,7 +24,7 @@ if (!existsSync(dbDir)) mkdirSync(dbDir, { recursive: true });
 export const sqlite = new Database(dbPath);
 
 // when the sqlite file gets built for the first time, it can be locked for a period of time
-// this seems to occur mainly during delopment and not in production so we use a retry system  
+// this seems to occur mainly during delopment and not in production so we use a retry system
 let success = false;
 for (let attempt = 0; attempt < 5; attempt++) {
   try {
@@ -34,10 +34,10 @@ for (let attempt = 0; attempt < 5; attempt++) {
     sqlite.run('PRAGMA busy_timeout = 5000;');
 
     success = true;
-    
+
     break;
   } catch (err) {
-    if ((err as SQLiteError).code === "SQLITE_BUSY") {
+    if ((err as SQLiteError).code === 'SQLITE_BUSY') {
       console.warn(`[database] failed to initialze sqlite db (attempt ${attempt + 1}), retrying`);
       Bun.sleepSync(1_000);
     } else {

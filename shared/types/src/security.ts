@@ -1,4 +1,4 @@
-export const UserPermissions ={
+export const UserPermissions = {
   NONE: 0,
   KICK: 1 << 0, // 1
   BAN: 1 << 1, // 2
@@ -17,7 +17,7 @@ export const UserPermissions ={
   MASTER: 1 << 30, // (1,073,741,824)
 } as const;
 
-export type UserPermissions = typeof UserPermissions[keyof typeof UserPermissions];
+export type UserPermissions = (typeof UserPermissions)[keyof typeof UserPermissions];
 
 export type AuditAction =
   | 'server.start'
