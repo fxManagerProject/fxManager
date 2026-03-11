@@ -9,11 +9,22 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 export function createAuthRepository(db: DB) {
   return {
-    async createUser(username: string, password: string, permissions: number = 0) {
+    async createUser(
+      username: string,
+      password: string,
+      permissions: number = 0,
+      updateLoggedIn: boolean = false,
+    ) {
       const passwordHash = await Bun.password.hash(password, { algorithm: 'bcrypt' });
       return db
         .insert(adminUsers)
-        .values({ username, passwordHash, createdAt: new Date(), permissions  })
+        .values({
+          username,
+          passwordHash,
+          createdAt: new Date(),
+          lastLoginAt: updateLoggedIn ? new Date() : null,
+          permissions,
+        })
         .returning()
         .get();
     },
