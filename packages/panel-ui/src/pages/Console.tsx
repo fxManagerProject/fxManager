@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Terminal, SendHorizonal, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Terminal, SendHorizonal, ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
