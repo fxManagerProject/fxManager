@@ -9,6 +9,8 @@ const DEFAULTS: ServerConfig = {
   maxRestarts: 5,
   restartDelayMs: 5000,
   webServerPort: process.env.PANEL_PORT ? Number(process.env.PANEL_PORT) : 4000,
+  // used for fxserver resource -> process manager communications
+  internalPort: 4005,
 };
 
 export function loadConfig(): ServerConfig {
