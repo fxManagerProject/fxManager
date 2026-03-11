@@ -6,7 +6,6 @@ import { existsSync } from 'fs';
 import type { IProcessManager } from '@fxmanager/types';
 import { serverRoutes } from './routes/server';
 import { playerRoutes } from './routes/players';
-import { resourceRoutes } from './routes/resource';
 import { wsRoutes } from './ws';
 import { authRoutes } from './routes/auth';
 
@@ -34,7 +33,6 @@ export function startPanel({ pm, port = 4000 }: PanelStartParams) {
     // ── API ──────────────────────────────────────────────────────────────────
     .use(serverRoutes(pm))
     .use(playerRoutes)
-    .use(resourceRoutes)
     .use(authRoutes)
     .use(wsRoutes(pm))
     .get('/api/health', () => ({ ok: true, ts: Date.now() }));
