@@ -9,7 +9,7 @@ type DB = BunSQLiteDatabase<typeof schema>;
 export function createAuditRepository(db: DB) {
   return {
     log(input: {
-      adminId: number;
+      adminId?: number;
       action: AuditAction;
       target?: string;
       metadata?: Record<string, unknown>;

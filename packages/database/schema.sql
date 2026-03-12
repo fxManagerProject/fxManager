@@ -35,7 +35,7 @@ CREATE INDEX tokens_token_idx ON api_tokens (token);
 CREATE TABLE
     IF NOT EXISTS audit_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        admin_id TEXT NOT NULL,
+        admin_id INTEGER,
         action TEXT NOT NULL,
         target TEXT,
         metadata TEXT,

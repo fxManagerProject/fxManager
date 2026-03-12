@@ -139,9 +139,7 @@ export const auditLog = sqliteTable(
   'audit_log',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
-    adminId: integer('admin_id')
-      .notNull()
-      .references(() => adminUsers.id, { onDelete: 'cascade' }),
+    adminId: integer('admin_id').references(() => adminUsers.id, { onDelete: 'cascade' }),
     action: text('action').notNull(),
     target: text('target'),
     metadata: text('metadata', { mode: 'json' }).$type<Record<string, unknown>>(),

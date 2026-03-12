@@ -15,7 +15,7 @@ export const migration_0001_initial: Migration = {
 
     `CREATE TABLE IF NOT EXISTS audit_log (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      admin_id INTEGER,
+      admin_id INTEGER REFERENCES admin_users (id) ON DELETE SET NULL,
       action TEXT NOT NULL,
       target TEXT,
       metadata TEXT,
