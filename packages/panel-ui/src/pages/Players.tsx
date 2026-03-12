@@ -69,7 +69,7 @@ export default function Players() {
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {p.license}
+                    {p.identifiers.license}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(p.firstSeen).toLocaleDateString()}
