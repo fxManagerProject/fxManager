@@ -3,7 +3,7 @@ export interface Ban {
   playerId: number;
   reason: string;
   bannedBy: string;
-  expiresAt?: Date;
+  expiresAt: Date | null;
   createdAt: Date;
 }
 
