@@ -8,7 +8,7 @@ import { parseAnsiToSegments } from '../../common/utils';
 
 export class ProcessManager extends EventEmitter implements IProcessManager {
   private proc: ReturnType<typeof Bun.spawn> | null = null;
-  private state: ServerState = { status: 'stopped', restarts: 0 };
+  private state: ServerState = { status: 'stopped', restarts: 0, playerCount: 0 };
   private restartTimer: Timer | null = null;
   private logs = new LogBuffer(5_000);
   private outputIdx = 0;
@@ -90,6 +90,17 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
 
   getConsoleContent() {
     return this.logs.getHistory();
+  }
+
+  handleGameEvent(payload: GameEventPayload) {
+    if (payload.event.startsWith('player.')) {
+      const change = payload.event === 'player.join' ? 1 : -1;
+
+      this.setState(this.state.status, {
+        playerCount: Math.max(0, this.state.playerCount + change),
+      });
+    }
+    this.emit('game', payload);
   }
 
   // region private

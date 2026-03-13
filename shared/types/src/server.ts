@@ -1,5 +1,6 @@
 import type { EventEmitter } from 'events';
 import type { ConsoleOutputEvent } from './socket';
+import { GameEventPayload } from './game-api';
 
 export type ServerStatus = 'stopped' | 'starting' | 'running' | 'stopping' | 'crashed';
 
@@ -8,6 +9,7 @@ export interface ServerState {
   pid?: number;
   startedAt?: Date;
   restarts: number;
+  playerCount: number;
   lastCrashAt?: Date;
 }
 
@@ -30,4 +32,5 @@ export interface IProcessManager extends EventEmitter {
   restart(): Promise<void>;
   sendCommand(command: string): void;
   getConsoleContent(): ConsoleOutputEvent[];
+  handleGameEvent(payload: GameEventPayload): void;
 }

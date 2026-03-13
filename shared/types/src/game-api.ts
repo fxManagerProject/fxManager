@@ -31,3 +31,7 @@ export interface OnlinePlayer extends Player {
   ping?: number;
   health: number;
 }
+
+export type GameEventPayload =
+  | { event: 'player.join'; data: OnlinePlayer }
+  | { event: 'player.drop'; data: { serverId: number } };
