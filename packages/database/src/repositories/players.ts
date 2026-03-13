@@ -123,6 +123,12 @@ export function createPlayersRepository(db: DB) {
       return activeBan ?? null;
     },
 
+    updatePlaytime(playerId: number, playtime: number) {
+      const now = new Date();
+
+      db.update(players).set({ lastSeen: now, playtime }).where(eq(players.id, playerId));
+    },
+
     findById(id: number): Player | null {
       const player = db.select().from(players).where(eq(players.id, id)).get();
 
