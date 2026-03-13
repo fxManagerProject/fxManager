@@ -1,6 +1,6 @@
-import { eq, desc, and, inArray, isNull, or, gt } from 'drizzle-orm';
+import { eq, desc, and, inArray, isNull, or, gt, sql } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { players, playerIdentifiers, bans } from '../schema';
+import { adminUsers, bans, players, playerIdentifiers } from '../schema';
 import type * as schema from '../schema';
 import { Ban, Player, PlayerIdentifiers } from '@fxmanager/types';
 
@@ -8,6 +8,17 @@ type DB = BunSQLiteDatabase<typeof schema>;
 
 export function createPlayersRepository(db: DB) {
   return {
+    isStaff(playerId: number): boolean {
+      const result = db
+        .select({ id: sql<number>`1` }) 
+        .from(adminUsers)
+        .where(eq(adminUsers.playerId, playerId))
+        .limit(1)
+        .get();
+
+      return !!result;
+    },
+
     findByLicense(license: string): Player | null {
       const result = db
         .select({ player: players })
@@ -30,7 +41,9 @@ export function createPlayersRepository(db: DB) {
         return acc;
       }, {} as PlayerIdentifiers);
 
-      return { ...result.player, identifiers };
+      const isStaff = this.isStaff(result.player.id);
+
+      return { ...result.player, isStaff, identifiers };
     },
 
     /* ToDo:
@@ -60,6 +73,7 @@ export function createPlayersRepository(db: DB) {
 
         if (existingIdentifier) {
           const playerId = existingIdentifier.playerId;
+          const isStaff = this.isStaff(playerId);
 
           const [updatedPlayer] = await tx
             .update(players)
@@ -75,7 +89,7 @@ export function createPlayersRepository(db: DB) {
               .onConflictDoNothing();
           }
 
-          return { ...updatedPlayer, identifiers };
+          return { ...updatedPlayer, isStaff, identifiers };
         } else {
           const [newPlayer] = await tx
             .insert(players)
@@ -87,7 +101,7 @@ export function createPlayersRepository(db: DB) {
             .values(identifierRows.map((row) => ({ ...row, playerId: newPlayer.id })))
             .onConflictDoNothing();
 
-          return { ...newPlayer, identifiers };
+          return { ...newPlayer, isStaff: false, identifiers };
         }
       });
     },
@@ -146,7 +160,9 @@ export function createPlayersRepository(db: DB) {
         return acc;
       }, {} as PlayerIdentifiers);
 
-      return { ...player, identifiers };
+      const isStaff = this.isStaff(player.id);
+
+      return { ...player, isStaff, identifiers };
     },
 
     list(page = 1, pageSize = 50) {

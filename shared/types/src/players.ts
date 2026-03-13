@@ -10,6 +10,7 @@ export interface Player {
   name: string;
   playtime: number;
   identifiers: PlayerIdentifiers;
+  isStaff: boolean;
   firstSeen: Date;
   lastSeen: Date;
 }
