@@ -12,19 +12,19 @@ export const serverRoutes = (pm: IProcessManager) =>
 
     .post('/start', async ({ admin }) => {
       await pm.start();
-      repo.audit.log({ adminId: admin.username, action: 'server.start' });
+      repo.audit.log({ adminId: admin.id, action: 'server.start' });
       return { success: true };
     })
 
     .post('/stop', async ({ admin }) => {
       await pm.stop();
-      repo.audit.log({ adminId: admin.username, action: 'server.stop' });
+      repo.audit.log({ adminId: admin.id, action: 'server.stop' });
       return { success: true };
     })
 
     .post('/restart', async ({ admin }) => {
       await pm.restart();
-      repo.audit.log({ adminId: admin.username, action: 'server.restart' });
+      repo.audit.log({ adminId: admin.id, action: 'server.restart' });
       return { success: true };
     })
 
