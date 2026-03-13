@@ -13,9 +13,3 @@ export interface Player {
   firstSeen: Date;
   lastSeen: Date;
 }
-
-export interface OnlinePlayer extends Player {
-  serverId: number;
-  ping?: number;
-  health: number;
-}
