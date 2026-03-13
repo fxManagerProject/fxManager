@@ -11,8 +11,8 @@
  *     resource/                ← FiveM resource
  */
 
-import { $ } from 'bun';
-import { existsSync, mkdirSync, cpSync } from 'fs';
+import { Build, type PluginBuilder } from 'bun';
+import { mkdirSync, cpSync } from 'fs';
 import { join } from 'path';
 
 const args = process.argv.slice(2);
@@ -21,26 +21,14 @@ const targetArg = args.find((a) => a.startsWith('--target='))?.split('=')[1] ?? 
 const DIST = join(import.meta.dir, 'dist');
 const ENTRY = join(import.meta.dir, 'packages/core/src/index.ts');
 const CLIENT_DIST = join(import.meta.dir, 'packages/panel-ui/dist');
-const RESOURCE_DIST = join(import.meta.dir, 'packages/resource/dist');
+const RESOURCE_DIST = join(import.meta.dir, 'packages/resource');
 
-const targets = {
+const targets: Record<string, Build.CompileTarget> = {
   windows: 'bun-windows-x64',
   linux: 'bun-linux-x64',
 } as const;
 
 mkdirSync(DIST, { recursive: true });
-
-console.log('🔨 Building React client...');
-await $`bun run --cwd packages/panel-ui build`;
-if (!existsSync(CLIENT_DIST)) {
-  throw new Error(`Client build failed — dist not found at ${CLIENT_DIST}`);
-}
-
-console.log('🔨 Building FxServer resource...');
-await $`bun run --cwd packages/resource build`;
-if (!existsSync(RESOURCE_DIST)) {
-  throw new Error(`Resource build failed — dist not found at ${RESOURCE_DIST}`);
-}
 
 console.log('📦 Compiling binaries...');
 
@@ -49,13 +37,39 @@ const toBuild =
     ? Object.entries(targets)
     : [[targetArg, targets[targetArg as keyof typeof targets]]];
 
+const stripDevLabels = {
+  name: 'strip-dev-labels',
+  setup(build: PluginBuilder) {
+    build.onLoad({ filter: /\.(ts|tsx)$/ }, async (args: any) => {
+      const text = await Bun.file(args.path).text();
+      return {
+        contents: text.replaceAll(/^\s*DEV:.*$/gm, ''),
+        loader: 'ts',
+      };
+    });
+  },
+};
+
 for (const [name, target] of toBuild) {
   const ext = name === 'windows' ? '.exe' : '';
-  const out = join(DIST, `fxmanager-${name}${ext}`);
+  const filename = `fxmanager-${name}`;
 
-  console.log(`  → ${name}: ${out}`);
+  console.log(`  → ${name}: ${filename}${ext}`);
 
-  await $`bun build --compile --target=${target} --define 'process.env.NODE_ENV="production"' ${ENTRY} --outfile=${out}`;
+  const buildSettings = {
+    entrypoints: [ENTRY],
+    outdir: DIST,
+    compile: {
+      target: target as Build.CompileTarget,
+      outfile: join(DIST, `${filename}${ext}`),
+    },
+    define: {
+      'process.env.NODE_ENV': JSON.stringify('production'),
+    },
+    plugins: [stripDevLabels],
+  };
+
+  await Bun.build(buildSettings);
 }
 
 console.log('🌐 Copying panel-ui assets...');
@@ -71,7 +85,8 @@ const filesToCopy = ['dist', 'locales', 'static', 'fxmanifest.lua'];
 const resourceOut = join(DIST, 'resource');
 mkdirSync(publicOut, { recursive: true });
 filesToCopy.forEach((file) => {
-  const src = join(import.meta.dir, 'packages/resource', file);
+  const src = join(RESOURCE_DIST, file);
+  console.log('src', src);
   const dest = join(resourceOut, file);
 
   cpSync(src, dest, { recursive: true });
