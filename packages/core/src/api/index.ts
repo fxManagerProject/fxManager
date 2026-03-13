@@ -12,10 +12,10 @@ interface CoreAPIStartParams {
 export function startAPI({ port = 4005, gm }: CoreAPIStartParams) {
   const app = new Elysia()
     .use(cors())
-    .use(resourceAuth)
-    .use(playerRoutes(gm))
+    .get('/api/health', () => ({ ok: true, ts: Date.now() }))
 
-    .get('/api/health', () => ({ ok: true, ts: Date.now() }));
+    .use(resourceAuth)
+    .use(playerRoutes(gm));
 
   app.listen(port, () => {
     console.log(`[core - api] running at http://localhost:${port}`);
