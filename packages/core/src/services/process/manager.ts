@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import type { IProcessManager, LogSegment } from '@fxmanager/types';
 import { repo } from '@fxmanager/database';
-import { loadConfig } from '../config';
+import { loadConfig } from '../../config';
 import type { ServerState, ServerStatus, ConsoleOutputEvent } from '@fxmanager/types';
 import { LogBuffer } from './consoleBuffer';
 
