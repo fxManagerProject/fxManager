@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import type { IProcessManager, LogSegment } from '@fxmanager/types';
+import type { GameEventPayload, IProcessManager } from '@fxmanager/types';
 import { repo } from '@fxmanager/database';
 import { loadConfig } from '../../config';
 import type { ServerState, ServerStatus, ConsoleOutputEvent } from '@fxmanager/types';
@@ -180,6 +180,3 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
     this.proc = null;
   }
 }
-
-// Singleton
-export const processManager = new ProcessManager();

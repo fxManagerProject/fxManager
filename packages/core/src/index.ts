@@ -1,25 +1,25 @@
 import './config/env';
 
-import { applyMigrations } from '@fxmanager/database';
-import { processManager } from './services/process/manager';
-import { startPanel } from '../../panel/src/index';
 import { loadConfig } from './config';
-
-// ─── Bootstrap ────────────────────────────────────────────────────────────────
+import { applyMigrations } from '@fxmanager/database';
+import { startPanel } from '../../panel/src/index';
+import { ProcessManager } from './services/process/manager';
 
 console.log('[core] FiveM Panel starting...');
 
-// 1. Run DB migrations
+const { webServerPort } = loadConfig();
+const processManager = new ProcessManager();
+
+// check and update database migrations
 applyMigrations();
 
-// 2. Start the web panel
-const { webServerPort } = loadConfig();
+// initialize the web panel
 startPanel({
   port: webServerPort,
   pm: processManager,
 });
 
-// 3. Graceful shutdown
+// handle resource shutdown
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
@@ -29,8 +29,9 @@ async function shutdown(signal: string) {
     if (processManager.getState().status === 'running') {
       await processManager.stop();
     }
-  } catch {
-    /* ignore */
+  } catch (err) {
+    console.error('Failed to run shutdown functions !');
+    console.error(err);
   }
   process.exit(0);
 }
