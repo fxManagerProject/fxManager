@@ -25,10 +25,11 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
     this.setState('starting');
 
     // biome-ignore format: keep this formatting
-    const args = [
+    const args: string[] = [
       '+exec', config.configFile,
       '+set', 'onesync', 'on',
       '+set', 'resource-api-token', config.resourceApiToken,
+      '+set', 'api-port', `${config.internalPort}`,
     ];
 
     console.log(`[core] Starting FiveM: ${config.executable} ${args.join(' ')}`);
