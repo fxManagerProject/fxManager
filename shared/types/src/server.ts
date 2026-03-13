@@ -20,6 +20,7 @@ export interface ServerConfig {
   restartDelayMs: number;
   webServerPort: number;
   internalPort: number;
+  resourceApiToken: string;
 }
 
 export interface IProcessManager extends EventEmitter {

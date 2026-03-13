@@ -11,6 +11,7 @@ const DEFAULTS: ServerConfig = {
   webServerPort: process.env.PANEL_PORT ? Number(process.env.PANEL_PORT) : 4000,
   // used for fxserver resource -> process manager communications
   internalPort: 4005,
+  resourceApiToken: crypto.randomUUID(),
 };
 
 export function loadConfig(): ServerConfig {
