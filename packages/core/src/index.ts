@@ -8,8 +8,9 @@ import { loadConfig } from './config';
 import { ProcessManager } from './services/process/manager';
 import { GameManager } from './services/game/manager';
 import { closureMessage } from './common/fancy_stuff';
+import { checkVersion } from './common/version_check';
 
-const { webServerPort, internalPort } = loadConfig();
+const { webServerPort, internalPort, version } = loadConfig();
 const processManager = new ProcessManager();
 const gameManager = new GameManager(processManager);
 
@@ -26,6 +27,8 @@ startPanel({
   port: webServerPort,
   pm: processManager,
 });
+
+checkVersion(version);
 
 // handle resource shutdown
 process.on('SIGINT', () => shutdown('SIGINT'));
