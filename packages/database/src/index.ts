@@ -47,6 +47,7 @@ for (let attempt = 0; attempt < 5; attempt++) {
 }
 
 if (!success) throw new Error('Database was unable to initialize after 5 tries !');
+else console.info(`[database] connection established.`);
 
 export const db = drizzle(sqlite, { schema });
 

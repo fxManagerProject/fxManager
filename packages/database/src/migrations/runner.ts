@@ -32,12 +32,12 @@ export function runMigrations(sqlite: Database, migrations: Migration[]) {
     .sort((a, b) => a.version - b.version);
 
   if (pending.length === 0) {
-    console.log(`[db] Schema up to date (v${current})`);
+    console.log(`[database] Schema up to date (v${current})`);
     return;
   }
 
   for (const migration of pending) {
-    console.log(`[db] Applying migration v${migration.version}: ${migration.description}`);
+    console.log(`[database] Applying migration v${migration.version}: ${migration.description}`);
 
     sqlite.run('BEGIN');
     try {
@@ -52,10 +52,10 @@ export function runMigrations(sqlite: Database, migrations: Migration[]) {
       sqlite.run('COMMIT');
     } catch (err) {
       sqlite.run('ROLLBACK');
-      throw new Error(`[db] Migration v${migration.version} failed: ${(err as Error).message}`);
+      throw new Error(`[database] Migration v${migration.version} failed: ${(err as Error).message}`);
     }
   }
 
   const latest = pending.at(-1)!;
-  console.log(`[db] Migrated to v${latest.version} (${pending.length} applied)`);
+  console.log(`[database] Migrated to v${latest.version} (${pending.length} applied)`);
 }
