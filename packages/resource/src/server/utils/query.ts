@@ -29,6 +29,7 @@ export async function QueryManager<T>(
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        'x-resource-token': API_TOKEN,
         ...headers,
       },
       body: body ? JSON.stringify(body) : null,
