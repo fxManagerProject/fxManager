@@ -14,6 +14,7 @@ export interface ServerState {
 }
 
 export interface ServerConfig {
+  version: `${string}.${string}.${string}` | `${string}.${string}.${string}-b` | 'dev-build';
   executable: string;
   serverDataPath: string;
   configFile: string;
