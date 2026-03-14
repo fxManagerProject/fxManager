@@ -1,3 +1,5 @@
+import { ChevronRightIcon, ExternalLink, MoreHorizontal } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   SidebarGroup,
@@ -12,7 +14,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import type { NavItem } from '@/types/sidebar';
-import { ChevronRightIcon, ExternalLink, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,9 +40,9 @@ function NavItemWithSubItems({ item }: { item: NavItem }) {
             {item.items?.map((subItem) => (
               <SidebarMenuSubItem key={subItem.title}>
                 <SidebarMenuSubButton asChild>
-                  <a href={subItem.url}>
+                  <Link to={subItem.url}>
                     <span>{subItem.title}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
             ))}
@@ -58,10 +59,10 @@ export function NavItemNoItems({ item }: { item: NavItem }) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild tooltip={item.title}>
-        <a href={item.url}>
+        <Link to={item.url}>
           {item.icon && <item.icon />}
           <span>{item.title}</span>
-        </a>
+        </Link>
       </SidebarMenuButton>
 
       {/* Optional: Actions dropdown if you still want a "More" menu for these items */}
@@ -118,9 +119,9 @@ export function NavMain() {
           //           {item.items?.map((subItem) => (
           //             <SidebarMenuSubItem key={subItem.title}>
           //               <SidebarMenuSubButton asChild>
-          //                 <a href={subItem.url}>
+          //                 <Link href={subItem.url}>
           //                   <span>{subItem.title}</span>
-          //                 </a>
+          //                 </Link>
           //               </SidebarMenuSubButton>
           //             </SidebarMenuSubItem>
           //           ))}
