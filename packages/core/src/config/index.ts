@@ -1,7 +1,9 @@
 import type { ServerConfig } from '@fxmanager/types';
 import { repo } from '@fxmanager/database';
+import { getCoreVersion, isDev } from '../common/utils';
 
 const DEFAULTS: ServerConfig = {
+  version: isDev ? 'dev-build' : await getCoreVersion(),
   executable: process.env.FIVEM_EXECUTABLE ?? './FXServer',
   serverDataPath: process.env.FIVEM_DATA_PATH ?? './server-data',
   configFile: process.env.FIVEM_CFG ?? 'server.cfg',
