@@ -52,7 +52,9 @@ export function runMigrations(sqlite: Database, migrations: Migration[]) {
       sqlite.run('COMMIT');
     } catch (err) {
       sqlite.run('ROLLBACK');
-      throw new Error(`[database] Migration v${migration.version} failed: ${(err as Error).message}`);
+      throw new Error(
+        `[database] Migration v${migration.version} failed: ${(err as Error).message}`,
+      );
     }
   }
 

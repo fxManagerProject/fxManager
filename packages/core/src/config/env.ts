@@ -10,9 +10,7 @@ Ideally I shouldn't need to do this, but in the development environment it's not
 from the project root and looking in packages/core
 */
 
-const envPath = isDev
-  ? join(process.cwd(), '.env')
-  : join(process.cwd(), '../..', '.env');
+const envPath = isDev ? join(process.cwd(), '.env') : join(process.cwd(), '../..', '.env');
 
 if (existsSync(envPath)) {
   const lines = readFileSync(envPath, 'utf-8').split('\n');

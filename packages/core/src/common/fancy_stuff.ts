@@ -16,7 +16,7 @@ export async function openingMessage() {
   console.log(`${' '.repeat(labelPadding)}\x1b[1m${LABEL}\x1b[0m`);
   console.log(`${' '.repeat(subPadding)}\x1b[36m${SUB_MSG}\x1b[0m`); // Cyan sub-text
   console.log(`\n\x1b[34m${BORDER}\x1b[0m\n`);
-  
+
   await Bun.sleep(100);
 }
 

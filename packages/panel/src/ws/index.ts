@@ -146,7 +146,7 @@ export const wsRoutes = (pm: IProcessManager) =>
           type === 'console:input' &&
           pm.getState().status === 'running'
         ) {
-          console.log('[panel] sending command to process');
+          DEV: console.log('[panel] sending command to process', payload);
           pm.sendCommand((payload as any).command);
         }
 
