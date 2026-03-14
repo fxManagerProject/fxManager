@@ -1,5 +1,8 @@
 import { join } from 'path';
 import { existsSync, readFileSync } from 'fs';
+import { openingMessage } from '../common/fancy_stuff';
+
+await openingMessage();
 
 /* 
 Ideally I shouldn't need to do this, but in the development environment it's not loading the .env
