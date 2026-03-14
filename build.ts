@@ -14,6 +14,7 @@
 import { Build, type PluginBuilder } from 'bun';
 import { mkdirSync, cpSync } from 'fs';
 import { join } from 'path';
+import { version } from './package.json' with { type: 'json' };
 
 const args = process.argv.slice(2);
 const targetArg = args.find((a) => a.startsWith('--target='))?.split('=')[1] ?? 'all';
@@ -65,6 +66,7 @@ for (const [name, target] of toBuild) {
     },
     define: {
       'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.env.VERSION': JSON.stringify(version),
     },
     plugins: [stripDevLabels],
   };
