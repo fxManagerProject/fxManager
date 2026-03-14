@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useConsoleSocket } from '@/hooks/use-ws-channels';
+import { useConsoleSocket, useServerStateSocket } from '@/hooks/use-ws-channels';
 import type { ConsoleOutputEvent } from '@fxmanager/types';
 
 function LogLine({ event }: { event: ConsoleOutputEvent }) {
@@ -19,6 +19,9 @@ function LogLine({ event }: { event: ConsoleOutputEvent }) {
 }
 
 export default function Console() {
+  const {
+    state: { serverState },
+  } = useServerStateSocket();
   const { logs, sendCommand } = useConsoleSocket();
   const viewportRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState('');
@@ -34,10 +37,24 @@ export default function Console() {
     setInput('');
   };
 
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') return submit();
+    if (e.key === 'ArrowUp') {
+      const idx = Math.min(histIdx + 1, history.length - 1);
+      setHistIdx(idx);
+      setInput(history[idx] ?? '');
+    }
+    if (e.key === 'ArrowDown') {
+      const idx = Math.max(histIdx - 1, -1);
+      setHistIdx(idx);
+      setInput(idx === -1 ? '' : history[idx]);
+    }
+  };
+
   useEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
-    
+
     const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
     if (isNearBottom) {
       el.scrollTop = el.scrollHeight;
@@ -74,7 +91,12 @@ export default function Console() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Enter server command..."
+            disabled={serverState?.status !== 'running'}
+            placeholder={
+              serverState?.status === 'running'
+                ? 'Enter server command...'
+                : 'Server not running...'
+            }
             className="flex-1 border-0 bg-transparent font-mono text-sm shadow-none outline-none focus-visible:ring-0"
           />
           <Button size="icon" variant="ghost" onClick={submit} className="h-8 w-8 text-primary">
