@@ -79,6 +79,10 @@ export function ServerStatusCard() {
             <p>Uptime</p>
             <p>{serverState?.startedAt ? formatUptime(serverState.startedAt, false) : 'N/A'}</p>
           </div>
+          <div className="flex flex-row justify-between">
+            <p>Players:</p>
+            <p>{serverState?.playerCount ?? 'N/A'}</p>
+          </div>
           <div>
             <p className="mb-2 text-sm font-medium">Actions</p>
             <div className="flex w-full flex-row gap-2">
