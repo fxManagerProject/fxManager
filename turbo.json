@@ -1,32 +1,28 @@
 {
-  "$schema": "https://turbo.build/schema.json",
-  "ui": "tui",
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", "client/dist/**"],
-      "cache": true
-    },
-    "dev": {
-      "dependsOn": ["^build"],
-      "persistent": true,
-      "cache": false
-    },
-    "dev:client": {
-      "persistent": true,
-      "cache": false
-    },
-    "dev:isolated": {
-      "persistent": true,
-      "cache": false
-    },
-    "typecheck": {
-      "dependsOn": ["^typecheck"],
-      "cache": true
-    },
-    "lint": {
-      "cache": true,
-      "outputs": []
+    "$schema": "https://turbo.build/schema.json",
+    "ui": "tui",
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "outputs": ["dist/**", "client/dist/**"],
+            "cache": true
+        },
+        "dev": {
+            "dependsOn": ["^build"],
+            "persistent": true,
+            "cache": false
+        },
+        "dev:isolated": {
+            "persistent": true,
+            "cache": false
+        },
+        "typecheck": {
+            "dependsOn": ["^typecheck"],
+            "cache": true
+        },
+        "lint": {
+            "cache": true,
+            "outputs": []
+        }
     }
-  }
 }
