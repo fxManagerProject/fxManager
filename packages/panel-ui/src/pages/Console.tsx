@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Terminal, SendHorizonal, ArrowRight } from 'lucide-react';
+import Ansi from "ansi-to-react";
 import { Card } from '@/components/ui/card';
 // import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -10,12 +11,7 @@ import type { ConsoleOutputEvent } from '@fxmanager/types';
 function LogLine({ event }: { event: ConsoleOutputEvent }) {
   return (
     <div className="font-mono text-sm leading-tight whitespace-pre-wrap">
-      <span className="text-gray-500 mr-2">[{new Date(event.ts).toLocaleTimeString()}]</span>
-      {event.segments.map((seg, i) => (
-        <span key={i} style={{ color: seg.color }}>
-          {seg.text}
-        </span>
-      ))}
+      <Ansi>{event.line}</Ansi>
     </div>
   );
 }
