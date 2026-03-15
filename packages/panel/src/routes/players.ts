@@ -1,6 +1,7 @@
 import Elysia, { t } from 'elysia';
 import { repo } from '@fxmanager/database';
 import { sessionAuth } from '../middleware/session-auth';
+import { ApiResponse, PlayerProfile } from '@fxmanager/types';
 
 export const playerRoutes = new Elysia({ prefix: '/players' })
 
@@ -28,4 +29,13 @@ export const playerRoutes = new Elysia({ prefix: '/players' })
         sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')])),
       }),
     },
-  );
+  )
+
+  .get('/:playerId', async ({ params }): Promise<ApiResponse<PlayerProfile>> => {
+    const playerId = parseInt(params.playerId);
+    const profile = await repo.players.findById(playerId);
+
+    if (!profile) return { success: false, error: `Player id ${playerId} does not exist.` };
+
+    return { success: true, data: profile };
+  });
