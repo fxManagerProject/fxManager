@@ -2,7 +2,7 @@ import { eq, desc, and, inArray, isNull, or, gt, sql, asc, like } from 'drizzle-
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { adminUsers, bans, players, playerIdentifiers } from '../schema';
 import type * as schema from '../schema';
-import { Ban, Player, PlayerIdentifiers } from '@fxmanager/types';
+import type { Ban, PaginatedResponse, Player, PlayerIdentifiers } from '@fxmanager/types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -173,7 +173,7 @@ export function createPlayersRepository(db: DB) {
         sortBy?: 'playtime' | 'lastSeen' | 'firstSeen';
         sortOrder?: 'asc' | 'desc';
       },
-    ): Omit<Player, 'identifiers'>[] {
+    ): PaginatedResponse<Omit<Player, 'identifiers'>> {
       const { search, sortBy = 'lastSeen', sortOrder = 'desc' } = options ?? {};
 
       const sortCol = {
@@ -184,6 +184,23 @@ export function createPlayersRepository(db: DB) {
 
       const orderFn = sortOrder === 'asc' ? asc : desc;
 
+      const filters = search
+        ? or(like(players.name, `%${search}%`), like(playerIdentifiers.value, `%${search}%`))
+        : undefined;
+
+      const countQuery = db
+        .select({ count: sql<number>`count(distinct ${players.id})` })
+        .from(players);
+
+      if (search) {
+        countQuery
+          .leftJoin(playerIdentifiers, eq(playerIdentifiers.playerId, players.id))
+          .where(filters);
+      }
+
+      const totalResult = countQuery.get();
+      const total = totalResult?.count ?? 0;
+
       const query = db
         .select({
           id: players.id,
@@ -191,7 +208,7 @@ export function createPlayersRepository(db: DB) {
           playtime: players.playtime,
           lastSeen: players.lastSeen,
           firstSeen: players.firstSeen,
-          isStaff: sql<1|0>`CASE WHEN ${adminUsers.playerId} IS NOT NULL THEN 1 ELSE 0 END`,
+          isStaff: sql<1 | 0>`CASE WHEN ${adminUsers.playerId} IS NOT NULL THEN 1 ELSE 0 END`,
         })
         .from(players)
         .leftJoin(adminUsers, eq(players.id, adminUsers.playerId))
@@ -200,9 +217,7 @@ export function createPlayersRepository(db: DB) {
       if (search) {
         query
           .leftJoin(playerIdentifiers, eq(playerIdentifiers.playerId, players.id))
-          .where(
-            or(like(players.name, `%${search}%`), like(playerIdentifiers.value, `%${search}%`)),
-          );
+          .where(filters);
       }
 
       const response = query
@@ -211,7 +226,12 @@ export function createPlayersRepository(db: DB) {
         .offset((page - 1) * pageSize)
         .all();
 
-      return response.map((row) => ({ ...row, isStaff: row.isStaff === 1 }));
+      return {
+        items: response.map((row) => ({ ...row, isStaff: row.isStaff === 1 })),
+        total,
+        page,
+        pageSize,
+      };
     },
   };
 }
