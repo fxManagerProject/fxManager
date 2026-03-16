@@ -4,8 +4,8 @@ import { ProtectedRoute } from './components/protected-route';
 import { useAuth } from './hooks/use-auth';
 
 import { LoadingScreen } from './components/loading';
-import SetupPage from './pages/Setup';
-import NotFound from './pages/NotFound';
+import SetupPage from './pages/public/Setup';
+import NotFound from './pages/public/NotFound';
 import { routes } from './pages';
 
 export function App() {
@@ -19,7 +19,7 @@ export function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
+      <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
 
       {standaloneRoutes.map(({ path, element, auth }) => (
         <Route key={path} path={path} element={<ProtectedRoute element={element} auth={auth} />} />
@@ -27,7 +27,11 @@ export function App() {
 
       <Route element={<AppLayout />}>
         {layoutRoutes.map(({ path, element, auth }) => (
-          <Route key={path} path={path} element={<ProtectedRoute element={element} auth={auth} />} />
+          <Route
+            key={path}
+            path={path}
+            element={<ProtectedRoute element={element} auth={auth} />}
+          />
         ))}
       </Route>
 

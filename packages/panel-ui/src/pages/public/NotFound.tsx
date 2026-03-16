@@ -1,7 +1,7 @@
-import { useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home, LogIn, Terminal } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Home, LogIn, Terminal } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function NotFound() {
   const { user } = useAuth();
@@ -40,10 +40,10 @@ export default function NotFound() {
           <Button
             variant="default"
             className="w-30"
-            onClick={() => navigate(user ? "/" : "/login")}
+            onClick={() => navigate(user ? '/' : '/login')}
           >
             {user ? <Home className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
-            {user ? "Dashboard" : "Login"}
+            {user ? 'Dashboard' : 'Login'}
           </Button>
         </div>
       </div>

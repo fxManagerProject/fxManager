@@ -1,10 +1,10 @@
-import type { ComponentType } from "react";
-import LoginPage from "./LoginPage";
-import Dashboard from "./Dashboard";
-import Players from "./Players";
-import PlayerView from "./Player";
-import Console from "./Console";
-import Settings from "./Settings";
+import type { ComponentType } from 'react';
+import LoginPage from './public/LoginPage';
+import Dashboard from './dashboard/Main';
+import Players from './players/Main';
+import PlayerView from './players/PlayerView';
+import Console from './console/Main';
+import Settings from './settings/Settings';
 
 type RouteConfig = {
   path: string;
@@ -14,10 +14,10 @@ type RouteConfig = {
 };
 
 export const routes: RouteConfig[] = [
-  { path: "/login",             element: LoginPage,   auth: false },
-  { path: "/dashboard",         element: Dashboard },
-  { path: "/players",           element: Players },
-  { path: "/players/:playerId", element: PlayerView },
-  { path: "/console",           element: Console },
-  { path: "/settings",          element: Settings },
+  { path: '/login', element: LoginPage, auth: false },
+  { path: '/dashboard', element: Dashboard },
+  { path: '/players', element: Players },
+  { path: '/players/:playerId', element: PlayerView },
+  { path: '/console', element: Console },
+  { path: '/settings', element: Settings },
 ];

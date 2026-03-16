@@ -56,9 +56,9 @@ export default function Players() {
     if (debouncedSearch) params.set('search', debouncedSearch);
 
     /* ToDo:
-      * Consider storing params in localstorage so the user coming back has the same settings
-      * Useful if looking through profiles to avoid reiterating a search over and over
-    */
+     * Consider storing params in localstorage so the user coming back has the same settings
+     * Useful if looking through profiles to avoid reiterating a search over and over
+     */
 
     QueryService<PaginatedResponse<Omit<Player, 'identifiers'>>>({
       endpoint: `/players?${params.toString()}`,
@@ -159,7 +159,9 @@ export default function Players() {
                       <TableCell className="font-medium pl-4 flex-1 truncate">
                         {p.name}
                         {p.isStaff && (
-                          <Badge variant="link" className="ml-2 text-xs">Staff</Badge>
+                          <Badge variant="link" className="ml-2 text-xs">
+                            Staff
+                          </Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground flex-1">
@@ -187,8 +189,18 @@ export default function Players() {
         </div>
 
         <div className="flex items-center justify-between px-4 py-4 border-t border-border bg-card">
-          <PageSizeSelector pageSize={pageSize} setPageSize={setPageSize} label="Players per page" />
-          <PageSelector page={page} pageSize={pageSize} setPage={setPage} loading={loading} total={total} />
+          <PageSizeSelector
+            pageSize={pageSize}
+            setPageSize={setPageSize}
+            label="Players per page"
+          />
+          <PageSelector
+            page={page}
+            pageSize={pageSize}
+            setPage={setPage}
+            loading={loading}
+            total={total}
+          />
         </div>
       </Card>
     </div>
