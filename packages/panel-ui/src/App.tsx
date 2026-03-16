@@ -11,6 +11,7 @@ import Console from './pages/Console';
 import { LoadingScreen } from './components/loading';
 import SetupPage from './pages/Setup';
 import PlayerView from './pages/Player';
+import NotFound from './pages/NotFound';
 
 export function App() {
   const { user, loading, settings } = useAuth();
@@ -34,7 +35,7 @@ export function App() {
         <Route path="/settings" element={<ProtectedRoute element={Settings} />} />
       </Route>
 
-      <Route path="*" element={<p>Not Found</p>} />
+      <Route path="*" element={<ProtectedRoute element={NotFound} auth={false} />} />
     </Routes>
   );
 }
