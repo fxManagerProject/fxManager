@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Search, ArrowUpDown, Eye } from 'lucide-react';
+import { Users, Search, ArrowUpDown, Eye, ShieldAlert } from 'lucide-react';
 import type { PaginatedResponse, Player } from '@fxmanager/types';
 import {
   Table,
@@ -27,6 +27,8 @@ import PageSizeSelector from '@/components/page-size-selector';
 import PageSelector from '@/components/page-selector';
 import { Link } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { usePlayerAction } from '@/hooks/use-player-actions';
+import { PlayerActionDialog } from '@/components/player-actions-dialog';
 
 type SortBy = 'lastSeen' | 'firstSeen' | 'playtime';
 type SortOrder = 'asc' | 'desc';
@@ -40,6 +42,7 @@ export default function Players() {
   const [sortBy, setSortBy] = useState<SortBy>('lastSeen');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
+  const { dialogOpen, dialogPlayer, dialogTab, openAction, closeAction } = usePlayerAction();
   const debouncedSearch = useDebounce(search, 300);
   const loading = players === null;
 
@@ -136,7 +139,7 @@ export default function Players() {
                 <TableHead className="flex-1 flex items-center">First seen</TableHead>
                 <TableHead className="flex-1 flex items-center">Last seen</TableHead>
                 <TableHead className="flex-1 flex items-center">Playtime</TableHead>
-                <TableHead className="w-60 flex items-center" />
+                <TableHead className="w-70 flex items-center" />
               </TableRow>
             </TableHeader>
             <TableBody className="block w-full">
@@ -173,11 +176,14 @@ export default function Players() {
                       <TableCell className="text-sm text-muted-foreground flex-1">
                         {formatDuration(p.playtime)}
                       </TableCell>
-                      <TableCell className="w-60 flex justify-center">
-                        <Button size="sm" variant="outline" className="h-7 w-40" asChild>
+                      <TableCell className="w-70 flex justify-around">
+                        <Button size="sm" variant="outline" className="h-7 w-30" asChild>
                           <Link to={`/players/${p.id}`}>
                             <Eye className="mr-1.5 h-3.5 w-3.5" /> View Profile
                           </Link>
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 w-20" onClick={() => openAction(p)}>
+                          <ShieldAlert className="mr-1.5 h-3.5 w-3.5" /> Actions
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -203,6 +209,13 @@ export default function Players() {
           />
         </div>
       </Card>
+
+      <PlayerActionDialog
+        player={dialogPlayer}
+        open={dialogOpen}
+        defaultTab={dialogTab}
+        onClose={closeAction}
+      />
     </div>
   );
 }
