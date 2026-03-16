@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Ban, ExternalLink, Hammer, StickyNote } from 'lucide-react';
+import { AlertTriangle, Ban, ExternalLink, Hammer, StickyNote, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QueryService } from '@/lib/query';
 import type { ApiResponse, Player } from '@fxmanager/types';
 import { computeExpiry, formatDate, initials } from '@/lib/utils';
+import { toast } from 'sonner';
 
 // region types
 
@@ -260,15 +261,23 @@ function NoteTab({
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!form.content.trim()) return;
     setLoading(true);
+
     try {
       const res = await QueryService<ApiResponse>({
         endpoint: `/players/${playerId}/notes`,
         method: 'POST',
         body: form,
       });
-      if (res.success) onSuccess();
+
+      if (res.success) {
+        toast.success('Note saved successfully.');
+        onSuccess();
+      } else {
+        toast.error(res.error ?? 'Failed to save note.');
+      }
+    } catch {
+      toast.error('An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
@@ -285,14 +294,9 @@ function NoteTab({
           className="min-h-[200px] max-h-[200px] resize-none"
         />
       </div>
-      <Button
-        className="w-full"
-        variant="outline"
-        disabled={!form.content.trim() || loading}
-        onClick={handleSubmit}
-      >
-        <StickyNote className="h-4 w-4" />
-        {loading ? 'Saving...' : 'Save note'}
+      <Button className="w-full" variant="outline" disabled={loading} onClick={handleSubmit}>
+        {!form.content.trim() ? <Trash2 className="h-4 w-4" /> : <StickyNote className="h-4 w-4" />}
+        {loading ? 'Saving...' : !form.content.trim() ? 'Clear note' : 'Save note'}
       </Button>
     </div>
   );
