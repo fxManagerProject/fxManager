@@ -30,10 +30,7 @@ export function formatDate(date: Date | string | null | undefined): string {
   }).format(new Date(date));
 }
 
-export function computeExpiry(
-  duration: number,
-  unit: "hours" | "days" | "weeks"
-): Date | null {
+export function computeExpiry(duration: number, unit: 'hours' | 'days' | 'weeks'): Date | null {
   if (!duration || duration <= 0) return null;
   const ms = { hours: 36e5, days: 864e5, weeks: 6048e5 }[unit];
   return new Date(Date.now() + duration * ms);

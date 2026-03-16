@@ -201,5 +201,5 @@ export function AdminProfile({ adminProfile }: { adminProfile: PlayerProfile['ad
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

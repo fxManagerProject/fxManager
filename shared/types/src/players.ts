@@ -1,4 +1,4 @@
-import { adminUsers, bans, kicks, playerNotes, reports, warns } from "@fxmanager/database";
+import { adminUsers, bans, kicks, playerNotes, reports, warns } from '@fxmanager/database';
 
 export interface PlayerIdentifiers {
   license: string;

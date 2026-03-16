@@ -182,7 +182,12 @@ export default function Players() {
                             <Eye className="mr-1.5 h-3.5 w-3.5" /> View Profile
                           </Link>
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 w-20" onClick={() => openAction(p)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 w-20"
+                          onClick={() => openAction(p)}
+                        >
                           <ShieldAlert className="mr-1.5 h-3.5 w-3.5" /> Actions
                         </Button>
                       </TableCell>

@@ -25,7 +25,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/stat-card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AdminProfile, BansTab, KicksTab, NotesTab, ReportsTab, WarnsTab } from './components/tab-elements';
+import {
+  AdminProfile,
+  BansTab,
+  KicksTab,
+  NotesTab,
+  ReportsTab,
+  WarnsTab,
+} from './components/tab-elements';
 import { usePlayerAction } from '@/hooks/use-player-actions';
 import { PlayerActionDialog } from '@/components/player-actions-dialog';
 
@@ -113,7 +120,7 @@ export default function PlayerView() {
   return (
     <ScrollArea className="h-[calc(100vh-5rem)]">
       <div className="space-y-6 p-6">
-       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <Avatar className="h-16 w-16 text-lg">
             <AvatarFallback>{initials(playerData.name)}</AvatarFallback>
           </Avatar>
@@ -131,7 +138,6 @@ export default function PlayerView() {
             <p className="text-sm text-muted-foreground">Player #{playerData.id}</p>
           </div>
 
-          {/* ── Actions button ── */}
           <Button variant="outline" size="sm" onClick={() => openAction(playerData)}>
             <Gavel className="h-4 w-4" />
             Actions

@@ -1,56 +1,53 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  AlertTriangle,
-  Ban,
-  ExternalLink,
-  Hammer,
-  StickyNote,
-} from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { AlertTriangle, Ban, ExternalLink, Hammer, StickyNote } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { QueryService } from "@/lib/query";
-import type { ApiResponse, Player } from "@fxmanager/types";
-import { computeExpiry, formatDate, initials } from "@/lib/utils";
+} from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { QueryService } from '@/lib/query';
+import type { ApiResponse, Player } from '@fxmanager/types';
+import { computeExpiry, formatDate, initials } from '@/lib/utils';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// region types
 
-export type ActionTab = "warn" | "kick" | "ban" | "note";
+export type ActionTab = 'warn' | 'kick' | 'ban' | 'note';
 
 export interface PlayerActionSheetProps {
-  player: Pick<Player, "id" | "name" | "isStaff"> | null;
+  player: Pick<Player, 'id' | 'name' | 'isStaff'> | null;
   open: boolean;
   defaultTab?: ActionTab;
   onClose: () => void;
   onSuccess?: (action: ActionTab, playerId: number) => void;
 }
 
-// ─── Form state types ─────────────────────────────────────────────────────────
+interface WarnForm {
+  reason: string;
+}
+interface KickForm {
+  reason: string;
+}
+interface BanForm {
+  reason: string;
+  duration: string;
+  unit: 'hours' | 'days' | 'weeks' | 'permanent';
+}
+interface NoteForm {
+  content: string;
+}
 
-interface WarnForm  { reason: string }
-interface KickForm  { reason: string }
-interface BanForm   { reason: string; duration: string; unit: "hours" | "days" | "weeks" | "permanent" }
-interface NoteForm  { content: string }
-
-// ─── Action forms ─────────────────────────────────────────────────────────────
+// region action tabs
 
 function WarnTab({
   playerId,
@@ -59,7 +56,7 @@ function WarnTab({
   playerId: number;
   onSuccess: () => void;
 }) {
-  const [form, setForm] = useState<WarnForm>({ reason: "" });
+  const [form, setForm] = useState<WarnForm>({ reason: '' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -68,7 +65,7 @@ function WarnTab({
     try {
       const res = await QueryService<ApiResponse>({
         endpoint: `/players/${playerId}/warn`,
-        method: "POST",
+        method: 'POST',
         body: form,
       });
       if (res.success) onSuccess();
@@ -95,7 +92,7 @@ function WarnTab({
         onClick={handleSubmit}
       >
         <AlertTriangle className="h-4 w-4" />
-        {loading ? "Issuing..." : "Issue warning"}
+        {loading ? 'Issuing...' : 'Issue warning'}
       </Button>
     </div>
   );
@@ -108,7 +105,7 @@ function KickTab({
   playerId: number;
   onSuccess: () => void;
 }) {
-  const [form, setForm] = useState<KickForm>({ reason: "" });
+  const [form, setForm] = useState<KickForm>({ reason: '' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -117,7 +114,7 @@ function KickTab({
     try {
       const res = await QueryService<ApiResponse>({
         endpoint: `/players/${playerId}/kick`,
-        method: "POST",
+        method: 'POST',
         body: form,
       });
       if (res.success) onSuccess();
@@ -144,7 +141,7 @@ function KickTab({
         onClick={handleSubmit}
       >
         <Hammer className="h-4 w-4" />
-        {loading ? "Kicking..." : "Kick player"}
+        {loading ? 'Kicking...' : 'Kick player'}
       </Button>
     </div>
   );
@@ -158,13 +155,13 @@ function BanTab({
   onSuccess: () => void;
 }) {
   const [form, setForm] = useState<BanForm>({
-    reason: "",
-    duration: "",
-    unit: "permanent",
+    reason: '',
+    duration: '',
+    unit: 'permanent',
   });
   const [loading, setLoading] = useState(false);
 
-  const isPermanent = form.unit === "permanent";
+  const isPermanent = form.unit === 'permanent';
 
   const handleSubmit = async () => {
     if (!form.reason.trim()) return;
@@ -174,11 +171,11 @@ function BanTab({
         reason: form.reason,
         expiresAt: isPermanent
           ? null
-          : computeExpiry(Number(form.duration), form.unit as "hours" | "days" | "weeks"),
+          : computeExpiry(Number(form.duration), form.unit as 'hours' | 'days' | 'weeks'),
       };
       const res = await QueryService<ApiResponse>({
         endpoint: `/players/${playerId}/ban`,
-        method: "POST",
+        method: 'POST',
         body: payload,
       });
       if (res.success) onSuccess();
@@ -215,7 +212,7 @@ function BanTab({
           <Select
             value={form.unit}
             onValueChange={(v) =>
-              setForm((f) => ({ ...f, unit: v as BanForm["unit"], duration: "" }))
+              setForm((f) => ({ ...f, unit: v as BanForm['unit'], duration: '' }))
             }
           >
             <SelectTrigger>
@@ -229,12 +226,16 @@ function BanTab({
             </SelectContent>
           </Select>
         </div>
-        <p className={`text-xs text-muted-foreground ${!isPermanent && form.duration ? "opacity-100" : "opacity-0"}`}>
-          Expires:{" "}
-          {formatDate(computeExpiry(Number(form.duration), form.unit as "hours" | "days" | "weeks"))}
+        <p
+          className={`text-xs text-muted-foreground ${!isPermanent && form.duration ? 'opacity-100' : 'opacity-0'}`}
+        >
+          Expires:{' '}
+          {formatDate(
+            computeExpiry(Number(form.duration), form.unit as 'hours' | 'days' | 'weeks'),
+          )}
         </p>
       </div>
-      
+
       <Button
         className="w-full"
         variant="destructive"
@@ -242,7 +243,7 @@ function BanTab({
         onClick={handleSubmit}
       >
         <Ban className="h-4 w-4" />
-        {loading ? "Banning..." : isPermanent ? "Issue permanent ban" : "Issue ban"}
+        {loading ? 'Banning...' : isPermanent ? 'Issue permanent ban' : 'Issue ban'}
       </Button>
     </div>
   );
@@ -255,7 +256,7 @@ function NoteTab({
   playerId: number;
   onSuccess: () => void;
 }) {
-  const [form, setForm] = useState<NoteForm>({ content: "" });
+  const [form, setForm] = useState<NoteForm>({ content: '' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -264,7 +265,7 @@ function NoteTab({
     try {
       const res = await QueryService<ApiResponse>({
         endpoint: `/players/${playerId}/notes`,
-        method: "POST",
+        method: 'POST',
         body: form,
       });
       if (res.success) onSuccess();
@@ -291,18 +292,18 @@ function NoteTab({
         onClick={handleSubmit}
       >
         <StickyNote className="h-4 w-4" />
-        {loading ? "Saving..." : "Save note"}
+        {loading ? 'Saving...' : 'Save note'}
       </Button>
     </div>
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// region main component
 
 export function PlayerActionDialog({
   player,
   open,
-  defaultTab = "warn",
+  defaultTab = 'warn',
   onClose,
   onSuccess,
 }: PlayerActionSheetProps) {
@@ -334,9 +335,7 @@ export function PlayerActionDialog({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Player #{player.id}
-              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">Player #{player.id}</p>
             </div>
           </div>
         </DialogHeader>
@@ -347,15 +346,12 @@ export function PlayerActionDialog({
           className="flex flex-col flex-1 min-h-0"
         >
           <TabsList className="w-full justify-start flex-wrap rounded-none pb-0" variant="line">
-            {(["warn", "kick", "ban", "note"] as const).map((value) => {
+            {(['warn', 'kick', 'ban', 'note'] as const).map((value) => {
               const icons = { warn: AlertTriangle, kick: Hammer, ban: Ban, note: StickyNote };
-              const labels = { warn: "Warn", kick: "Kick", ban: "Ban", note: "Note" };
+              const labels = { warn: 'Warn', kick: 'Kick', ban: 'Ban', note: 'Note' };
               const Icon = icons[value];
               return (
-                <TabsTrigger
-                  key={value}
-                  value={value}
-                >
+                <TabsTrigger key={value} value={value}>
                   <Icon className="h-3.5 w-3.5" />
                   {labels[value]}
                 </TabsTrigger>
@@ -365,29 +361,33 @@ export function PlayerActionDialog({
 
           <div className="flex-1 overflow-y-auto min-h-0">
             <TabsContent value="warn" className="p-4 mt-0 h-full">
-              <WarnTab playerId={player.id} onSuccess={() => handleSuccess("warn")} />
+              <WarnTab playerId={player.id} onSuccess={() => handleSuccess('warn')} />
             </TabsContent>
             <TabsContent value="kick" className="p-4 mt-0 h-full">
-              <KickTab playerId={player.id} onSuccess={() => handleSuccess("kick")} />
+              <KickTab playerId={player.id} onSuccess={() => handleSuccess('kick')} />
             </TabsContent>
             <TabsContent value="ban" className="p-4 mt-0 h-full">
-              <BanTab playerId={player.id} onSuccess={() => handleSuccess("ban")} />
+              <BanTab playerId={player.id} onSuccess={() => handleSuccess('ban')} />
             </TabsContent>
             <TabsContent value="note" className="p-4 mt-0 h-full">
-              <NoteTab playerId={player.id} onSuccess={() => handleSuccess("note")} />
+              <NoteTab playerId={player.id} onSuccess={() => handleSuccess('note')} />
             </TabsContent>
           </div>
         </Tabs>
 
         <div className="px-4 py-3 border-t">
-          <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs text-muted-foreground"
+            asChild
+          >
             <Link to={`/players/${player.id}`}>
               <ExternalLink className="h-3.5 w-3.5" />
               View full profile
             </Link>
           </Button>
         </div>
-
       </DialogContent>
     </Dialog>
   );

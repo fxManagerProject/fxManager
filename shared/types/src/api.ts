@@ -1,10 +1,12 @@
-export type ApiResponse<T = unknown> = {
-  success: true;
-  data: T;
-} | {
-  success: false;
-  error: string;
-}
+export type ApiResponse<T = unknown> =
+  | {
+      success: true;
+      data: T;
+    }
+  | {
+      success: false;
+      error: string;
+    };
 
 export interface PaginatedResponse<T> {
   items: T[];
