@@ -38,4 +38,28 @@ export const playerRoutes = new Elysia({ prefix: '/players' })
     if (!profile) return { success: false, error: `Player id ${playerId} does not exist.` };
 
     return { success: true, data: profile };
-  });
+  })
+
+  .post(
+    '/:playerId/notes',
+    async ({ params, body, admin }): Promise<ApiResponse> => {
+      const playerId = parseInt(params.playerId);
+
+      try {
+        await repo.players.updatePlayerNotes(playerId, admin.id, body.content);
+
+        return { success: true, data: null };
+      } catch (err) {
+        if ((err as Error).message === 'content_too_short') {
+          return { success: false, error: 'Content is too short' };
+        }
+        console.error('An error occured when updating a player notes', { playerId, admin, body });
+        return { success: false, error: 'An unkown error occured' };
+      }
+    },
+    {
+      body: t.Object({
+        content: t.String(),
+      }),
+    },
+  );

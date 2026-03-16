@@ -263,5 +263,32 @@ export function createPlayersRepository(db: DB) {
         pageSize,
       };
     },
+
+    async updatePlayerNotes(playerId: number, adminId: number, content: string) {
+      const playerNote = await db
+        .select({ id: playerNotes.id })
+        .from(playerNotes)
+        .where(and(eq(playerNotes.playerId, playerId), eq(playerNotes.issuer, adminId)))
+        .get();
+
+      if (playerNote) {
+        if (content.trim()) {
+          await db
+            .update(playerNotes)
+            .set({ content })
+            .where(and(eq(playerNotes.playerId, playerId), eq(playerNotes.issuer, adminId)));
+        } else {
+          await db
+            .delete(playerNotes)
+            .where(and(eq(playerNotes.playerId, playerId), eq(playerNotes.issuer, adminId)));
+        }
+      } else if (content.length > 3) {
+        await db.insert(playerNotes).values({ playerId, issuer: adminId, content });
+      } else {
+        throw new Error('content_too_short');
+      }
+
+      return true;
+    },
   };
 }
