@@ -265,6 +265,8 @@ export function createPlayersRepository(db: DB) {
     },
 
     async updatePlayerNotes(playerId: number, adminId: number, content: string) {
+      const now = new Date();
+
       const playerNote = db
         .select({ id: playerNotes.id })
         .from(playerNotes)
@@ -275,7 +277,7 @@ export function createPlayersRepository(db: DB) {
         if (content.trim()) {
           await db
             .update(playerNotes)
-            .set({ content })
+            .set({ content, issuedAt: now })
             .where(and(eq(playerNotes.playerId, playerId), eq(playerNotes.issuer, adminId)));
         } else {
           await db
@@ -283,7 +285,7 @@ export function createPlayersRepository(db: DB) {
             .where(and(eq(playerNotes.playerId, playerId), eq(playerNotes.issuer, adminId)));
         }
       } else if (content.length > 3) {
-        await db.insert(playerNotes).values({ playerId, issuer: adminId, content });
+        await db.insert(playerNotes).values({ playerId, content, issuer: adminId, issuedAt: now });
       } else {
         throw new Error('content_too_short');
       }
@@ -314,9 +316,7 @@ export function createPlayersRepository(db: DB) {
         if (expiresAt !== null && activeBan.expiresAt >= expiresAt) return false;
 
         // shorten the active one, only have 1 active ban at a time
-        await db.update(bans)
-          .set({ expiresAt: now })
-          .where(eq(bans.id, activeBan.id));
+        await db.update(bans).set({ expiresAt: now }).where(eq(bans.id, activeBan.id));
       }
 
       await db.insert(bans).values({
