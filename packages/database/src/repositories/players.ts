@@ -337,6 +337,15 @@ export function createPlayersRepository(db: DB) {
         issuer: adminId,
         issuedAt: new Date(),
       });
-    }
+    },
+
+    async addWarn(playerId: number, reason: string, adminId: number) {
+      await db.insert(warns).values({
+        playerId,
+        reason,
+        issuer: adminId,
+        issuedAt: new Date(),
+      });
+    },
   };
 }
