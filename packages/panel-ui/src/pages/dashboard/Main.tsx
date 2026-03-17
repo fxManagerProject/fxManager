@@ -1,4 +1,13 @@
-import { Activity, Clock, Hash, Play, RefreshCw, RotateCcw, Square } from 'lucide-react';
+import {
+  Activity,
+  Clock,
+  Hash,
+  LayoutDashboard,
+  Play,
+  RefreshCw,
+  RotateCcw,
+  Square,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +15,7 @@ import { HandleServerAction } from '@/lib/query';
 import { formatUptime } from '@/lib/utils';
 import { STATUS_VARIANT } from '@/static/server-state';
 import { useServerStateSocket } from '@/hooks/use-ws-channels';
+import { PageHeader } from '@/components/page-header';
 
 export default function Dashboard() {
   const {
@@ -32,9 +42,11 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">Server overview and controls</p>
-      </div>
+      <PageHeader
+        Icon={LayoutDashboard}
+        title="Dashboard"
+        description="Server overview and controls"
+      />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map(({ label, value, icon: Icon }) => (

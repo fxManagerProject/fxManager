@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useConsoleSocket, useServerStateSocket } from '@/hooks/use-ws-channels';
 import type { ConsoleOutputEvent } from '@fxmanager/types';
+import { PageHeader } from '@/components/page-header';
 
 function LogLine({ event }: { event: ConsoleOutputEvent }) {
   return (
@@ -63,10 +64,7 @@ export default function Console() {
 
   return (
     <div className="flex h-[calc(100vh-5rem)] flex-col gap-4">
-      <div className="flex flex-none items-center gap-2">
-        <Terminal className="h-5 w-5 text-primary" />
-        <h1 className="text-2xl font-bold">Console</h1>
-      </div>
+      <PageHeader Icon={Terminal} title="Console" />
 
       <Card className="flex flex-1 flex-col min-h-0 pb-0 overflow-hidden">
         <ScrollArea className="flex-1 min-h-0" viewportRef={viewportRef}>

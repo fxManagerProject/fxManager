@@ -29,6 +29,7 @@ import { Link } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePlayerAction } from '@/hooks/use-player-actions';
 import { PlayerActionDialog } from '@/components/player-actions-dialog';
+import { PageHeader } from '@/components/page-header';
 
 type SortBy = 'lastSeen' | 'firstSeen' | 'playtime';
 type SortOrder = 'asc' | 'desc';
@@ -89,12 +90,7 @@ export default function Players() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
-          <h1 className="text-2xl font-bold">Players</h1>
-        </div>
-      </div>
+      <PageHeader Icon={Users} title="Players" />
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
