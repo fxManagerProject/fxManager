@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { Player } from '@fxmanager/types';
-import type { ActionTab } from '@/components/player-actions';
+import type { ActionTab } from '@/components/player-actions-dialog';
 
 type ActionDialogPlayer = Pick<Player, 'id' | 'name' | 'isStaff'>;
 
@@ -13,18 +13,18 @@ interface UsePlayerActionReturn {
 }
 
 export function usePlayerAction(): UsePlayerActionReturn {
-  const [dialogOpen, setSheetOpen] = useState(false);
-  const [dialogPlayer, setSheetPlayer] = useState<ActionDialogPlayer | null>(null);
-  const [dialogTab, setSheetTab] = useState<ActionTab>('warn');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogPlayer, setDialogPlayer] = useState<ActionDialogPlayer | null>(null);
+  const [dialogTab, setDialogTab] = useState<ActionTab>('warn');
 
   const openAction = useCallback((player: ActionDialogPlayer, tab: ActionTab = 'warn') => {
-    setSheetPlayer(player);
-    setSheetTab(tab);
-    setSheetOpen(true);
+    setDialogPlayer(player);
+    setDialogTab(tab);
+    setDialogOpen(true);
   }, []);
 
   const closeAction = useCallback(() => {
-    setSheetOpen(false);
+    setDialogOpen(false);
   }, []);
 
   return { dialogOpen, dialogPlayer, dialogTab, openAction, closeAction };
