@@ -290,5 +290,33 @@ export function createPlayersRepository(db: DB) {
 
       return true;
     },
+
+    async addBan(playerId: number, expiresAt: Date | null, reason: string, adminUsername: string) {
+      const now = new Date();
+
+      const activeBan = db
+        .select({ id: bans.id, expiresAt: bans.expiresAt })
+        .from(bans)
+        .where(
+          and(
+            eq(bans.playerId, playerId),
+            isNull(bans.revokedAt),
+            or(isNull(bans.expiresAt), gt(bans.expiresAt, now)),
+          ),
+        )
+        .get();
+
+      if (activeBan && activeBan.expiresAt === null) return false;
+
+      await db.insert(bans).values({
+        playerId,
+        expiresAt,
+        bannedBy: adminUsername,
+        reason,
+        createdAt: now,
+      });
+
+      return true;
+    },
   };
 }
