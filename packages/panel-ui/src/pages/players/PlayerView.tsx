@@ -5,7 +5,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertTriangle,
@@ -127,41 +126,35 @@ export default function PlayerView() {
 
   return (
     <div>
-      <Button variant="outline" onClick={() => navigate(-1)}>
-        <ArrowLeft /> Back to player list
-      </Button>
-      <ScrollArea className="h-[calc(100vh-5rem)]">
-        <div className="space-y-6 p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <Avatar className="h-16 w-16 text-lg">
-              <AvatarFallback>{initials(playerData.name)}</AvatarFallback>
-            </Avatar>
+      <div className="flex items-center gap-3 my-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-bold truncate">{playerData.name}</h1>
-                {playerData.isStaff && (
-                  <Badge className="gap-1">
-                    <ShieldCheck className="h-3 w-3" />
-                    Staff
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">Player #{playerData.id}</p>
-            </div>
+        <Avatar className="h-12 w-12 text-base shrink-0">
+          <AvatarFallback>{initials(playerData.name)}</AvatarFallback>
+        </Avatar>
 
-            <Button
-              variant="outline"
-              size="icon-lg"
-              title="Open Actions"
-              onClick={() => openAction(playerData)}
-            >
-              <Gavel className="h-6 w-6" />
-            </Button>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-lg font-bold truncate">{playerData.name}</h1>
+            {playerData.isStaff && (
+              <Badge variant="secondary" className="gap-1">
+                <ShieldCheck className="h-3 w-3" />
+                Staff
+              </Badge>
+            )}
           </div>
+          <p className="text-xs text-muted-foreground">Player #{playerData.id}</p>
+        </div>
 
-          <Separator />
+        <Button variant="outline" size="icon" title="Open Actions" onClick={() => openAction(playerData)}>
+          <Gavel className="h-4 w-4" />
+        </Button>
+      </div>
 
+      <ScrollArea className="h-[calc(100vh-7rem)]">
+        <div className="space-y-6 pt-2 pb-0 pl-0 pr-4">
           <div className="flex flex-wrap gap-3">
             <StatCard icon={Clock} label="Playtime" value={formatDuration(playerData.playtime)} />
             <StatCard icon={User} label="First Seen" value={formatDate(playerData.firstSeen)} />
