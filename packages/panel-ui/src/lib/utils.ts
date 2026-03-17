@@ -1,4 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
+import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -44,3 +46,14 @@ export function initials(name: string): string {
     .slice(0, 2)
     .toUpperCase();
 }
+
+export async function copyToClipboard(value: string, confirmation?: ReactNode) {
+  try {
+    await navigator.clipboard.writeText(value);
+    
+    toast.info('Copied to clipboard', confirmation ? { description: confirmation } : {})
+  } catch (err) {
+    console.error("Failed to copy!", err);
+    toast.error("Failed to copy to clipboard.", { richColors: true });
+  }
+};
