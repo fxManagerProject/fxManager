@@ -121,7 +121,7 @@ export function createPlayersRepository(db: DB) {
       });
     },
 
-    checkBanned(identifiers: PlayerIdentifiers): Ban | null {
+    checkBanned(identifiers: PlayerIdentifiers): Omit<Ban, 'revokedAt'> | null {
       const now = new Date();
 
       const identifierValues = Object.values(identifiers).filter(Boolean);
@@ -265,7 +265,7 @@ export function createPlayersRepository(db: DB) {
     },
 
     async updatePlayerNotes(playerId: number, adminId: number, content: string) {
-      const playerNote = await db
+      const playerNote = db
         .select({ id: playerNotes.id })
         .from(playerNotes)
         .where(and(eq(playerNotes.playerId, playerId), eq(playerNotes.issuer, adminId)))
