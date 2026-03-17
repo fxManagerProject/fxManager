@@ -99,4 +99,32 @@ export const playerRoutes = new Elysia({ prefix: '/players' })
         expiresAt: t.Nullable(t.Date()),
       }),
     },
+  )
+
+  .post(
+    '/:playerId/kick',
+    async ({ params, body, admin }): Promise<ApiResponse> => {
+      const playerId = parseInt(params.playerId);
+
+      try {
+        await repo.players.addKick(
+          playerId,
+          body.reason,
+          admin.id,
+        );
+
+        return {
+          success: true,
+          data: null,
+        };
+      } catch (err) {
+        console.error('An error occured when kicking a player', { playerId, admin, body });
+        return { success: false, error: 'An unkown error occured' };
+      }
+    },
+    {
+      body: t.Object({
+        reason: t.String({ minLength: 10 }),
+      }),
+    },
   );
