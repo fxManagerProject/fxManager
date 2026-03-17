@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    class="lucide lucide-server" aria-hidden="true">
+    <rect width="44" height="44" x="2" y="2" fill="#bb4d00" stroke="none" rx="8"></rect>
+    <rect width="28" height="10" x="10" y="11" rx="2" ry="2" stroke="white"></rect>
+    <rect width="28" height="10" x="10" y="27" rx="2" ry="2" stroke="white"></rect>
+    <line x1="14" x2="14.01" y1="16" y2="16" stroke="white"></line>
+    <line x1="14" x2="14.01" y1="32" y2="32" stroke="white"></line>
+</svg>
