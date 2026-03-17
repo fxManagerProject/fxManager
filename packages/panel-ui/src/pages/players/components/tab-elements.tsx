@@ -158,15 +158,13 @@ export function NotesTab({ notes }: { notes: PlayerProfile['notes'] }) {
   return (
     <div className="space-y-3">
       {notes.map((note) => (
-        <Card key={note.id}>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-sm">{note.content}</p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Added by <span className="font-medium">{note.issuer}</span> ·{' '}
-              {formatDate(note.issuedAt)}
-            </p>
-          </CardContent>
-        </Card>
+        <div key={note.id} className="p-4">
+          <p className="text-sm">{note.content}</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Added by <span className="font-medium">{note.issuer}</span> ·{' '}
+            {formatDate(note.issuedAt)}
+          </p>
+        </div>
       ))}
     </div>
   );
