@@ -50,10 +50,10 @@ export function initials(name: string): string {
 export async function copyToClipboard(value: string, confirmation?: ReactNode) {
   try {
     await navigator.clipboard.writeText(value);
-    
-    toast.info('Copied to clipboard', confirmation ? { description: confirmation } : {})
+
+    toast.info('Copied to clipboard', confirmation ? { description: confirmation } : {});
   } catch (err) {
-    console.error("Failed to copy!", err);
-    toast.error("Failed to copy to clipboard.", { richColors: true });
+    console.error('Failed to copy!', err);
+    toast.error('Failed to copy to clipboard.', { richColors: true });
   }
-};
+}
