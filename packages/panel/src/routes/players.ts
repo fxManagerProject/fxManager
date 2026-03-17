@@ -62,4 +62,41 @@ export const playerRoutes = new Elysia({ prefix: '/players' })
         content: t.String(),
       }),
     },
+  )
+
+  .post(
+    '/:playerId/ban',
+    async ({ params, body, admin }): Promise<ApiResponse> => {
+      const playerId = parseInt(params.playerId);
+
+      try {
+        const result = await repo.players.addBan(
+          playerId,
+          body.expiresAt,
+          body.reason,
+          admin.username,
+        );
+
+        if (result) {
+          return {
+            success: true,
+            data: null,
+          };
+        } else {
+          return {
+            success: false,
+            error: 'Player is already banned',
+          };
+        }
+      } catch (err) {
+        console.error('An error occured when adding a ban to player', { playerId, admin, body });
+        return { success: false, error: 'An unkown error occured' };
+      }
+    },
+    {
+      body: t.Object({
+        reason: t.String({ minLength: 10 }),
+        expiresAt: t.Nullable(t.Date()),
+      }),
+    },
   );
