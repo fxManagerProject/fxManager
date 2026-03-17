@@ -12,7 +12,7 @@
 		"lint": "biome lint --write"
 	},
 	"devDependencies": {
-        "@fxmanager/types": "workspace:*",
+		"@fxmanager/types": "workspace:*",
 		"@citizenfx/client": "latest",
 		"@citizenfx/server": "latest",
 		"@jgoz/esbuild-plugin-typecheck": "^4.0.3",
@@ -26,9 +26,10 @@
 		"vite": "^5.4.14"
 	},
 	"dependencies": {
-		"@nativewrappers/fivem": "latest",
 		"@communityox/ox_lib": "latest",
+		"@nativewrappers/fivem": "latest",
 		"react": "^18.3.1",
-		"react-dom": "^18.3.1"
+		"react-dom": "^18.3.1",
+		"zod": "^4.3.6"
 	}
 }
