@@ -17,6 +17,12 @@ import { STATUS_VARIANT } from '@/static/server-state';
 import { useServerStateSocket } from '@/hooks/use-ws-channels';
 import { PageHeader } from '@/components/page-header';
 
+/* ToDo:
+  * Consider adding wider details on process health
+    * Displayed as graphs
+  * Display connected staff counter  
+*/
+
 export default function Dashboard() {
   const {
     state: { serverState },

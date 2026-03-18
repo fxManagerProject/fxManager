@@ -8,6 +8,10 @@ import type {
 } from '@fxmanager/types';
 import { usePanelWS } from './use-websocket';
 
+/* ToDo:
+  * Consider a refactor, notably to store data client side (i.e. online player list / console output)
+*/
+
 // region server status
 
 interface ServerChannelState {

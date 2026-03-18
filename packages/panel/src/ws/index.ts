@@ -3,6 +3,10 @@ import type { ChannelName, IProcessManager, WSEnvelope } from '@fxmanager/types'
 import type { ServerState, ConsoleOutputEvent } from '@fxmanager/types';
 import { sessionAuth } from '../middleware/session-auth';
 
+/* ToDo:
+  * Consider a refactor, notably to store data client side (i.e. online player list / console output)
+*/
+
 type SocketData = { _subs: Map<ChannelName, () => void> };
 
 function envelope(channel: ChannelName, type: string, payload: unknown): string {
