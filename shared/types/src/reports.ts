@@ -1,10 +1,12 @@
 // consider altering to inferred types ?
 
+export type ReportStatus = 'open' | 'inprogress' | 'resolved'
+
 export interface ReportRecap {
   id: number;
   playerId: number;
   subject: string;
-  status: 'open' | 'inprogress' | 'resolved';
+  status: ReportStatus;
   openedAt: Date;
   lastAction: Date;
 }
