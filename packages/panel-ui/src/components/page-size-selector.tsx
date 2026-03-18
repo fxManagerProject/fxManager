@@ -1,10 +1,9 @@
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import type { Dispatch, SetStateAction } from 'react';
 
 interface PageSizeSelectorProps {
   pageSize: number;
-  setPageSize: Dispatch<SetStateAction<number>>;
+  setPageSize: (size: number) => void;
   label?: string;
 }
 

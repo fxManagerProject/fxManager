@@ -1,13 +1,12 @@
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
-import type { Dispatch, SetStateAction } from 'react';
 
 interface PageSelectorProps {
   total: number;
   pageSize: number;
   page: number;
   loading: boolean;
-  setPage: Dispatch<SetStateAction<number>>;
+  setPage: (page: number) => void;
 }
 
 export default function PageSelector({
@@ -24,7 +23,7 @@ export default function PageSelector({
       <Button
         variant="outline"
         size="icon"
-        onClick={() => setPage((p) => Math.max(1, p - 1))}
+        onClick={() => setPage(page - 1)}
         disabled={page === 1 || loading}
       >
         <ArrowLeft className="h-4 w-4" />
@@ -37,7 +36,7 @@ export default function PageSelector({
       <Button
         variant="outline"
         size="icon"
-        onClick={() => setPage((p) => p + 1)}
+        onClick={() => setPage(page + 1)}
         disabled={page >= totalPages || loading}
       >
         <ArrowRight className="h-4 w-4" />
