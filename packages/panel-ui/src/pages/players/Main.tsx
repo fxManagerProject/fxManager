@@ -25,7 +25,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { formatDuration } from '@/lib/utils';
 import PageSizeSelector from '@/components/page-size-selector';
 import PageSelector from '@/components/page-selector';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePlayerAction } from '@/hooks/use-player-actions';
 import { PlayerActionDialog } from '@/components/player-actions-dialog';
@@ -35,18 +35,71 @@ type SortBy = 'lastSeen' | 'firstSeen' | 'playtime';
 type SortOrder = 'asc' | 'desc';
 
 export default function Players() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [players, setPlayers] = useState<Omit<Player, 'identifiers'>[]>([]);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
-  const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<SortBy>('lastSeen');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   const { dialogOpen, dialogPlayer, dialogTab, openAction, closeAction } = usePlayerAction();
+  const [players, setPlayers] = useState<Omit<Player, 'identifiers'>[]>([]);
+  const [total, setTotal] = useState(0);
+
+  const search = searchParams.get('search') ?? '';
+  const sortBy = (searchParams.get('sortBy') as SortBy) ?? 'lastSeen';
+  const sortOrder = (searchParams.get('sortOrder') as SortOrder) ?? 'desc';
+  const page = Number(searchParams.get('page') ?? 1);
+  const pageSize = Number(searchParams.get('pageSize') ?? 5);
+
   const debouncedSearch = useDebounce(search, 300);
   const loading = players === null;
+
+  // helpers functions to update individual params
+  const setSearch = (v: string) =>
+    setSearchParams(
+      (p) => {
+        if (v) {
+          p.set('search', v);
+        } else {
+          p.delete('search');
+        }
+        p.set('page', '1');
+        return p;
+      },
+      { replace: true },
+    );
+  const setSortBy = (v: SortBy) =>
+    setSearchParams(
+      (p) => {
+        p.set('sortBy', v);
+        p.set('page', '1');
+        return p;
+      },
+      { replace: true },
+    );
+  const setSortOrder = (v: SortOrder) =>
+    setSearchParams(
+      (p) => {
+        p.set('sortOrder', v);
+        return p;
+      },
+      { replace: true },
+    );
+  const setPage = (v: number) =>
+    setSearchParams(
+      (p) => {
+        p.set('page', v.toString());
+        return p;
+      },
+      { replace: true },
+    );
+  const setPageSize = (v: number) =>
+    setSearchParams(
+      (p) => {
+        p.set('pageSize', v.toString());
+        p.set('page', '1');
+        return p;
+      },
+      { replace: true },
+    );
+  const toggleSortOrder = () => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
 
   useEffect(() => {
     let cancelled = false;
@@ -59,11 +112,6 @@ export default function Players() {
     });
 
     if (debouncedSearch) params.set('search', debouncedSearch);
-
-    /* ToDo:
-     * Consider storing params in localstorage so the user coming back has the same settings
-     * Useful if looking through profiles to avoid reiterating a search over and over
-     */
 
     QueryService<PaginatedResponse<Omit<Player, 'identifiers'>>>({
       endpoint: `/players?${params.toString()}`,
@@ -81,13 +129,6 @@ export default function Players() {
       cancelled = true;
     };
   }, [debouncedSearch, sortBy, sortOrder, page, pageSize]);
-
-  useEffect(() => {
-    const updatePage = () => setPage(1);
-    updatePage();
-  }, [debouncedSearch, sortBy, sortOrder]);
-
-  const toggleSortOrder = () => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
 
   return (
     <div className="space-y-6">
