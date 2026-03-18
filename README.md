@@ -3,6 +3,10 @@
 A self-contained, cross-platform admin panel for FiveM & RedM servers.  
 Single binary deployment - no runtime dependencies required on the target machine.
 
+> [!WARNING]
+> This project is still in intensive development, it is **not** to be considered stable until a `v1.0.0+` release.
+> If this repository is public, it's for transparency, feedback and open source contributions to help it achieve this milestone.
+
 ---
 
 ## Stack
