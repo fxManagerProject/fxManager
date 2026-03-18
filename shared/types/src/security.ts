@@ -1,3 +1,4 @@
+// acts like an enum
 export const UserPermissions = {
   NONE: 0,
   KICK: 1 << 0, // 1
@@ -13,6 +14,11 @@ export const UserPermissions = {
   VIEW_REPORT: 1 << 8, // 256
   SEND_REPORT: 1 << 9, // 512
   CLOSE_REPORT: 1 << 10, // 1024
+  
+  SERVER_ACTIONS: 1 << 11, // 2048 - start/stop/restart
+  CONSOLE_ACCESS: 1 << 12, // 4096 - view & execute console commands
+
+  SETTINGS_ACCESS: 1 << 13, // 8192 - access & edit settings
 
   MASTER: 1 << 30, // (1,073,741,824)
 } as const;
