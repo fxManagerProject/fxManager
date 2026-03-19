@@ -227,7 +227,6 @@ export function createPlayersRepository(db: DB) {
           .leftJoin(playerIdentifiers, eq(playerIdentifiers.playerId, players.id))
           .where(filters)
           .groupBy(players.id);
-        console.log('added groupby on players.id')
       }
 
       const totalResult = countQuery.get();
