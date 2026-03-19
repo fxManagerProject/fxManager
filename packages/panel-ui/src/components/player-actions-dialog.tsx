@@ -17,9 +17,18 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QueryService } from '@/lib/query';
-import type { ApiResponse, BanForm, KickForm, NoteForm, Player, WarnForm } from '@fxmanager/types';
+import {
+  UserPermissions,
+  type ApiResponse,
+  type BanForm,
+  type KickForm,
+  type NoteForm,
+  type Player,
+  type WarnForm,
+} from '@fxmanager/types';
 import { computeExpiry, formatDate, initials } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
 
 // region types
 
@@ -42,6 +51,7 @@ function WarnTab({
   playerId: number;
   onSuccess: () => void;
 }) {
+  const { hasPermission } = useAuth();
   const [form, setForm] = useState<WarnForm>({ reason: '' });
   const [loading, setLoading] = useState(false);
 
@@ -50,6 +60,11 @@ function WarnTab({
 
     if (form.reason.trim().length < 10) {
       toast.error('Reason must be at least 10 characters.');
+      return;
+    }
+
+    if (!hasPermission(UserPermissions.WARN)) {
+      toast.error('You are not authorized to issue warns.');
       return;
     }
 
@@ -104,6 +119,7 @@ function KickTab({
   playerId: number;
   onSuccess: () => void;
 }) {
+  const { hasPermission } = useAuth();
   const [form, setForm] = useState<KickForm>({ reason: '' });
   const [loading, setLoading] = useState(false);
 
@@ -112,6 +128,11 @@ function KickTab({
 
     if (form.reason.trim().length < 10) {
       toast.error('Reason must be at least 10 characters.');
+      return;
+    }
+
+    if (!hasPermission(UserPermissions.KICK)) {
+      toast.error('You are not authorized to issue kicks.');
       return;
     }
 
@@ -166,6 +187,7 @@ function BanTab({
   playerId: number;
   onSuccess: () => void;
 }) {
+  const { hasPermission } = useAuth();
   const [form, setForm] = useState<BanForm>({
     reason: '',
     duration: '',
@@ -187,6 +209,11 @@ function BanTab({
 
     if (!isPermanent && !form.duration) {
       toast.error('Please specify a duration or set to permanent.');
+      return;
+    }
+
+    if (!hasPermission(UserPermissions.BAN)) {
+      toast.error('You are not authorized to issue bans.');
       return;
     }
 
@@ -350,6 +377,7 @@ export function PlayerActionDialog({
   onClose,
   onSuccess,
 }: PlayerActionDialogProps) {
+  const { hasPermission } = useAuth();
   const [tab, setTab] = useState<ActionTab>(defaultTab);
 
   useEffect(() => {
@@ -393,17 +421,29 @@ export function PlayerActionDialog({
           className="flex flex-col flex-1 min-h-0"
         >
           <TabsList className="w-full justify-start flex-wrap rounded-none pb-0" variant="line">
-            {(['ban', 'kick', 'warn', 'note'] as const).map((value) => {
-              const icons = { warn: AlertTriangle, kick: Hammer, ban: Ban, note: StickyNote };
-              const labels = { warn: 'Warn', kick: 'Kick', ban: 'Ban', note: 'Note' };
-              const Icon = icons[value];
-              return (
-                <TabsTrigger key={value} value={value}>
-                  <Icon className="h-3.5 w-3.5" />
-                  {labels[value]}
-                </TabsTrigger>
-              );
-            })}
+            {(['ban', 'kick', 'warn', 'note'] as const)
+              .filter((value) => {
+                const permissionMap: Record<string, number> = {
+                  ban: UserPermissions.BAN,
+                  kick: UserPermissions.KICK,
+                  warn: UserPermissions.WARN,
+                  note: UserPermissions.NONE,
+                };
+
+                return hasPermission(permissionMap[value]);
+              })
+              .map((value) => {
+                const icons = { warn: AlertTriangle, kick: Hammer, ban: Ban, note: StickyNote };
+                const labels = { warn: 'Warn', kick: 'Kick', ban: 'Ban', note: 'Note' };
+                const Icon = icons[value];
+
+                return (
+                  <TabsTrigger key={value} value={value}>
+                    <Icon className="h-3.5 w-3.5" />
+                    {labels[value]}
+                  </TabsTrigger>
+                );
+              })}
           </TabsList>
 
           <div className="flex-1 overflow-y-auto min-h-0">
