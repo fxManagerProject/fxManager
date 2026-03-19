@@ -8,6 +8,7 @@ import { wsRoutes } from './ws';
 import { isDev } from '../common/utils';
 import { authRoutes, playerRoutes, serverRoutes } from './routes/panel';
 import { playerApiRoutes } from './routes/api';
+import { resourceAuth } from './middleware/auth';
 
 function resolvePublicDir(): string {
   return join(dirname(process.execPath), 'public');
@@ -25,13 +26,18 @@ export function startPanel({ pm, gm, port = 4000 }: PanelStartParams) {
     .get('/api/health', () => ({ ok: true, ts: Date.now() }))
 
     // apî routes
-    .use(playerApiRoutes(gm))
+    .group('/internal', app => app
+      .use(resourceAuth)
+      .use(playerApiRoutes(gm))
+    )
 
     // panel routes
-    .use(serverRoutes(pm))
-    .use(playerRoutes(gm))
-    .use(authRoutes)
-    .use(wsRoutes(pm));
+    .group('/api', app => app
+      .use(serverRoutes(pm))
+      .use(playerRoutes(gm))
+      .use(authRoutes)
+      .use(wsRoutes(pm))
+    )
 
   if (isDev) {
     console.log('[panel] Dev mode — Vite client on http://localhost:5173');

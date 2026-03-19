@@ -10,10 +10,7 @@ const playerIdentifiers = t.Object({
 });
 
 export const playerApiRoutes = (gm: IGameManager) =>
-  new Elysia({ prefix: '/api/players' })
-    .use(resourceAuth)
-
-    .get('/', () => ({ success: true }))
+  new Elysia({ prefix: '/players' })
 
     .post(
       '/deferrals',
