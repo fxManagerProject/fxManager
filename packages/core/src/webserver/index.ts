@@ -21,23 +21,24 @@ interface PanelStartParams {
 }
 
 export function startPanel({ pm, gm, port = 4000 }: PanelStartParams) {
+  // biome-ignore format: maintain route grouping layout
   const app = new Elysia()
     .use(cors())
     .get('/api/health', () => ({ ok: true, ts: Date.now() }))
-
     // apî routes
-    .group('/internal', app => app
-      .use(resourceAuth)
-      .use(playerApiRoutes(gm))
+    .group('/internal', (app) => 
+      app
+        .use(resourceAuth)
+        .use(playerApiRoutes(gm))
     )
-
     // panel routes
-    .group('/api', app => app
-      .use(serverRoutes(pm))
-      .use(playerRoutes(gm))
-      .use(authRoutes)
-      .use(wsRoutes(pm))
-    )
+    .group('/api', (app) =>
+      app
+        .use(serverRoutes(pm))
+        .use(playerRoutes(gm))
+        .use(authRoutes)
+        .use(wsRoutes(pm)),
+    );
 
   if (isDev) {
     console.log('[panel] Dev mode — Vite client on http://localhost:5173');
