@@ -1,5 +1,6 @@
 import type { ElementType } from 'react';
 import type { Settings } from './settings';
+import type { UserPermissions } from '@fxmanager/types';
 
 export interface AuthUser {
   id: number;
@@ -14,6 +15,7 @@ export interface AuthContextValue {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setup: (username: string, password: string) => Promise<void>;
+  hasPermission: (permissions: UserPermissions) => boolean;
 }
 
 export interface ProtectedRouteProps {

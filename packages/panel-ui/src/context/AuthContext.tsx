@@ -2,7 +2,8 @@ import { AuthContext } from '@/hooks/use-auth';
 import { QueryService } from '@/lib/query';
 import type { AuthUser } from '@/types/auth';
 import type { Settings } from '@/types/settings';
-import type { ApiError, ApiResponse } from '@fxmanager/types';
+import type { ApiError, ApiResponse, UserPermissions } from '@fxmanager/types';
+import { PermissionManager } from '@fxmanager/utils';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -85,8 +86,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [navigate, settings],
   );
 
+  const hasPermission = useCallback(
+    (permission: UserPermissions) => {
+      if (!user || typeof user.permissions !== 'number') {
+        return false;
+      }
+
+      return PermissionManager.has(user.permissions, permission);
+    },
+    [user],
+  );
+
   return (
-    <AuthContext.Provider value={{ settings, user, loading, login, logout, setup }}>
+    <AuthContext.Provider value={{ settings, user, loading, login, logout, setup, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );
