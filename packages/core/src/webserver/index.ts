@@ -37,9 +37,9 @@ export function startPanel({ pm, gm, port = 4000 }: PanelStartParams) {
         .use(authRoutes)
         .use(serverRoutes(pm))
         .use(playerRoutes(gm))
-        .use(gameRoutes(gm))
-        .use(wsRoutes(pm)),
-    );
+        .use(gameRoutes(gm)),
+    )
+    .use(wsRoutes(pm, gm));
 
   if (isDev) {
     console.log('[panel] Dev mode — Vite client on http://localhost:5173');
