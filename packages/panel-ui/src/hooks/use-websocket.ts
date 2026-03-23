@@ -14,6 +14,8 @@ interface WSManager {
 
 let manager: WSManager | null = null;
 const connectionListeners: Set<(v: boolean) => void> = new Set();
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let isConnecting = false; // guard against overlapping connect calls
 
 function getManager(): WSManager {
   if (manager) return manager;
@@ -23,27 +25,37 @@ function getManager(): WSManager {
   let connected = false;
 
   function connect() {
+    if (isConnecting) return; // prevent overlapping attempts
+    isConnecting = true;
+
     const url = WSUrl();
+    console.log('[ws] Connecting to', url);
     ws = new WebSocket(url);
 
-    console.log('New websocket connection', url);
-
     ws.onopen = () => {
+      isConnecting = false;
       connected = true;
       connectionListeners.forEach((fn) => fn(true));
     };
 
+    ws.onerror = (ev) => {
+      // onclose always fires after onerror, so just log here
+      console.warn('[ws] Connection error', ev);
+    };
+
     ws.onclose = () => {
+      isConnecting = false;
       connected = false;
       connectionListeners.forEach((fn) => fn(false));
-      setTimeout(connect, 2000);
+
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(connect, 2000);
     };
 
     ws.onmessage = (e) => {
       try {
         const envelope: WSEnvelope = JSON.parse(e.data);
-        const subs = listeners.get(envelope.channel);
-        subs?.forEach((fn) => fn(envelope));
+        listeners.get(envelope.channel)?.forEach((fn) => fn(envelope));
       } catch {
         /* ignore malformed */
       }
@@ -64,11 +76,7 @@ function getManager(): WSManager {
     send: (envelope) => {
       if (ws?.readyState === WebSocket.OPEN)
         ws.send(JSON.stringify({ ...envelope, ts: Date.now() }));
-      else
-        console.warn(
-          'Attempted to send message with WS not ready',
-          ws?.readyState ?? 'no ws ready state',
-        );
+      else console.warn('[ws] Send attempted while not connected, state:', ws?.readyState);
     },
     get connected() {
       return connected;
@@ -76,6 +84,15 @@ function getManager(): WSManager {
   };
 
   return manager;
+}
+
+// Prevent HMR from spawning duplicate reconnect loops
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    manager = null;
+    isConnecting = false;
+  });
 }
 
 // region hook

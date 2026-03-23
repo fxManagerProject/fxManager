@@ -9,11 +9,11 @@
     "lint": "biome lint ./src"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/static": "^1.1.0",
     "@fxmanager/database": "workspace:*",
     "@fxmanager/types": "workspace:*",
     "@fxmanager/utils": "workspace:*",
-    "elysia": "^1.4.27",
-    "@elysiajs/static": "^1.1.0",
-    "@elysiajs/cors": "^1.4.1"
+    "elysia": "^1.4.27"
   }
 }

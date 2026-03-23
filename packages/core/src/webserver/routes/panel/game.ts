@@ -13,5 +13,5 @@ export const gameRoutes = (gm: IGameManager) =>
       return {
         success: true,
         data: players,
-      }
+      };
     });

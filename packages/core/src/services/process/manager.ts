@@ -98,6 +98,7 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
   }
 
   handleGameEvent(payload: GameEventPayload) {
+    console.log('handleGameEvent', payload);
     if (payload.event.startsWith('player.')) {
       const change = payload.event === 'player.join' ? 1 : -1;
 

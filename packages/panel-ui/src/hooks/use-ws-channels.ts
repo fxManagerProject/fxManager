@@ -1,10 +1,10 @@
 import type {
   ServerState,
   ConsoleOutputEvent,
-  Player,
   WSEnvelope,
   ReportMessage,
   ReportStatus,
+  OnlinePlayer,
 } from '@fxmanager/types';
 import { usePanelWS } from './use-websocket';
 
@@ -54,16 +54,41 @@ export function useConsoleSocket() {
 // region player list
 
 interface PlayerlistChannelState {
-  players: Player[];
+  players: OnlinePlayer[];
+  ready: boolean;
 }
 
 function playerlistReducer(state: PlayerlistChannelState, env: WSEnvelope): PlayerlistChannelState {
-  if (env.type === 'playerlist:update') return { players: env.payload as Player[] };
-  return state;
+  console.log('playerlistReducer', state, env);
+  switch (env.type) {
+    case 'playerlist:snapshot':
+      return { players: env.payload as OnlinePlayer[], ready: true };
+
+    case 'playerlist:join':
+      return { ...state, players: [...state.players, env.payload as OnlinePlayer] };
+
+    case 'playerlist:drop': {
+      const { serverId } = env.payload as { serverId: number };
+      return { ...state, players: state.players.filter((p) => p.serverId !== serverId) };
+    }
+
+    case 'playerlist:update': {
+      const updated = env.payload as Partial<OnlinePlayer> & { serverId: number };
+      return {
+        ...state,
+        players: state.players.map((p) =>
+          p.serverId === updated.serverId ? { ...p, ...updated } : p,
+        ),
+      };
+    }
+
+    default:
+      return state;
+  }
 }
 
 export function usePlayerlistSocket() {
-  return usePanelWS('playerlist', playerlistReducer, { players: [] });
+  return usePanelWS('playerlist', playerlistReducer, { players: [], ready: false });
 }
 
 // region report

@@ -79,6 +79,8 @@ export class GameManager implements IGameManager {
       ...player,
     } satisfies OnlinePlayer;
 
+    console.log('Player', name, serverId, 'has joined');
+
     this.playerlist.push(playerPayload);
     this.pm.handleGameEvent({
       event: 'player.join',

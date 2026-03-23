@@ -1,7 +1,14 @@
 import Elysia from 'elysia';
-import type { ChannelName, IProcessManager, WSEnvelope } from '@fxmanager/types';
+import type {
+  ChannelName,
+  GameEventPayload,
+  IGameManager,
+  IProcessManager,
+  OnlinePlayer,
+  WSEnvelope,
+} from '@fxmanager/types';
 import type { ServerState, ConsoleOutputEvent } from '@fxmanager/types';
-import { sessionAuth } from '../middleware/session-auth';
+import { repo } from '@fxmanager/database';
 
 /* ToDo:
  * Consider a refactor, notably to store data client side (i.e. online player list / console output)
@@ -51,9 +58,20 @@ function subscribeConsoleChannel(
 function subscribePlayerlistChannel(
   ws: { send: (v: string) => void },
   pm: IProcessManager,
+  gm: IGameManager,
 ): () => void {
-  const onPlayers = (players: unknown[]) =>
-    ws.send(envelope('playerlist', 'playerlist:update', players));
+  console.log('sending player list snapshot:', gm.getPlayerList());
+  ws.send(envelope('playerlist', 'playerlist:snapshot', gm.getPlayerList()));
+
+  const onPlayers = (payload: GameEventPayload) => {
+    console.log('Handling onPlayers', payload);
+    if (payload.event === 'player.join')
+      ws.send(envelope('playerlist', 'playerlist:join', payload.data));
+    else if (payload.event === 'player.drop')
+      ws.send(envelope('playerlist', 'playerlist:drop', payload.data));
+    else if (payload.event === 'player.update')
+      ws.send(envelope('playerlist', 'playerlist:update', payload.data));
+  };
 
   pm.on('players', onPlayers);
   return () => pm.off('players', onPlayers);
@@ -94,10 +112,11 @@ function resolveChannelSubscriber(
   channel: ChannelName,
   ws: { send: (v: string) => void },
   pm: IProcessManager,
+  gm: IGameManager,
 ): (() => void) | null {
   if (channel === 'server') return subscribeServerChannel(ws, pm);
   if (channel === 'console') return subscribeConsoleChannel(ws, pm);
-  if (channel === 'playerlist') return subscribePlayerlistChannel(ws, pm);
+  if (channel === 'playerlist') return subscribePlayerlistChannel(ws, pm, gm);
   if (channel.startsWith('report:')) {
     const reportId = channel.slice('report:'.length);
     return subscribeReportChannel(ws, reportId, pm);
@@ -107,15 +126,15 @@ function resolveChannelSubscriber(
 
 // region elysia route
 
-export const wsRoutes = (pm: IProcessManager) =>
-  new Elysia().use(sessionAuth).ws('/ws', {
+export const wsRoutes = (pm: IProcessManager, gm: IGameManager) =>
+  new Elysia().ws('/ws', {
     open(ws) {
       (ws.data as unknown as SocketData)._subs = new Map();
 
       // Auto-subscribe all global channels on connect
       const globalChannels: ChannelName[] = ['server', 'console', 'playerlist'];
       for (const ch of globalChannels) {
-        const cleanup = resolveChannelSubscriber(ch, ws, pm);
+        const cleanup = resolveChannelSubscriber(ch, ws, pm, gm);
         if (cleanup) (ws.data as unknown as SocketData)._subs.set(ch, cleanup);
       }
     },
@@ -133,7 +152,7 @@ export const wsRoutes = (pm: IProcessManager) =>
 
         // ── Channel subscription management ──────────────────────────────────
         if (type === 'channel:subscribe' && !subs.has(channel)) {
-          const cleanup = resolveChannelSubscriber(channel, ws, pm);
+          const cleanup = resolveChannelSubscriber(channel, ws, pm, gm);
           if (cleanup) subs.set(channel, cleanup);
           return;
         }

@@ -1,7 +1,7 @@
-import { QueryService } from "@/lib/query";
-import type { ApiResponse, OnlinePlayer } from "@fxmanager/types";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { QueryService } from '@/lib/query';
+import type { ApiResponse, OnlinePlayer } from '@fxmanager/types';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -9,23 +9,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   Activity,
   Clock,
@@ -37,151 +32,136 @@ import {
   UsersIcon,
   Wifi,
   WifiOff,
-} from "lucide-react";
-import { formatDuration } from "@/lib/utils";
-import { usePlayerlistSocket } from "@/hooks/use-ws-channels";
-import { PageHeader } from "@/components/page-header";
-import { useNavigate } from "react-router-dom";
-import { PlayerActionDialog } from "@/components/player-actions-dialog";
-import { usePlayerAction } from "@/hooks/use-player-actions";
-import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
- 
+} from 'lucide-react';
+import { formatDuration } from '@/lib/utils';
+import { usePlayerlistSocket } from '@/hooks/use-ws-channels';
+import { PageHeader } from '@/components/page-header';
+import { useNavigate } from 'react-router-dom';
+import { PlayerActionDialog } from '@/components/player-actions-dialog';
+import { usePlayerAction } from '@/hooks/use-player-actions';
+import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 // region helpers
- 
+
 /** Format a Date (or ISO string) to a short locale time, e.g. "14:07" */
 function formatJoinTime(date: Date | string): string {
   return new Date(date).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
- 
+
 /** Map a 0-200 health value to a semantic colour class */
 function healthColor(health: number): string {
-  if (health > 150) return "text-emerald-400";
-  if (health > 100) return "text-yellow-400";
-  if (health > 50)  return "text-orange-400";
-  return "text-red-500";
+  if (health > 150) return 'text-emerald-400';
+  if (health > 100) return 'text-yellow-400';
+  if (health > 50) return 'text-orange-400';
+  return 'text-red-500';
 }
- 
+
 /** Return a width percentage string for the health bar (0-200 range → 0-100%) */
 function healthBarWidth(health: number): string {
   return `${Math.min(100, Math.max(0, (health / 200) * 100))}%`;
 }
- 
+
 /** Map a ping value to a colour class */
 function pingColor(ping?: number): string {
-  if (ping === undefined) return "text-zinc-500";
-  if (ping < 80)  return "text-emerald-400";
-  if (ping < 150) return "text-yellow-400";
-  return "text-red-500";
+  if (ping === undefined) return 'text-zinc-500';
+  if (ping < 80) return 'text-emerald-400';
+  if (ping < 150) return 'text-yellow-400';
+  return 'text-red-500';
 }
- 
+
 // region main component
 
 const players: OnlinePlayer[] = [
   {
     id: 1,
     serverId: 1,
-    name: "Haruto_K",
+    name: 'Haruto_K',
     isStaff: true,
     health: 196,
     playtime: 312,
     ping: 42,
-    firstSeen: new Date("2025-01-15T08:00:00"),
-    lastSeen: new Date("2025-03-20T09:14:00"),
+    firstSeen: new Date('2025-01-15T08:00:00'),
+    lastSeen: new Date('2025-03-20T09:14:00'),
     identifiers: {
-      license: "license:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
-      fivem: "fivem:123456",
-      discord: "discord:198765432101234567",
+      license: 'license:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2',
+      fivem: 'fivem:123456',
+      discord: 'discord:198765432101234567',
     },
   },
   {
     id: 2,
     serverId: 4,
-    name: "xXSn1perXx",
+    name: 'xXSn1perXx',
     isStaff: false,
     health: 134,
     playtime: 47,
     ping: 88,
-    firstSeen: new Date("2025-03-20T11:45:00"),
-    lastSeen: new Date("2025-03-20T11:52:00"),
+    firstSeen: new Date('2025-03-20T11:45:00'),
+    lastSeen: new Date('2025-03-20T11:52:00'),
     identifiers: {
-      license: "license:b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3",
-      steam: "steam:110000112345678",
+      license: 'license:b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3',
+      steam: 'steam:110000112345678',
     },
   },
   {
     id: 3,
     serverId: 7,
-    name: "Mireille_D",
+    name: 'Mireille_D',
     isStaff: true,
     health: 82,
     playtime: 1430,
     ping: 61,
-    firstSeen: new Date("2024-06-10T10:00:00"),
-    lastSeen: new Date("2025-03-20T08:01:00"),
+    firstSeen: new Date('2024-06-10T10:00:00'),
+    lastSeen: new Date('2025-03-20T08:01:00'),
     identifiers: {
-      license: "license:c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-      fivem: "fivem:654321",
-      discord: "discord:876543219876543210",
-      steam: "steam:110000198765432",
+      license: 'license:c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+      fivem: 'fivem:654321',
+      discord: 'discord:876543219876543210',
+      steam: 'steam:110000198765432',
     },
   },
   {
     id: 4,
     serverId: 12,
-    name: "BigDaddyJ",
+    name: 'BigDaddyJ',
     isStaff: false,
     health: 38,
     playtime: 9,
     ping: 204,
-    firstSeen: new Date("2025-03-20T13:00:00"),
-    lastSeen: new Date("2025-03-20T13:07:00"),
+    firstSeen: new Date('2025-03-20T13:00:00'),
+    lastSeen: new Date('2025-03-20T13:07:00'),
     identifiers: {
-      license: "license:d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+      license: 'license:d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5',
     },
   },
   {
     id: 5,
     serverId: 19,
-    name: "nova_404",
+    name: 'nova_404',
     isStaff: false,
     health: 165,
     playtime: 228,
     ping: 73,
-    firstSeen: new Date("2025-02-28T09:00:00"),
-    lastSeen: new Date("2025-03-20T10:33:00"),
+    firstSeen: new Date('2025-02-28T09:00:00'),
+    lastSeen: new Date('2025-03-20T10:33:00'),
     identifiers: {
-      license: "license:e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
-      discord: "discord:112233445566778899",
-      steam: "steam:110000111223344",
+      license: 'license:e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6',
+      discord: 'discord:112233445566778899',
+      steam: 'steam:110000111223344',
     },
   },
 ];
- 
-const COL_GRID = "grid-cols-[3rem_1fr_1fr_1fr_1fr_1fr_8rem]";
+
+const COL_GRID = 'grid-cols-[3rem_1fr_1fr_1fr_1fr_1fr_8rem]';
 
 export default function OnlinePlayerList() {
   const navigate = useNavigate();
   const { dialogOpen, dialogPlayer, dialogTab, openAction, closeAction } = usePlayerAction();
-  const [loading, setLoading]  = useState<boolean>(false);
- 
-  // useEffect(() => {
-  //   QueryService<ApiResponse<OnlinePlayer[]>>({
-  //     endpoint: "/game/playerlist",
-  //     method: "GET",
-  //   })
-  //     .then((response) => {
-  //       if (!response.success) {
-  //         toast.error("Unable to fetch p list");
-  //         return;
-  //       }
-  //       setPlayers(response.data);
-  //     })
-  //     .finally(() => setLoading(false));
-  // }, []);
+  const { state } = usePlayerlistSocket();
 
   return (
     <div className="space-y-6">
@@ -216,7 +196,7 @@ export default function OnlinePlayerList() {
 
             <TableBody className="block w-full">
               <ScrollArea className="h-[65vh]">
-                {loading ? (
+                {state.ready ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <TableRow key={i} className={`grid ${COL_GRID} w-full`}>
                       {Array.from({ length: 7 }).map((_, j) => (
@@ -233,7 +213,7 @@ export default function OnlinePlayerList() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  players.map((p) => (
+                  state.players.map((p) => (
                     <TableRow
                       key={p.serverId}
                       className={`grid ${COL_GRID} w-full border-zinc-800/60 hover:bg-zinc-900/50 transition-colors group cursor-pointer`}
@@ -248,9 +228,7 @@ export default function OnlinePlayerList() {
                           <span className="text-zinc-100 text-sm font-medium leading-none">
                             {p.name}
                           </span>
-                          {p.isStaff && (
-                            <Shield className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                          )}
+                          {p.isStaff && <Shield className="w-3.5 h-3.5 text-sky-400 shrink-0" />}
                         </div>
                       </TableCell>
 
@@ -260,15 +238,20 @@ export default function OnlinePlayerList() {
                           <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all duration-500 ${
-                                p.health > 150 ? "bg-emerald-500"
-                                : p.health > 100 ? "bg-yellow-500"
-                                : p.health > 50  ? "bg-orange-500"
-                                : "bg-red-600"
+                                p.health > 150
+                                  ? 'bg-emerald-500'
+                                  : p.health > 100
+                                    ? 'bg-yellow-500'
+                                    : p.health > 50
+                                      ? 'bg-orange-500'
+                                      : 'bg-red-600'
                               }`}
                               style={{ width: healthBarWidth(p.health) }}
                             />
                           </div>
-                          <span className={`text-xs font-mono tabular-nums w-8 text-right ${healthColor(p.health)}`}>
+                          <span
+                            className={`text-xs font-mono tabular-nums w-8 text-right ${healthColor(p.health)}`}
+                          >
                             {p.health}
                           </span>
                         </div>
@@ -284,8 +267,14 @@ export default function OnlinePlayerList() {
 
                       <TableCell className="flex items-center">
                         {p.ping !== undefined ? (
-                          <span className={`text-sm font-mono tabular-nums flex items-center gap-1 ${pingColor(p.ping)}`}>
-                            {p.ping < 150 ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                          <span
+                            className={`text-sm font-mono tabular-nums flex items-center gap-1 ${pingColor(p.ping)}`}
+                          >
+                            {p.ping < 150 ? (
+                              <Wifi className="w-3 h-3" />
+                            ) : (
+                              <WifiOff className="w-3 h-3" />
+                            )}
                             {p.ping}
                             <span className="text-zinc-600 text-xs">ms</span>
                           </span>
@@ -315,7 +304,7 @@ export default function OnlinePlayerList() {
           </Table>
         </div>
       </Card>
-      
+
       <PlayerActionDialog
         player={dialogPlayer}
         open={dialogOpen}
