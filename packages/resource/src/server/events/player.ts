@@ -26,7 +26,7 @@ on(
     if (typeof identifiers.license !== 'string') return deferrals.done('No license found.');
 
     const apiChecks = await QueryManager<DeferralCheckResponse>({
-      endpoint: '/api/players/deferrals',
+      endpoint: '/players/deferrals',
       method: 'POST',
       body: { identifiers },
     });
@@ -83,7 +83,7 @@ on('playerJoining', () => {
   } satisfies { name: string; identifiers: PlayerIdentifiers; serverId: number };
 
   QueryManager<{ ack: true }>({
-    endpoint: '/api/players/join',
+    endpoint: '/players/join',
     method: 'POST',
     body,
   }).catch((err) => {
@@ -94,7 +94,7 @@ on('playerJoining', () => {
 on('playerDropped', () => {
   const src = source;
   QueryManager<{ ack: true }>({
-    endpoint: '/api/players/drop',
+    endpoint: '/players/drop',
     method: 'POST',
     body: { serverId: src },
   }).catch((err) => {
