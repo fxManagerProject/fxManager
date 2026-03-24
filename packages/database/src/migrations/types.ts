@@ -1,5 +1,5 @@
 export interface Migration {
-  version: number;
-  description: string;
-  up: string[];
+	version: number;
+	description: string;
+	up: string[];
 }
