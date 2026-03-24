@@ -1,0 +1,23 @@
+{
+  "name": "@fxmanager/core",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build ./src/index.ts --outdir ./dist",
+    "start": "bun src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.5.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@fxmanager/database": "workspace:*",
+    "@fastify/static": "^9.0.0",
+    "fastify": "^5.8.4"
+  }
+}

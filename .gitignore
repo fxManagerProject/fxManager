@@ -1,9 +1,31 @@
+# Dependencies
 node_modules
-dist/
-data/
+.pnp
+.pnp.js
+
+# Local env files
 .env
-*.db
-*.db-shm
-*.db-wal
-packages/panel/client/dist/
-.turbo/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Testing
+coverage
+
+# Turbo
+.turbo
+
+# Vercel
+.vercel
+
+# Build Outputs
+dist
+
+# Debug
+npm-debug.log*
+
+# Misc
+.DS_Store
+*.pem
+.vscode
