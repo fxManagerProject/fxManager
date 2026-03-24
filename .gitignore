@@ -13,6 +13,9 @@ node_modules
 # Testing
 coverage
 
+# Database files
+data
+
 # Turbo
 .turbo
 
