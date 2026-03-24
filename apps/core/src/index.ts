@@ -3,8 +3,12 @@ import fastifyStatic from '@fastify/static';
 import path from 'path';
 import { isProduction } from './common/utils';
 import { applyMigrations } from '@fxmanager/database';
+import { checkVersion } from './common/version_check';
 
 applyMigrations();
+// hardcode for the time being
+// checkVersion(isProduction ? process.env.VERSION as string : 'dev-build');
+checkVersion('dev-build');
 
 const fastify = Fastify({ logger: !isProduction });
 
@@ -30,7 +34,7 @@ fastify.get('/api/health', async () => {
 const start = async () => {
   try {
     await fastify.listen({ port: 3000, host: '0.0.0.0' });
-    console.log(`Fastify server listening on http://localhost:${3000}`)
+    console.log(`[core] Fastify server listening on http://localhost:${3000}`)
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
