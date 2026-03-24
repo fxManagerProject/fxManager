@@ -6,7 +6,7 @@ import { isProduction } from './common/utils';
 const fastify = Fastify({ logger: !isProduction });
 
 if (isProduction) {
-  const distPath = path.join(__dirname, './assets');
+  const distPath = path.join(process.cwd(), './assets');
 
   fastify.register(fastifyStatic, {
     root: distPath,
