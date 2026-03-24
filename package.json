@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "bun run src/server/index.ts",
     "build:client": "bun build src/client/entry.tsx --outdir public/dist --minify",
-    "build:server": "bun build src/server/index.ts --compile --outfile dist/fxmanager --asset-dir public",
+    "build:server": "bun build src/server/index.ts public/dist/* --compile --outfile dist/fxmanager",
     "build": "bun run build:client && bun run build:server"
   },
   "dependencies": {
