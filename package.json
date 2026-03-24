@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "bun@1.3.2",
   "scripts": {
-    "build": "turbo build",
+    "build": "bun ./scripts/build.ts",
     "dev": "NODE_ENV=development turbo dev",
     "lint": "turbo lint",
     "format": "turbo format",
