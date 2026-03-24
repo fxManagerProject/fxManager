@@ -1,0 +1,21 @@
+{
+	"name": "@fxmanager/utils",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit"
+	},
+	".": {
+		"types": "./src/index.ts",
+		"import": "./src/index.ts"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}

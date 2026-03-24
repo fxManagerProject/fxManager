@@ -83,6 +83,15 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/utils": {
+      "name": "@fxmanager/utils",
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
   },
   "packages": {
     "@babel/code-frame": ["@babel/code-frame@7.29.0", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.28.5", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw=="],
@@ -258,6 +267,8 @@
     "@fxmanager/database": ["@fxmanager/database@workspace:packages/database"],
 
     "@fxmanager/ui": ["@fxmanager/ui@workspace:packages/ui"],
+
+    "@fxmanager/utils": ["@fxmanager/utils@workspace:packages/utils"],
 
     "@fxmanager/webpanel": ["@fxmanager/webpanel@workspace:apps/webpanel"],
 
