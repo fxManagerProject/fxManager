@@ -1,4 +1,4 @@
-import type { CoreConfig, PlatformOS } from '@fxmanager/shared';
+import type { CoreConfig, PlatformOS } from '@fxmanager/shared/types';
 import { repo } from '@fxmanager/database';
 
 function getPlatform(): PlatformOS {
