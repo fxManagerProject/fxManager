@@ -17,6 +17,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
+		"@fxmanager/database": "workspace:*",
 		"@types/bun": "latest"
 	},
 	"peerDependencies": {
