@@ -1,1 +1,5 @@
-export * from './events';
+export const EventNames = {
+	SERVERSTATUS: 'ServerStatus',
+	PLAYERJOIN: 'PlayerJoin',
+	PLAYERDROP: 'PlayerDrop',
+};
