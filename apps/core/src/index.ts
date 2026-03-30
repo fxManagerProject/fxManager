@@ -1,11 +1,12 @@
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
-import path from 'path';
-import { isProduction } from './common/utils';
+import path, { join } from 'path';
+import { isFxManagerSetup, isProduction } from './common/utils';
 import { applyMigrations } from '@fxmanager/database';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
+import { readFileSync } from 'fs';
 
 applyMigrations();
 // hardcode for the time being
@@ -20,11 +21,31 @@ if (isProduction) {
   fastify.register(fastifyStatic, {
     root: distPath,
     prefix: '/',
+    // disable automatic index.html serving
+    index: false,
+    // disable fastify static 404 handler
+    wildcard: false,
   });
 
-  // Handle SPA routing (redirect 404s to index.html so React Router works)
-  fastify.setNotFoundHandler((request, reply) => {
-    reply.sendFile('index.html');
+  fastify.get('/*', (request, reply) => {
+    fastify.log.info(`new req: ${request.url}`);
+
+    if (request.url.match(/\.(js|css|png|ico|svg|woff2?)(\?.*)?$/)) {
+      return reply.sendFile(request.url.slice(1));
+    }
+
+    if (isFxManagerSetup()) {
+			return reply.sendFile('index.html');
+		}
+
+    const template = readFileSync(join(distPath, 'index.html'), 'utf-8');
+
+    const html = template.replace(
+      '<head>',
+      `<head><script>window.__SETUP_REQUIRED__ = ${true};</script>`
+    );
+
+    reply.type('text/html').send(html);
   });
 }
 
