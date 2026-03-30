@@ -87,7 +87,6 @@
     "packages/shared": {
       "name": "@fxmanager/shared",
       "devDependencies": {
-        "@fxmanager/database": "workspace:*",
         "@types/bun": "latest",
       },
       "peerDependencies": {
