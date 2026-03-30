@@ -4,11 +4,22 @@ import { createRoot } from 'react-dom/client';
 import '@fxmanager/ui/globals.css';
 import { App } from './App.tsx';
 import { ThemeProvider } from '@/components/theme-provider.tsx';
+import { BrowserRouter } from 'react-router-dom';
+import SetupApp from './SetupApp.tsx';
+
+declare global {
+  interface Window { __SETUP_REQUIRED__?: boolean; }
+}
 
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
-		<ThemeProvider>
-			<App />
-		</ThemeProvider>
+		<BrowserRouter>
+			<ThemeProvider>
+				{window.__SETUP_REQUIRED__
+					? <SetupApp />
+					: <App />
+				}
+			</ThemeProvider>
+		</BrowserRouter>
 	</StrictMode>,
 );
