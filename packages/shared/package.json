@@ -8,7 +8,7 @@
 	"exports": {
 		"./constants": "./src/constants/index.ts",
 		"./types": "./src/types/index.ts",
-		"./events": "./src/events/index.ts"
+		"./utils": "./src/utils/index.ts"
 	},
 	"scripts": {
 		"lint": "biome check .",
