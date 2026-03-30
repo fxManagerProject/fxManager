@@ -23,12 +23,11 @@ import {
 } from '../schema';
 import type * as schema from '../schema';
 import type {
-	Ban,
 	PaginatedResponse,
 	Player,
 	PlayerIdentifiers,
-	PlayerProfile,
 } from '@fxmanager/shared/types';
+import { Ban, PlayerProfile } from '../types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
