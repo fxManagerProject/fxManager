@@ -13,7 +13,7 @@
 		"drizzle-orm": "^0.43.0"
 	},
 	"devDependencies": {
-    "@fxmanager/shared": "workspace:*",
+		"@fxmanager/shared": "workspace:*",
 		"@types/bun": "^1.3.10"
 	}
 }

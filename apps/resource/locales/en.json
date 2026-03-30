@@ -1,4 +1,4 @@
 {
-  "hello": "hello ${world}",
-  "world": "world"
+	"hello": "hello ${world}",
+	"world": "world"
 }
