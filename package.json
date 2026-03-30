@@ -7,7 +7,7 @@
     "build": "NODE_ENV=development turbo build && bun ./scripts/build.ts",
     "dev": "NODE_ENV=development turbo dev",
     "lint": "turbo lint",
-    "format": "turbo format",
+    "format": "turbo format && biome format --write ./scripts/*.ts",
     "typecheck": "turbo typecheck",
     "db:studio": "drizzle-kit studio"
   },
