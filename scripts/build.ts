@@ -1,4 +1,4 @@
-import { $, Build, type PluginBuilder } from 'bun';
+import { Build, type PluginBuilder } from 'bun';
 import fs from "node:fs/promises";
 import path, { join } from "node:path";
 import { name, version } from '../package.json' with { type: 'json' };
@@ -9,6 +9,7 @@ const targetArg = args.find((a) => a.startsWith('--target='))?.split('=')[1] ?? 
 const ROOT_DIR = path.join(import.meta.dir, "..");
 const DIST_DIR = path.join(ROOT_DIR, "dist");
 const ASSETS_DIR = path.join(DIST_DIR, "assets");
+const RESOURCE_DIR = path.join(DIST_DIR, "resource");
 const CORE_ENTRY = join(ROOT_DIR, 'apps/core/src/index.ts');
 
 const targets: Record<string, Build.CompileTarget> = {
@@ -18,8 +19,7 @@ const targets: Record<string, Build.CompileTarget> = {
 
 await fs.rm(DIST_DIR, { recursive: true, force: true });
 await fs.mkdir(ASSETS_DIR, { recursive: true });
-
-await $`bun x turbo build --filter=@fxmanager/webpanel`;
+await fs.mkdir(RESOURCE_DIR, { recursive: true });
 
 const webpanelDist = path.join(process.cwd(), "apps/webpanel/dist");
 
@@ -41,6 +41,19 @@ async function copyDir(src: string, dest: string) {
 }
 
 await copyDir(webpanelDist, ASSETS_DIR);
+
+const resourceDist = path.join(process.cwd(), 'apps/resource');
+
+['locales', 'static', 'dist'].forEach(async (localPath) => {
+	const path = join(resourceDist, localPath);
+	await copyDir(path, RESOURCE_DIR);
+});
+
+['fxmanifest.lua', 'README.md'].forEach(async (localPath) => {
+	const src = join(resourceDist, localPath);
+	const dest = join(RESOURCE_DIR, localPath);
+	await fs.copyFile(src, dest);
+});
 
 // define target to build for
 const toBuild =
@@ -65,7 +78,7 @@ const stripDevLabels = {
 const buildResults = [];
 for (const [platform, target] of toBuild) {
   const ext = platform === 'windows' ? '.exe' : '';
-  const filename = `fxmanager-${platform}`;
+  const filename = `${name}-${platform}`;
 	const outfile = join(DIST_DIR, `${filename}${ext}`);
 
   const buildSettings = {
