@@ -1,4 +1,4 @@
-import { ApiError } from '@fxmanager/shared';
+import { ApiError } from '@fxmanager/shared/types';
 import { API_TOKEN, HOSTNAME } from './env';
 
 export async function QueryManager<T>(
