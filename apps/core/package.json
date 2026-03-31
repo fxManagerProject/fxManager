@@ -16,8 +16,10 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@fxmanager/database": "workspace:*",
+    "@fastify/cookie": "^11.0.2",
     "@fastify/static": "^9.0.0",
+    "@fxmanager/database": "workspace:*",
+    "@sinclair/typebox": "^0.34.49",
     "fastify": "^5.8.4"
   }
 }
