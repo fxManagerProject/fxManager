@@ -18,11 +18,11 @@
         "@fastify/cookie": "^11.0.2",
         "@fastify/static": "^9.0.0",
         "@fxmanager/database": "workspace:*",
+        "@fxmanager/shared": "workspace:*",
         "@sinclair/typebox": "^0.34.49",
         "fastify": "^5.8.4",
       },
       "devDependencies": {
-        "@fxmanager/shared": "workspace:*",
         "@types/bun": "latest",
         "@types/node": "^25.5.0",
       },
