@@ -56,8 +56,7 @@ export class ProcessManager extends EventEmitter {
 	}
 
 	async stop() {
-		if (this.state.status !== 'running' || !this.proc) 
-			throw new Error('server_not_running');
+		if (this.state.status !== 'running' || !this.proc) return false;
 
 		console.log(`[core] Stopping fxServer`);
     this.setState('stopping');
@@ -68,11 +67,15 @@ export class ProcessManager extends EventEmitter {
 
 		console.log(`[core] fxServer has stopped`);
     this.setState('stopped');
+
+		return true;
 	}
 
   async restart() {
     if (this.state.status === 'running') await this.stop();
     await this.start();
+
+		return true;
   }
 
 	// testing code ? or improve
