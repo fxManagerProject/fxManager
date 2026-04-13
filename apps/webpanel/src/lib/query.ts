@@ -22,25 +22,22 @@ export async function QueryService<T>(
 	// const url = `${protocol}://${HOSTNAME}/api${endpoint}`;
 	const url = `/api${endpoint}`;
 
+	const options: RequestInit = {
+		method,
+		credentials: 'include',
+		headers: {
+			'Content-Type': 'application/json',
+			...headers,
+		},
+	};
+
+	if (method !== 'GET') {
+		options.body = body ? JSON.stringify(body) : JSON.stringify({});
+	}
+
 	try {
-		console.log('fetch request', {
-			method,
-			credentials: 'include',
-			headers: {
-				'Content-Type': 'application/json',
-				...headers,
-			},
-			body: body ? JSON.stringify(body) : null,
-		});
-		const response = await fetch(url, {
-			method,
-			credentials: 'include',
-			headers: {
-				'Content-Type': 'application/json',
-				...headers,
-			},
-			body: body ? JSON.stringify(body) : null,
-		});
+		// console.log('fetch request', options);
+		const response = await fetch(url, options);
 
 		if (!response.ok) {
 			let errorData;
