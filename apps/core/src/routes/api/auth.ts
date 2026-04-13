@@ -59,7 +59,7 @@ const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
     const session = repo.auth.createSession(user.id);
 
     return reply
-      .setCookie('session_id', session.id, {
+      .setCookie(COOKIE_NAME, session.id, {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'lax',
@@ -77,12 +77,12 @@ const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
     }
 
     return reply
-      .clearCookie('session_id', { path: '/' })
+      .clearCookie(COOKIE_NAME, { path: '/' })
       .send({ success: true });
   });
 
 	fastify.get('/me', (request, reply) => {
-    const sessionId = request.cookies.session_id;
+    const sessionId = request.cookies[COOKIE_NAME];
 
 		if (!sessionId) {
 			return reply.code(401).send({ error: 'Not authenticated' });
