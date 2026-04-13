@@ -1,7 +1,6 @@
 import { ApiError } from '@fxmanager/shared/types';
 import { toast } from 'sonner';
 
-const HOSTNAME = import.meta.env.DEV ? 'localhost:3000' : window.location.host;
 const IS_SECURE = window.location.protocol === 'https:';
 
 export async function QueryService<T>(
@@ -18,8 +17,6 @@ export async function QueryService<T>(
 	},
 	showError: boolean = false,
 ): Promise<T> {
-	// const protocol = IS_SECURE ? 'https' : 'http';
-	// const url = `${protocol}://${HOSTNAME}/api${endpoint}`;
 	const url = `/api${endpoint}`;
 
 	const options: RequestInit = {
@@ -77,8 +74,8 @@ export async function HandleServerAction(action: 'start' | 'stop' | 'restart') {
 	}
 }
 
-export function WSUrl(endpoint: string = '/ws') {
-  const protocol = IS_SECURE ? 'wss' : 'ws';
-  const host = window.location.host;
-  return `${protocol}://${host}${endpoint}`;
+export function WSUrl() {
+	const protocol = IS_SECURE ? 'wss' : 'ws';
+	const host = window.location.host;
+	return `${protocol}://${host}/api/ws`;
 }
