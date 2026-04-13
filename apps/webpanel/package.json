@@ -12,8 +12,9 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
-		"@fxmanager/ui": "workspace:*",
 		"@fxmanager/shared": "workspace:*",
+		"@fxmanager/ui": "workspace:*",
+		"ansi-to-react": "^6.2.6",
 		"lucide-react": "^1.0.1",
 		"react": "^19.2.4",
 		"react-dom": "^19.2.4",
