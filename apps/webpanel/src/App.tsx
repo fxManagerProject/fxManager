@@ -3,8 +3,11 @@ import { routes } from './pages';
 import AppLayout from './components/sidebar';
 import { ProtectedRoute } from './components/protected-route';
 import NotFound from './pages/NotFound';
+import { useAuth } from './hooks/use-auth';
 
 export function App() {
+	const { user } = useAuth();
+
 	const layoutRoutes = routes.filter(
 		(r) => r.layout !== false && r.auth !== false,
 	);
@@ -16,7 +19,7 @@ export function App() {
 		<Routes>
 			<Route
 				path="/"
-				element={<Navigate to={false ? '/dashboard' : '/login'} replace />}
+				element={<Navigate to={user ? '/dashboard' : '/login'} replace />}
 			/>
 
 			{standaloneRoutes.map(({ path, element, auth }) => (
