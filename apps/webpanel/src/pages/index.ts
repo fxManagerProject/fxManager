@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import LoginPage from './login';
 import DashboardPage from './dashboard';
-import { Console } from './dashboard/console';
+import Console from './console/console';
 
 type RouteConfig = {
 	path: string;
