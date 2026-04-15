@@ -10,3 +10,15 @@ export interface WSMessage<T = unknown> {
 	event: string;
 	data: T;
 }
+
+export type WSClientMessage =
+	| {
+			type: 'subscribe' | 'unsubscribe';
+			channel: Channel;
+	  }
+	| {
+			type: 'emit';
+			channel: Channel;
+			event: string;
+			data: unknown;
+	  };
