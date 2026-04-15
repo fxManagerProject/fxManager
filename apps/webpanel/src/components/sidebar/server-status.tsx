@@ -21,9 +21,8 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from '@fxmanager/ui/components/tooltip';
-import { useWsChannel } from '@/hooks/use-ws-channel';
-import type { ProcessState, ServerState } from '@fxmanager/shared/types';
 import { HandleServerAction } from '@/lib/query';
+import { usePlayerlistSocket, useServerStateSocket } from '@/hooks/ws-channels';
 
 interface ActionButtonProps {
 	Icon: LucideIcon;
@@ -65,16 +64,15 @@ function ActionButton({
 }
 
 export function ServerStatusCard() {
-	const serverState = useWsChannel<ServerState>(
-		'server_state',
-		'status_changed',
-		{ status: 'stopped', startedAt: null },
-	);
-	const { state, setOpen } = useSidebar();
-	const isCollapsed = state === 'collapsed';
-	const status = serverState?.status ?? ('stopped' satisfies ProcessState);
-	const isRunning = status === 'running';
-	const canStart = status === 'stopped' || status === 'crashed';
+	const { state: serverState } = useServerStateSocket();
+	const { count } = usePlayerlistSocket();
+	const { state: sideBarState, setOpen } = useSidebar();
+	const isCollapsed = sideBarState === 'collapsed';
+	const isRunning = serverState.status === 'running';
+	const canStart =
+		serverState.status === 'stopped' || serverState.status === 'crashed';
+
+	console.log(serverState);
 
 	if (isCollapsed) {
 		return (
@@ -96,7 +94,9 @@ export function ServerStatusCard() {
 				<CardContent className="space-y-3">
 					<div className="flex flex-row justify-between">
 						<p>Status</p>
-						<Badge variant={STATUS_VARIANT[status]}>{status}</Badge>
+						<Badge variant={STATUS_VARIANT[serverState.status]}>
+							{serverState.status}
+						</Badge>
 					</div>
 					<div className="flex flex-row justify-between">
 						<p>Uptime</p>
@@ -105,6 +105,10 @@ export function ServerStatusCard() {
 								? formatUptime(serverState.startedAt)
 								: 'N/A'}
 						</p>
+					</div>
+					<div className="flex flex-row justify-between">
+						<p>Players:</p>
+						<p>{count}</p>
 					</div>
 					<div>
 						<p className="mb-2 text-sm font-medium">Actions</p>
