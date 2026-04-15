@@ -20,7 +20,7 @@ function LogLine({ event }: { event: ProcessOutputLine }) {
 }
 
 export default function Console() {
-	const { subscribe, unsubscribe, on } = useWS();
+	const { subscribe, unsubscribe, on, emit } = useWS();
 	const [lines, setLines] = useState<ProcessOutputLine[]>([]);
 
 	useEffect(() => {
@@ -44,8 +44,7 @@ export default function Console() {
 	const submit = () => {
 		const cmd = input.trim();
 		if (!cmd) return;
-		// ws emitter to server
-		// emit('console', 'command', { command: cmd });
+		emit('console', 'command', { command: cmd });
 		setHistory((h) => [cmd, ...h].slice(0, 50));
 		setHistIdx(-1);
 		setInput('');
