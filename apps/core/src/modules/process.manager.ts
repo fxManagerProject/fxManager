@@ -33,16 +33,20 @@ export class ProcessManager extends EventEmitter {
 
 		console.log({ executable: config.executable, cwd: config.serverDataPath, args });
 
+		const startingMsg = {
+			line: '\x1b[1m\x1b[32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
+						'\x1b[1m\x1b[32m  🚀 fxManager is starting your server...      \x1b[0m\n' +
+						'\x1b[1m\x1b[32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
+			ts: Date.now(),
+			source: 'stdout',
+		} satisfies ProcessOutputLine;
+
+		this.buffer.push(startingMsg);
+
 		wsManager.broadcast({
 			channel: 'console',
 			event: 'line',
-			data: {
-				line: '\x1b[1m\x1b[32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
-							'\x1b[1m\x1b[32m  🚀 fxManager is starting your server...      \x1b[0m\n' +
-							'\x1b[1m\x1b[32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
-				ts: Date.now(),
-				source: 'stdout',
-			} satisfies ProcessOutputLine,
+			data: startingMsg,
 		});
 
     try {
@@ -73,17 +77,21 @@ export class ProcessManager extends EventEmitter {
 
 		console.log(`[core] Stopping fxServer`);
     this.setState('stopping');
-		wsManager.broadcast({
-			channel: 'console',
-			event: 'line',
-			data: {
+
+		const serverStopping = {
 				line: '\n' +
 							'\x1b[1m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
 							'\x1b[1m\x1b[33m  🛑 fxManager is stopping the server...       \x1b[0m\n' +
 							'\x1b[1m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
 				ts: Date.now(),
 				source: 'stdout',
-			} satisfies ProcessOutputLine,
+			} satisfies ProcessOutputLine
+
+		this.buffer.push(serverStopping);
+		wsManager.broadcast({
+			channel: 'console',
+			event: 'line',
+			data: serverStopping,
 		});
 
 		this.proc.kill();
@@ -92,17 +100,22 @@ export class ProcessManager extends EventEmitter {
 
 		console.log(`[core] fxServer has stopped`);
     this.setState('stopped');
-		wsManager.broadcast({
-      channel: 'console',
-      event: 'line',
-      data: {
-        line: '\x1b[2m\x1b[37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
-              '\x1b[2m\x1b[37m  ⚪ fxServer has successfully stopped.        \x1b[0m\n' +
+
+		const serverStopped = {
+				line: '\n' +
+							'\x1b[2m\x1b[37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
+              '\x1b[2m\x1b[37m  ⚪ fxServer has been stopped.                 \x1b[0m\n' +
               '\x1b[2m\x1b[37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
-        ts: Date.now(),
-        source: 'stdout',
-      } satisfies ProcessOutputLine,
-    });
+				ts: Date.now(),
+				source: 'stdout',
+			} satisfies ProcessOutputLine
+
+		this.buffer.push(serverStopped);
+		wsManager.broadcast({
+			channel: 'console',
+			event: 'line',
+			data: serverStopped,
+		});
 
 		return true;
 	}
