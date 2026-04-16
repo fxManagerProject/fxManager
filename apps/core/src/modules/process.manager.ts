@@ -128,6 +128,10 @@ export class ProcessManager extends EventEmitter {
 		return this.buffer.getHistory();
 	}
 
+	getState() {
+		return this.state;
+	}
+
 	// region private methods
 	private setState(status: ProcessState) {
 		const startedAt = status === 'starting'

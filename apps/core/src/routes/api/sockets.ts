@@ -14,6 +14,10 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm }) => {
     socket.send(JSON.stringify({ type: 'connected', clientId }));
   });
 
+	wsManager.setInitialData<ServerState>('server_state', () => {
+		return pm.getState();
+	})
+
 	wsManager.setInitialData<ProcessOutputLine[]>('console', () => {
 		return pm.getLogs();
 	});
