@@ -3,12 +3,12 @@ import { loadConfig } from "../common/config";
 import { EventNames } from "@fxmanager/shared/constants";
 import { type ProcessOutputLine, type ProcessState, type ServerState } from "@fxmanager/shared/types";
 import { wsManager } from "./ws.manager";
+import { LogBuffer } from "./buffer.manager";
 
 export class ProcessManager extends EventEmitter {
   private state: ServerState = { status: 'stopped', startedAt: null };
 	private proc: ReturnType<typeof Bun.spawn> | null = null;
-	/* ToDo: implement log buffer */
-	private logs: any[] = [];
+	private buffer = new LogBuffer<ProcessOutputLine>();
 
 	constructor() {
 		super();
@@ -124,10 +124,9 @@ export class ProcessManager extends EventEmitter {
     stdin.flush();
   }
 
-	// testing code ? or improve
-	// getLogs() {
-	// 	return this.logs;
-	// }
+	getLogs() {
+		return this.buffer.getHistory();
+	}
 
 	// region private methods
 	private setState(status: ProcessState) {
@@ -193,8 +192,9 @@ export class ProcessManager extends EventEmitter {
 
 				console.log(value);
 
-        this.logs.push(event);
+        this.buffer.push(event);
         this.emit('console', event);
+
 				wsManager.broadcast({
 					channel: 'console',
 					event: 'line',
