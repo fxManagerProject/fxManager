@@ -1,14 +1,19 @@
 import { randomUUID } from 'crypto';
 import { wsManager } from '../../modules/ws.manager';
-import type { RouteModule } from '../../types';
+import type { AuthedRequest, RouteModule } from '../../types';
 import type { ServerState, ProcessOutputLine } from '@fxmanager/shared/types';
-
-// ToDo: add authentication checks
+import { sessionAuth } from '../../middleware/auth';
+import { PermissionManager } from '@fxmanager/shared/utils';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 const wsEndpoints: RouteModule['handler'] = async (fastify, { pm }) => {
+	
+	fastify.addHook('preHandler', sessionAuth);
+
   fastify.get('', { websocket: true }, (socket, request) => {
     const clientId = randomUUID();
-    wsManager.add(clientId, socket);
+		const { admin } = request as AuthedRequest;
+    wsManager.add(clientId, socket, admin);
 
     // Send client its assigned id so it can reference itself
     socket.send(JSON.stringify({ type: 'connected', clientId }));
@@ -22,9 +27,10 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm }) => {
 		return pm.getLogs();
 	});
 
-	wsManager.on<{ command: string }>('console', 'command', (clientId, event, { command }) => {
+	wsManager.on<{ command: string }>('console', 'command', ({ id }, event, { command }) => {
+
 		if (command.includes("resource-api-token") || command.includes("api-port")) {
-			wsManager.send<ProcessOutputLine>(clientId, {
+			wsManager.send<ProcessOutputLine>(id, {
 				channel: 'console',
 				event: 'line',
 				data: {
