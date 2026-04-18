@@ -1,12 +1,16 @@
 import type { WebSocket } from '@fastify/websocket';
 import type { Channel, WSClientMessage, WSMessage } from '@fxmanager/shared/types';
+import type { FastifyRequest } from 'fastify';
+import type { AuthedRequest } from '../types';
 
 interface Subscription {
+	id: string;
   socket: WebSocket;
   channels: Set<Channel>;
+	admin: AuthedRequest['admin'];
 }
 
-type ServerHandler<T = unknown> = (clientId: string, event: string, data: T) => void;
+type ServerHandler<T = unknown> = (client: Subscription, event: string, data: T) => void;
 type InitialDataProvider<T = unknown> = (clientId: string, channel: string) => Promise<T> | T;
 
 class WSManager {
@@ -14,8 +18,8 @@ class WSManager {
   private callbacks = new Map<string, Set<ServerHandler>>();
   private initialProviders = new Map<Channel, InitialDataProvider>();
 
-  add(id: string, socket: WebSocket) {
-    this.clients.set(id, { socket, channels: new Set() });
+  add(id: string, socket: WebSocket, admin: AuthedRequest['admin']) {
+    this.clients.set(id, { id, socket, channels: new Set(), admin });
 
     socket.on('message', (raw: string) => {
       try {
@@ -41,7 +45,7 @@ class WSManager {
     } else if (msg.type === 'unsubscribe') {
       sub.channels.delete(msg.channel);
     } else if (msg.type === 'emit') {
-			this.triggerCallbacks(id, msg.channel!, msg.event!, msg.data);
+			this.triggerCallbacks(sub, msg.channel, msg.event, msg.data);
 		}
   }
 
@@ -67,12 +71,12 @@ class WSManager {
     }
   }
 
-	private triggerCallbacks(clientId: string, channel: Channel, event: string, data: unknown) {
+	private triggerCallbacks(client: Subscription, channel: Channel, event: string, data: unknown) {
     const exactKey = `${channel}:${event}`;
-    this.callbacks.get(exactKey)?.forEach((h) => h(clientId, event, data));
+    this.callbacks.get(exactKey)?.forEach((h) => h(client, event, data));
 
     const wildcardKey = `${channel}:*`;
-    this.callbacks.get(wildcardKey)?.forEach((h) => h(clientId, event, data));
+    this.callbacks.get(wildcardKey)?.forEach((h) => h(client, event, data));
   }
 
   remove(id: string) {
