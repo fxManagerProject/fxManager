@@ -34,6 +34,5 @@ export interface OnlinePlayer extends Player {
 	health: number;
 }
 
-export type GameEventPayload =
-	| { event: 'player.join'; data: OnlinePlayer }
-	| { event: 'player.drop'; data: { serverId: number } };
+/** struct: key: serverid - value: [health, ping] */
+export type PlayerUpdatePackage = Record<string, [number, number]>;
