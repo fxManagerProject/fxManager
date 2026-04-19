@@ -23,6 +23,16 @@ export interface AuthedRequest extends FastifyRequest {
 	admin: RequestAdmin;
 }
 
+export interface SearchQueryRequest extends AuthedRequest {
+	query: {
+		page: string;
+		pageSize: string;
+		search: string;
+		sortBy: "playtime" | "firstSeen" | "lastSeen" | undefined;
+		sortOrder: "asc" | "desc" | undefined;
+	}
+}
+
 declare module 'fastify' {
   interface FastifyRequest {
     admin?: RequestAdmin;
