@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useWSBase } from './use-ws-core';
-import type { OnlinePlayer } from '@fxmanager/shared/types';
+import type {
+	OnlinePlayer,
+	PlayerUpdatePackage,
+} from '@fxmanager/shared/types';
 
 interface UsePlayerlistReturn {
 	players: OnlinePlayer[];
@@ -29,12 +32,28 @@ export function usePlayerlistSocket(): UsePlayerlistReturn {
 			setPlayers((prev) => prev.filter((p) => p.id !== msg.data.id));
 		});
 
-		const offUpdate = on<OnlinePlayer>(
+		const offUpdate = on<PlayerUpdatePackage>(
 			'playerlist',
 			'player_updated',
 			(msg) => {
+				const updates = msg.data;
+
 				setPlayers((prev) =>
-					prev.map((p) => (p.id === msg.data.id ? { ...p, ...msg.data } : p)),
+					prev.map((player) => {
+						// each update (at the time of this commit) will include all players
+						// in future it will be considered (once enough data exists) if we
+						// batch the update polls to reduce their size further
+						const update = updates[player.serverId];
+						if (!update) return player;
+
+						const [health, ping] = update;
+
+						return {
+							...player,
+							health: health,
+							ping: ping,
+						};
+					}),
 				);
 			},
 		);
