@@ -11,8 +11,6 @@ import { createSettingsRepository } from './repositories/settings';
 import { createApiTokensRepository } from './repositories/api-tokens';
 import { createAuthRepository } from './repositories/auth';
 
-export * from './schema';
-export * from './types';
 export type { Migration } from './migrations/types';
 
 // ─── Initialise ───────────────────────────────────────────────────────────────
