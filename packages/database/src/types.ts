@@ -1,4 +1,4 @@
-import { Player, PlayerIdentifiers } from '@fxmanager/shared/types';
+import type { Player, PlayerIdentifiers } from '@fxmanager/shared/types';
 import { adminUsers, bans, kicks, playerNotes, reports, warns } from './schema';
 
 export type Ban = typeof bans.$inferSelect;

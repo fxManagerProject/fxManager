@@ -18,7 +18,6 @@ import {
 	playerIdentifiers,
 	warns,
 	kicks,
-	reports,
 	playerNotes,
 } from '../schema';
 import type * as schema from '../schema';
@@ -27,7 +26,7 @@ import type {
 	Player,
 	PlayerIdentifiers,
 } from '@fxmanager/shared/types';
-import { Ban, PlayerProfile } from '../types';
+import type { Ban, PlayerProfile } from '../types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 

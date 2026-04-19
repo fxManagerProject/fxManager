@@ -49,13 +49,18 @@ export function createAuthRepository(db: DB) {
 				.from(adminUsers)
 				.where(eq(adminUsers.username, username))
 				.get();
+
 			if (!user) return null;
+
 			const valid = await Bun.password.verify(password, user.passwordHash);
+
 			if (!valid) return null;
+
 			db.update(adminUsers)
 				.set({ lastLoginAt: new Date() })
 				.where(eq(adminUsers.id, user.id))
 				.run();
+
 			return user;
 		},
 

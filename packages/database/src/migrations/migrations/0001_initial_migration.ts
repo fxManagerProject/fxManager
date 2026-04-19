@@ -1,4 +1,4 @@
-import { Migration } from '../types';
+import type { Migration } from '../types';
 
 export const migration_0001_initial: Migration = {
 	version: 1,

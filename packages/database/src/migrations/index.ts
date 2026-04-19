@@ -1,5 +1,5 @@
 import type { Database } from 'bun:sqlite';
-import { Migration } from './types';
+import type { Migration } from './types';
 
 export * from './migrations';
 
