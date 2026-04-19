@@ -9,6 +9,7 @@ import SetupApp from './SetupApp.tsx';
 import { TooltipProvider } from '@fxmanager/ui/components/tooltip';
 import { AuthProvider } from './context/AuthContext.tsx';
 import { WSProvider } from './context/WsContext.tsx';
+import { Toaster } from 'sonner';
 
 declare global {
 	interface Window {
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')!).render(
 							</WSProvider>
 						</AuthProvider>
 					)}
+					<Toaster />
 				</TooltipProvider>
 			</ThemeProvider>
 		</BrowserRouter>
