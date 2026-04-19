@@ -47,7 +47,8 @@ const resourceDist = path.join(process.cwd(), 'apps/resource');
 
 ['locales', 'static', 'dist'].forEach(async (localPath) => {
 	const path = join(resourceDist, localPath);
-	await copyDir(path, RESOURCE_DIR);
+	const targetpath = join(RESOURCE_DIR, localPath);
+	await copyDir(path, targetpath);
 });
 
 ['fxmanifest.lua', 'README.md'].forEach(async (localPath) => {
