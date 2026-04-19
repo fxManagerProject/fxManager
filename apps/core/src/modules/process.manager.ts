@@ -5,14 +5,12 @@ import { type ProcessOutputLine, type ProcessState, type ServerState } from "@fx
 import { wsManager } from "./ws.manager";
 import { LogBuffer } from "./buffer.manager";
 
-export class ProcessManager extends EventEmitter {
+export class ProcessManager {
   private state: ServerState = { status: 'stopped', startedAt: null };
 	private proc: ReturnType<typeof Bun.spawn> | null = null;
 	private buffer = new LogBuffer<ProcessOutputLine>();
 
-	constructor() {
-		super();
-	}
+	constructor() {}
 
 	// region process methods
 	async start() {
@@ -156,7 +154,6 @@ export class ProcessManager extends EventEmitter {
 		const newState = { status, startedAt } satisfies ServerState;
 
 		this.state = newState;
-		this.emit(EventNames.SERVERSTATUS, newState);
 		wsManager.broadcast({
 			channel: 'server_state',
 			event: 'status_changed',
@@ -210,8 +207,6 @@ export class ProcessManager extends EventEmitter {
 				console.log(value);
 
         this.buffer.push(event);
-        this.emit('console', event);
-
 				wsManager.broadcast({
 					channel: 'console',
 					event: 'line',
