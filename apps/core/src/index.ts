@@ -74,15 +74,73 @@ fastify.register(apiRoutes, { prefix: '/api', pm, gm });
 fastify.register(internalRoutes, { prefix: '/internal', pm, gm  });
 
 if (!isProduction) {
-	fastify.get('/routemap', (_, reply) => {
+  const devUrl = 'http://localhost:5173';
+  const commonStyles = `
+    background: #121212; 
+    color: #e0e0e0; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    margin: 0; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    height: 100vh;
+  `;
+
+  fastify.get('/routemap', (_, reply) => {
     const routes = fastify.printRoutes({ commonPrefix: true, includeMeta: ['preHandler'] });
     
     reply
       .type('text/html; charset=utf-8')
-      .send(`<html><body><pre>${routes}</pre></body></html>`);
+      .send(`
+        <html>
+          <body style="${commonStyles} justify-content: flex-start; padding: 2rem; height: auto; display: block;">
+            <div style="max-width: 900px; margin: 0 auto;">
+              <h2 style="color: #4fc1ff; margin-bottom: 0.5rem;">⚙️ Fastify Route Map</h2>
+              <p style="color: #888; margin-bottom: 2rem;">Development Environment Only</p>
+              <pre style="background: #1e1e1e; padding: 1.5rem; border-radius: 8px; border: 1px solid #333; overflow-x: auto; line-height: 1.5; color: #d4d4d4; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">${routes}</pre>
+              <div style="margin-top: 2rem;">
+                <a href="/" style="color: #4fc1ff; text-decoration: none;">&larr; Back to Redirect</a>
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
   });
 
-  fastify.ready(() => console.log(`[dev] Route map: http://localhost:${3000}/routemap`));
+  fastify.get('/', (_, reply) => {
+    reply
+      .type('text/html; charset=utf-8')
+      .send(`
+        <html>
+          <head>
+            <meta http-equiv="refresh" content="3;url=${devUrl}" />
+          </head>
+          <body style="${commonStyles}">
+            <div style="text-align: center; background: #1e1e1e; padding: 3rem; border-radius: 16px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+              <div style="font-size: 3rem; margin-bottom: 1rem;">🚀</div>
+              <h2 style="margin: 0; color: #fff;">Development Mode</h2>
+              <p style="color: #888; margin: 1rem 0 2rem 0;">Redirecting to Vite Frontend...</p>
+              
+              <a href="${devUrl}" style="display: inline-block; background: #4fc1ff; color: #121212; padding: 0.8rem 1.5rem; border-radius: 6px; font-weight: bold; text-decoration: none; transition: opacity 0.2s;">
+                Launch App Now
+              </a>
+
+              <div style="margin-top: 2.5rem; border-top: 1px solid #333; padding-top: 1.5rem;">
+                <a href="/routemap" style="color: #888; text-decoration: none; font-size: 0.9rem;">
+                  View API Route Map &rarr;
+                </a>
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+  });
+
+  fastify.ready(() => {
+    console.log(`[dev] API available at: http://localhost:${3000}`);
+    console.log(`[dev] Route map: http://localhost:${3000}/routemap`);
+  });
 }
 
 const start = async () => {
