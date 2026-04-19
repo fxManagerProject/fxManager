@@ -106,6 +106,26 @@ export class GameManager {
 		});
   }
 
+	async playerUpdates(data: PlayerUpdatePackage) {
+		for (const [idString, [health, ping]] of Object.entries(data)) {
+			// record keys are converted to strings so we typed it as such as well
+      const serverId = parseInt(idString);
+      
+      const player = this.playerlist.find((p) => p.serverId === serverId);
+
+      if (player) {
+        player.health = health;
+        player.ping = ping;
+      }
+    }
+
+		wsManager.broadcast<PlayerUpdatePackage>({
+			channel: 'playerlist',
+			event: 'player_update',
+			data,
+		});
+	}
+
   // region emitting actions
 
   async dropPlayer(serverId: number, reason: string): Promise<ApiResponse> {
