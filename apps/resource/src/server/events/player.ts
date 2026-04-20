@@ -1,8 +1,8 @@
-import type {
+import { DeferralsDeferObj, DeferralsKickFunc } from '@common/types';
+import {
 	DeferralCheckResponse,
 	PlayerIdentifiers,
-} from '@fxmanager/shared';
-import { DeferralsDeferObj, DeferralsKickFunc } from '@common/types';
+} from '@fxmanager/shared/types';
 import { QueryManager } from '../utils/query';
 
 function getIdentifiers(src: string): Partial<PlayerIdentifiers> {
