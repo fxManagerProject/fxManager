@@ -18,16 +18,20 @@ export async function QueryManager<T>(
 	const url = `http://${HOSTNAME}/internal${endpoint}`;
 
 	try {
-		const response = await fetch(url, {
+		const options: RequestInit = {
 			method,
-			credentials: 'include',
 			headers: {
 				'Content-Type': 'application/json',
 				'x-resource-token': API_TOKEN,
 				...headers,
 			},
-			body: body ? JSON.stringify(body) : null,
-		});
+		};
+
+		if (method !== 'GET') {
+			options.body = body ? JSON.stringify(body) : JSON.stringify({});
+		}
+
+		const response = await fetch(url, options);
 
 		if (!response.ok) {
 			let errorData: { message: string };
