@@ -1,4 +1,4 @@
-import { repo } from "@fxmanager/database";
+import { repo } from '@fxmanager/database';
 
 export const isProduction = process.env.NODE_ENV === 'production';
 export const COOKIE_NAME = 'fxm_session';

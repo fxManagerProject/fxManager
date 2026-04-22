@@ -1,4 +1,4 @@
-import "./common/env";
+import './common/env';
 
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
@@ -24,58 +24,58 @@ const config = loadConfig();
 const fastify = Fastify({ logger: !isProduction });
 
 fastify.register(fastifyCookie, {
-  secret: config.cookieSecret,
+	secret: config.cookieSecret,
 });
 fastify.register(fastifyWebsocket);
 
 if (isProduction) {
-  const distPath = path.join(process.cwd(), './assets');
+	const distPath = path.join(process.cwd(), './assets');
 
-  fastify.register(fastifyStatic, {
-    root: distPath,
-    prefix: '/',
-    // disable automatic index.html serving
-    index: false,
-    // disable fastify static 404 handler
-    wildcard: false,
-  });
+	fastify.register(fastifyStatic, {
+		root: distPath,
+		prefix: '/',
+		// disable automatic index.html serving
+		index: false,
+		// disable fastify static 404 handler
+		wildcard: false,
+	});
 
-  fastify.get('/*', (request, reply) => {
-    fastify.log.info(`new req: ${request.url}`);
+	fastify.get('/*', (request, reply) => {
+		fastify.log.info(`new req: ${request.url}`);
 
-    if (request.url.match(/\.(js|css|png|ico|svg|woff2?)(\?.*)?$/)) {
-      return reply.sendFile(request.url.slice(1));
-    }
+		if (request.url.match(/\.(js|css|png|ico|svg|woff2?)(\?.*)?$/)) {
+			return reply.sendFile(request.url.slice(1));
+		}
 
-    if (isFxManagerSetup()) {
+		if (isFxManagerSetup()) {
 			return reply.sendFile('index.html');
 		}
 
-    const template = readFileSync(join(distPath, 'index.html'), 'utf-8');
+		const template = readFileSync(join(distPath, 'index.html'), 'utf-8');
 
-    const html = template.replace(
-      '<head>',
-      `<head><script>window.__SETUP_REQUIRED__ = ${true};</script>`
-    );
+		const html = template.replace(
+			'<head>',
+			`<head><script>window.__SETUP_REQUIRED__ = ${true};</script>`,
+		);
 
-    reply.type('text/html').send(html);
-  });
+		reply.type('text/html').send(html);
+	});
 }
 
 // API routes
 fastify.get('/api/health', async () => {
-  return { status: 'ok' };
+	return { status: 'ok' };
 });
 
 const pm = new ProcessManager();
 const gm = new GameManager();
 
 fastify.register(apiRoutes, { prefix: '/api', pm, gm });
-fastify.register(internalRoutes, { prefix: '/internal', pm, gm  });
+fastify.register(internalRoutes, { prefix: '/internal', pm, gm });
 
 if (!isProduction) {
-  const devUrl = 'http://localhost:5173';
-  const commonStyles = `
+	const devUrl = 'http://localhost:5173';
+	const commonStyles = `
     background: #121212; 
     color: #e0e0e0; 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -87,12 +87,13 @@ if (!isProduction) {
     height: 100vh;
   `;
 
-  fastify.get('/routemap', (_, reply) => {
-    const routes = fastify.printRoutes({ commonPrefix: true, includeMeta: ['preHandler'] });
-    
-    reply
-      .type('text/html; charset=utf-8')
-      .send(`
+	fastify.get('/routemap', (_, reply) => {
+		const routes = fastify.printRoutes({
+			commonPrefix: true,
+			includeMeta: ['preHandler'],
+		});
+
+		reply.type('text/html; charset=utf-8').send(`
         <html>
           <body style="${commonStyles} justify-content: flex-start; padding: 2rem; height: auto; display: block;">
             <div style="max-width: 900px; margin: 0 auto;">
@@ -106,12 +107,10 @@ if (!isProduction) {
           </body>
         </html>
       `);
-  });
+	});
 
-  fastify.get('/', (_, reply) => {
-    reply
-      .type('text/html; charset=utf-8')
-      .send(`
+	fastify.get('/', (_, reply) => {
+		reply.type('text/html; charset=utf-8').send(`
         <html>
           <head>
             <meta http-equiv="refresh" content="3;url=${devUrl}" />
@@ -135,22 +134,22 @@ if (!isProduction) {
           </body>
         </html>
       `);
-  });
+	});
 
-  fastify.ready(() => {
-    console.log(`[dev] API available at: http://localhost:${3000}`);
-    console.log(`[dev] Route map: http://localhost:${3000}/routemap`);
-  });
+	fastify.ready(() => {
+		console.log(`[dev] API available at: http://localhost:${3000}`);
+		console.log(`[dev] Route map: http://localhost:${3000}/routemap`);
+	});
 }
 
 const start = async () => {
-  try {
-    await fastify.listen({ port: 3000, host: '0.0.0.0' });
-    console.log(`[core] Fastify server listening on http://localhost:${3000}`)
-  } catch (err) {
-    fastify.log.error(err);
-    process.exit(1);
-  }
+	try {
+		await fastify.listen({ port: 3000, host: '0.0.0.0' });
+		console.log(`[core] Fastify server listening on http://localhost:${3000}`);
+	} catch (err) {
+		fastify.log.error(err);
+		process.exit(1);
+	}
 };
 
 start();

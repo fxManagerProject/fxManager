@@ -1,9 +1,13 @@
-import type { AuthedRequest, RouteModule, SearchQueryRequest } from "../../types";
-import { sessionAuth } from "../../middleware/session";
-import { PermissionManager } from "@fxmanager/shared/utils";
-import { UserPermissions } from "@fxmanager/shared/constants";
-import { repo } from "@fxmanager/database";
-import type { PaginatedResponse, Player } from "@fxmanager/shared/types";
+import type {
+	AuthedRequest,
+	RouteModule,
+	SearchQueryRequest,
+} from '../../types';
+import { sessionAuth } from '../../middleware/session';
+import { PermissionManager } from '@fxmanager/shared/utils';
+import { UserPermissions } from '@fxmanager/shared/constants';
+import { repo } from '@fxmanager/database';
+import type { PaginatedResponse, Player } from '@fxmanager/shared/types';
 
 const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { gm } = options;
@@ -11,18 +15,21 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	// enforces that admin key exists in request otherwise returns 401
 	fastify.addHook('preHandler', sessionAuth);
 
-	fastify.get('/', (request, reply): PaginatedResponse<Omit<Player, 'identifiers'>> => {
-		const { query } = request as SearchQueryRequest;
+	fastify.get(
+		'/',
+		(request, reply): PaginatedResponse<Omit<Player, 'identifiers'>> => {
+			const { query } = request as SearchQueryRequest;
 
-		const page = Number(query.page ?? 1);
-		const pageSize = Number(query.pageSize ?? 50);
+			const page = Number(query.page ?? 1);
+			const pageSize = Number(query.pageSize ?? 50);
 
-		return repo.players.list(page, pageSize, {
-			search: query.search,
-			sortBy: query.sortBy as any,
-			sortOrder: query.sortOrder as any,
-		});
-	});
+			return repo.players.list(page, pageSize, {
+				search: query.search,
+				sortBy: query.sortBy as any,
+				sortOrder: query.sortOrder as any,
+			});
+		},
+	);
 
 	fastify.get('/:playerId', async (request, reply) => {
 		const { playerId: playerIdRaw } = request.params as { playerId: string };
@@ -30,9 +37,10 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		const profile = await repo.players.findById(playerId);
 
-		if (!profile) return {
+		if (!profile)
+			return {
 				success: false,
-				error: `Player id ${playerId} does not exist.`
+				error: `Player id ${playerId} does not exist.`,
 			};
 
 		return { success: true, data: profile };
@@ -51,16 +59,16 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		} catch (err) {
 			const error = err as Error;
 
-			if (error.message === 'content_too_short') 
+			if (error.message === 'content_too_short')
 				return {
 					success: false,
-					error: 'Content is too short'
+					error: 'Content is too short',
 				};
 
 			console.error('An error occurred when updating a player notes', {
 				playerId,
 				adminId: admin.id,
-				content
+				content,
 			});
 
 			return reply.code(500).send({
@@ -72,7 +80,10 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 	fastify.post('/:playerId/ban', async (request, reply) => {
 		const { playerId: playerIdRaw } = request.params as { playerId: string };
-		const { reason, expiresAt } = request.body as { reason: string; expiresAt: Date | null };
+		const { reason, expiresAt } = request.body as {
+			reason: string;
+			expiresAt: Date | null;
+		};
 		const { admin } = request as AuthedRequest;
 		const playerId = parseInt(playerIdRaw);
 
@@ -116,11 +127,15 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			}
 		} catch (err) {
 			const error = err as Error;
-			console.error('An error occurred when adding a ban to player', error.message, {
-				playerId,
-				admin: admin.username,
-				body: request.body
-			});
+			console.error(
+				'An error occurred when adding a ban to player',
+				error.message,
+				{
+					playerId,
+					admin: admin.username,
+					body: request.body,
+				},
+			);
 
 			return reply.code(500).send({
 				success: false,
@@ -163,8 +178,12 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		} catch (err) {
 			const error = err as Error;
 
-			console.error('An error occurred when kicking a player', error.message, { playerId, admin, body: request.body });
-			
+			console.error('An error occurred when kicking a player', error.message, {
+				playerId,
+				admin,
+				body: request.body,
+			});
+
 			return reply.code(500).send({
 				success: false,
 				error: error.message,
@@ -199,7 +218,11 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		} catch (err) {
 			const error = err as Error;
 
-			console.error('An error occurred when warning a player', error.message, { playerId, admin, body: request.body });
+			console.error('An error occurred when warning a player', error.message, {
+				playerId,
+				admin,
+				body: request.body,
+			});
 
 			return reply.code(500).send({
 				success: false,
