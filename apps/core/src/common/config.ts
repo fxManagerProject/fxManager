@@ -19,7 +19,7 @@ const DEFAULTS: CoreConfig = {
 	autoRestart: true,
 	maxRestarts: 5,
 	restartDelayMs: 5000,
-	webServerPort: process.env.PANEL_PORT ? Number(process.env.PANEL_PORT) : 4000,
+	webServerPort: process.env.PANEL_PORT ? Number(process.env.PANEL_PORT) : 3000,
 	// used for fxserver resource -> process manager communications
 	resourceApiToken: crypto.randomUUID(),
 	cookieSecret: process.env.COOKIE_SECRET ?? crypto.randomUUID(),
