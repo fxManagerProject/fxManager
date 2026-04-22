@@ -37,6 +37,10 @@ export default function Console() {
 		setHistory((h) => [cmd, ...h].slice(0, 50));
 		setHistIdx(-1);
 		setInput('');
+    
+		const el = viewportRef.current;
+		if (!el) return;
+    el.scrollTop = el.scrollHeight;
 	};
 
 	const onKeyDown = (e: React.KeyboardEvent) => {
