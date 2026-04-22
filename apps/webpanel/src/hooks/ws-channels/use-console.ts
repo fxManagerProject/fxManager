@@ -27,13 +27,17 @@ export function useConsoleSocket({
 		subscribe('console');
 
 		// Server dumps last N lines on subscribe via a 'history' event
-		const offInitial = on<ProcessOutputLine[]>('console', 'initial', ({ data }) => {
-			setLines(() => {
-				const merged = data.slice(-maxLines);
-				cache.current = merged;
-				return merged;
-			});
-		});
+		const offInitial = on<ProcessOutputLine[]>(
+			'console',
+			'initial',
+			({ data }) => {
+				setLines(() => {
+					const merged = data.slice(-maxLines);
+					cache.current = merged;
+					return merged;
+				});
+			},
+		);
 
 		const offLine = on<ProcessOutputLine>('console', 'line', ({ data }) => {
 			setLines((prev) => {
