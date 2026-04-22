@@ -99,10 +99,10 @@ export class GameManager {
     const newPlaytime = player.playtime + sessionDuration;
 
     repo.players.updatePlaytime(player.id, newPlaytime);
-    wsManager.broadcast<{ id :number }>({
+    wsManager.broadcast<{ serverId :number }>({
 			channel: 'playerlist',
-			event: 'player_joined',
-			data: { id: serverId },
+			event: 'player_left',
+			data: { serverId },
 		});
   }
 
