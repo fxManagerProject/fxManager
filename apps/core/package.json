@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "bun --watch src/index.ts",
-    "start": "bun src/index.ts"
+    "start": "bun src/index.ts",
+		"lint": "biome lint ./src",
+		"format": "biome format --write ."
   },
   "devDependencies": {
     "@types/bun": "latest",
