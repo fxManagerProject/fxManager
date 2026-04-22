@@ -31,24 +31,23 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 		return pm.getLogs();
 	});
 
-	wsManager.on<{ command: string }>('console', 'command', ({ id, admin }, event, { command }) => {
+	wsManager.on<{ command: string }>('console', 'command', ({ admin }, event, { command }) => {
 
 		if (!PermissionManager.has(admin.permissions, UserPermissions.CONSOLE_ACCESS)) return;
 
-		if (command.includes("resource-api-token") || command.includes("api-port")) {
-			wsManager.send<ProcessOutputLine>(id, {
-				channel: 'console',
-				event: 'line',
-				data: {
-          line: '\x1b[31m[           fxManager] protected convar - \x1b[1maction denied\x1b[0m',
-          source: 'stderr',
-          ts: Date.now(),
-				},
-			});
+    pm.injectConsoleLine({ 
+      process: `cmd:${admin.username}`,
+      value: `\x1b[37m> ${command}\x1b[0m`,
+    });
 
+		if (command.includes("resource-api-token") || command.includes("api-port")) {
+      pm.injectConsoleLine({ 
+        process: `fxManager`,
+        value: `  Protected Convar - \x1b[1maction denied\x1b[0m`,
+        color: '\x1b[31m' 
+      });
 			return;
 		}
-
 		pm.sendCommand(command);
 	});
 
