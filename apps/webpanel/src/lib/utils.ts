@@ -1,6 +1,7 @@
 import { toast } from 'sonner';
 
-export function formatDuration(minutes: number): string {
+export function formatDuration(milliseconds: number): string {
+  const minutes = Math.floor(milliseconds / 60_000);
 	if (minutes < 60) return `${minutes}m`;
 	const h = Math.floor(minutes / 60);
 	const m = minutes % 60;

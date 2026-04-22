@@ -24,13 +24,21 @@ export function usePlayerlistSocket(): UsePlayerlistReturn {
 		});
 
 		// Incremental updates
-		const offJoin = on<OnlinePlayer>('playerlist', 'player_joined', ({ data }) => {
-			setPlayers((prev) => [...prev, data]);
-		});
+		const offJoin = on<OnlinePlayer>(
+			'playerlist',
+			'player_joined',
+			({ data }) => {
+				setPlayers((prev) => [...prev, data]);
+			},
+		);
 
-		const offLeave = on<{ serverId: number }>('playerlist', 'player_left', ({ data }) => {
-			setPlayers((prev) => prev.filter((p) => p.serverId !== data.serverId));
-		});
+		const offLeave = on<{ serverId: number }>(
+			'playerlist',
+			'player_left',
+			({ data }) => {
+				setPlayers((prev) => prev.filter((p) => p.serverId !== data.serverId));
+			},
+		);
 
 		const offUpdate = on<PlayerUpdatePackage>(
 			'playerlist',

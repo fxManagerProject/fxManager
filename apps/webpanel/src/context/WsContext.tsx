@@ -74,7 +74,7 @@ export function WSProvider({ children }: { children: ReactNode }) {
 			return;
 		}
 
-    if (socketRef.current) return;
+		if (socketRef.current) return;
 
 		console.log('WSUrl', WSUrl());
 		const ws = new WebSocket(WSUrl());
@@ -100,23 +100,26 @@ export function WSProvider({ children }: { children: ReactNode }) {
 		};
 
 		return () => {
-      socketRef.current?.close();
-      socketRef.current = null;
-      setConnected(false);
-    };
+			socketRef.current?.close();
+			socketRef.current = null;
+			setConnected(false);
+		};
 	}, [user]);
 
-	const emit = useCallback(<T,>(channel: Channel, event: string, data: T) => {
-		if (socketRef.current?.readyState === WebSocket.OPEN) {
-			socketRef.current.send(
-				JSON.stringify({ type: 'emit', channel, event, data }),
-			);
-		} else {
-			console.warn(
-				`[ws] Cannot emit — not connected (channel: ${channel}, event: ${event})`,
-			);
-		}
-	}, [user]);
+	const emit = useCallback(
+		<T,>(channel: Channel, event: string, data: T) => {
+			if (socketRef.current?.readyState === WebSocket.OPEN) {
+				socketRef.current.send(
+					JSON.stringify({ type: 'emit', channel, event, data }),
+				);
+			} else {
+				console.warn(
+					`[ws] Cannot emit — not connected (channel: ${channel}, event: ${event})`,
+				);
+			}
+		},
+		[user],
+	);
 
 	return (
 		<WSContext.Provider value={{ subscribe, unsubscribe, on, emit, connected }}>

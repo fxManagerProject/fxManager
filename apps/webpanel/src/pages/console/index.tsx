@@ -82,7 +82,7 @@ export default function Console() {
 							</div>
 						)}
 					</div>
-          <ScrollBar orientation="horizontal" />
+					<ScrollBar orientation="horizontal" />
 				</ScrollArea>
 
 				<div className="flex flex-none items-center gap-2 border-t p-3 bg-background/50">
