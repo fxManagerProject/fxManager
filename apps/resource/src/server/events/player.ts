@@ -27,32 +27,46 @@ on(
 		setKickReason: DeferralsKickFunc,
 		deferrals: DeferralsDeferObj,
 	) => {
+		deferrals.defer();
+
 		const src = source;
 		const identifiers = getIdentifiers(`${src}`);
 
-		// Sanity check
-		if (typeof identifiers.license !== 'string')
-			return deferrals.done('No license found.');
+		setTimeout(() => {
+			deferrals.update('Checking you access');
 
-		const apiChecks = await QueryManager<DeferralCheckResponse>({
-			endpoint: '/players/deferrals',
-			method: 'POST',
-			body: { identifiers },
-		});
+			setTimeout(async () => {
+				// Sanity check
+				if (typeof identifiers.license !== 'string')
+					return deferrals.done('No license found.');
 
-		if (apiChecks.access) return deferrals.done();
+				let apiChecks: DeferralCheckResponse = { access: true };
+				try {
+					apiChecks = await QueryManager<DeferralCheckResponse>({
+						endpoint: '/players/deferrals',
+						method: 'POST',
+						body: { identifiers },
+					});
+				} catch (err) {
+					console.error(
+						`[API Error] Failed to connection join for ${playerName} (${src}):`,
+						(err as Error).message,
+					);
+				}
 
-		switch (apiChecks.type) {
-			case 'ban':
-				const ban = apiChecks.ban;
-				const createdStr = new Date(ban.createdAt).toLocaleDateString();
+				if (apiChecks.access) return deferrals.done();
 
-				const expiryStr = ban.permanent
-					? '<span style="color: #ff4d4d; font-weight: bold;">Permanent</span>'
-					: new Date(ban.expiresAt).toLocaleString();
+				switch (apiChecks.type) {
+					case 'ban':
+						const ban = apiChecks.ban;
+						const createdStr = new Date(ban.createdAt).toLocaleDateString();
 
-				deferrals.done(
-					`<div style="font-family: 'Segoe UI', sans-serif; padding: 20px; color: white; text-align: center;">
+						const expiryStr = ban.permanent
+							? '<span style="color: #ff4d4d; font-weight: bold;">Permanent</span>'
+							: new Date(ban.expiresAt).toLocaleString();
+
+						deferrals.done(
+							`<div style="font-family: 'Segoe UI', sans-serif; padding: 20px; color: white; text-align: center;">
               <h1 style="color: #ff4d4d; margin-bottom: 10px;">Connection Rejected</h1>
               <p style="font-size: 1.2em;">You have been banned from this server.</p>
               <hr style="border: 0; border-top: 1px solid #444; margin: 20px 0;">
@@ -67,12 +81,14 @@ on(
                 If you believe this is an error, please contact staff via Discord.
               </p>
             </div>`.trim(),
-				);
-				break;
-			case 'error':
-				deferrals.done(apiChecks.reason);
-				break;
-		}
+						);
+						break;
+					case 'error':
+						deferrals.done(apiChecks.reason);
+						break;
+				}
+			}, 0);
+		});
 	},
 );
 
