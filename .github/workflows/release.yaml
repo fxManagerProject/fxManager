@@ -45,8 +45,8 @@ jobs:
       - name: Package Assets
         run: |
           cd dist
-          zip -r ../fxmanager-linux.zip fxmanager-linux public/
-          zip -r ../fxmanager-windows.zip fxmanager-windows.exe public/
+          zip -r ../fxmanager-linux.zip fxmanager-linux assets/
+          zip -r ../fxmanager-windows.zip fxmanager-windows.exe assets/
           zip -r ../fxmanager-resource.zip resource/
           cd ..
 
