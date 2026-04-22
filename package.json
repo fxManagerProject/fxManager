@@ -14,7 +14,8 @@
     "format": "biome format --write .",
     "check": "biome check --write .",
     "typecheck": "turbo run typecheck",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "bump-version": "bun run scripts/bump-version.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
