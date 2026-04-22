@@ -143,6 +143,45 @@ export class ProcessManager {
 		return this.state;
 	}
 
+  injectConsoleLine(params: { 
+    payload?: ProcessOutputLine; 
+    process?: string; 
+    value?: string; 
+    color?: string;
+    noPrint?: boolean;
+  }) {
+    let { payload, process = "fxManager", value, noPrint, color = "\x1b[38;5;208m" } = params;
+
+    if (!payload) {
+      const paddedProcess = process.slice(0, 20).padStart(20, " ");
+      const isAnsi = color && /^\x1b\[[0-9;]*m$/.test(color);
+
+      let ansiColor: string;
+      if (isAnsi) {
+        ansiColor = color;
+      } else {
+        ansiColor = "\x1b[38;5;208m";
+      }
+
+      payload = {
+        line: `${ansiColor}[${paddedProcess}] ${value}\x1b[0m`,
+        ts: Date.now(),
+        source: 'stdout',
+      } satisfies ProcessOutputLine;
+    }
+
+    if(!noPrint) {
+      console.log(payload.line);
+    }
+
+    this.buffer.push(payload);
+    wsManager.broadcast({
+      channel: 'console',
+      event: 'line',
+      data: payload,
+    });
+  }
+
 	// region private methods
 	private setState(status: ProcessState) {
 		const startedAt = status === 'starting'
