@@ -39,7 +39,7 @@ jobs:
           git push origin HEAD:main 
 
       - name: Run Build
-        run: bun run build
+        run: bun run build:force
 
       - name: Package Assets
         run: |

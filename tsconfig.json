@@ -1,21 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "strict": true,
+		"types": ["bun"],
     "skipLibCheck": true,
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "@fxmanager/types":    ["./shared/types/src/index.ts"],
-      "@fxmanager/database": ["./packages/database/src/index.ts"],
-      "@fxmanager/core":     ["./packages/core/src/index.ts"],
-      "@fxmanager/core/*":   ["./packages/core/*"],
-      "@fxmanager/panel":    ["./packages/panel/src/index.ts"]
-    }
-  },
-  "exclude": ["node_modules", "**/node_modules", "dist", "**/dist", "**/client/dist"]
+    "strict": true
+  }
 }

@@ -1,0 +1,28 @@
+{
+	"name": "@fxmanager/core",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "bun --watch src/index.ts",
+		"start": "bun src/index.ts",
+		"lint": "biome lint ./src",
+		"format": "biome format --write ."
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/node": "^25.5.0"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@fastify/cookie": "^11.0.2",
+		"@fastify/static": "^9.0.0",
+		"@fastify/websocket": "^11.2.0",
+		"@fxmanager/database": "workspace:*",
+		"@fxmanager/shared": "workspace:*",
+		"@sinclair/typebox": "^0.34.49",
+		"fastify": "^5.8.4"
+	}
+}

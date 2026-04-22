@@ -1,28 +1,29 @@
 {
   "name": "fxmanager",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
-  "packageManager": "bun@1.2.0",
-  "workspaces": [
-    "packages/*",
-    "shared/*"
-  ],
+  "packageManager": "bun@1.3.2",
   "scripts": {
-    "dev": "NODE_ENV=development turbo run dev --parallel",
-    "build": "turbo run build && bun run build.ts",
-    "lint": "biome lint .",
-    "format": "biome format --write .",
-    "check": "biome check --write .",
-    "typecheck": "turbo run typecheck",
-    "db:studio": "drizzle-kit studio",
-    "bump-version": "bun run scripts/bump-version.ts"
+    "build": "NODE_ENV=production turbo build && bun ./scripts/build.ts",
+    "build:force": "NODE_ENV=production turbo build --force && bun ./scripts/build.ts",
+    "dev": "NODE_ENV=development turbo dev",
+    "lint": "turbo lint",
+    "format": "turbo format && biome format --write ./scripts/*.ts",
+    "typecheck": "turbo typecheck",
+    "db:studio": "drizzle-kit studio"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
-    "@types/bun": "latest",
-    "@types/node": "^25.3.5",
+    "@biomejs/biome": "^2.4.8",
+    "@types/bun": "^1.3.11",
     "drizzle-kit": "^0.31.0",
-    "turbo": "^2.5.0",
-    "typescript": "^5.8.0"
-  }
+    "turbo": "^2.8.20",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }

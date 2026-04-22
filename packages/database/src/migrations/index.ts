@@ -1,25 +1,70 @@
-import { migration_0001_initial } from './migrations/0001_initial_migration';
+import type { Database } from 'bun:sqlite';
 import type { Migration } from './types';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATABASE MIGRATION GUIDE
-//
-// Follow these steps to modify the database schema:
-//
-// 1. CREATE: Add a new file in `./migrations/` using the naming convention:
-//    `XXXX_short_description.ts` (e.g., 0002_add_player_notes.ts)
-//
-// 2. IMPLEMENT: Define the `Migration` object.
-//    - Increment the `version` number by 1.
-//    - Use the `up` array for your SQL statements.
-//
-// 3. REGISTER: Import and add your new migration to the `migrations` array below.
-//    The order in this array determines the execution order.
-//
-// RULES:
-// - IMMUTABILITY: Never edit a migration that has already been deployed.
-// - ATOMICITY: Each string in the `up` array should be a single logical command.
-// - CONSISTENCY: Ensure `version` matches the filename prefix.
-// ─────────────────────────────────────────────────────────────────────────────
+export * from './migrations';
 
-export const migrations: Migration[] = [migration_0001_initial];
+// ─── Bootstrap the version tracking table ────────────────────────────────────
+// This is the only table created outside the migration system itself.
+
+function ensureVersionTable(sqlite: Database) {
+	sqlite.run(`
+    CREATE TABLE IF NOT EXISTS schema_version (
+      version     INTEGER NOT NULL,
+      description TEXT    NOT NULL,
+      applied_at  INTEGER NOT NULL
+    )
+  `);
+}
+
+function getCurrentVersion(sqlite: Database): number {
+	const row = sqlite
+		.query<{ version: number }, []>(
+			'SELECT MAX(version) as version FROM schema_version',
+		)
+		.get();
+	return row?.version ?? 0;
+}
+
+// ─── Runner ───────────────────────────────────────────────────────────────────
+
+export function runMigrations(sqlite: Database, migrations: Migration[]) {
+	ensureVersionTable(sqlite);
+
+	const current = getCurrentVersion(sqlite);
+	const pending = migrations
+		.filter((m) => m.version > current)
+		.sort((a, b) => a.version - b.version);
+
+	if (pending.length === 0) {
+		console.log(`[database] Schema up to date (v${current})`);
+		return;
+	}
+
+	for (const migration of pending) {
+		console.log(
+			`[database] Applying migration v${migration.version}: ${migration.description}`,
+		);
+
+		sqlite.run('BEGIN');
+		try {
+			for (const statement of migration.up) {
+				sqlite.run(statement);
+			}
+			sqlite.run(
+				'INSERT INTO schema_version (version, description, applied_at) VALUES (?, ?, ?)',
+				[migration.version, migration.description, Date.now()],
+			);
+			sqlite.run('COMMIT');
+		} catch (err) {
+			sqlite.run('ROLLBACK');
+			throw new Error(
+				`[database] Migration v${migration.version} failed: ${(err as Error).message}`,
+			);
+		}
+	}
+
+	const latest = pending.at(-1)!;
+	console.log(
+		`[database] Migrated to v${latest.version} (${pending.length} applied)`,
+	);
+}

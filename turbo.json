@@ -1,29 +1,27 @@
 {
-    "$schema": "https://turbo.build/schema.json",
-    "ui": "tui",
-    "globalEnv": ["NODE_ENV"],
-    "tasks": {
-        "build": {
-            "dependsOn": ["^build"],
-            "outputs": ["dist/**", "client/dist/**"],
-            "cache": true
-        },
-        "dev": {
-            "dependsOn": ["^build"],
-            "persistent": true,
-            "cache": false
-        },
-        "dev:isolated": {
-            "persistent": true,
-            "cache": false
-        },
-        "typecheck": {
-            "dependsOn": ["^typecheck"],
-            "cache": true
-        },
-        "lint": {
-            "cache": true,
-            "outputs": []
-        }
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "globalEnv": ["NODE_ENV"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**"]
+    },
+    "lint": {
+      "cache": true,
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "biome.json"]
+    },
+    "format": {
+      "cache": true,
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "biome.json"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
     }
+  }
 }

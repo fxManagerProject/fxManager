@@ -1,72 +1,72 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
-  "files": {
-    "include": [
-      "packages/**/src/**/*.ts",
-      "packages/**/src/**/*.tsx",
-      "shared/**/src/**/*.ts",
-      "build.ts",
-      "drizzle.config.ts"
-    ],
-    "ignore": ["**/node_modules/**", "**/dist/**", "**/client/dist/**", "**/*.lua"]
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineWidth": 100,
-    "lineEnding": "lf"
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "correctness": {
-        "noUnusedVariables": "warn",
-        "noUnusedImports": "warn",
-        "useExhaustiveDependencies": "warn"
-      },
-      "suspicious": {
-        "noExplicitAny": "warn",
-        "noConsoleLog": "off"
-      },
-      "style": {
-        "useConst": "error",
-        "noNonNullAssertion": "warn",
-        "useTemplate": "error"
-      },
-      "performance": {
-        "noBarrelFile": "off"
-      }
-    }
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "trailingCommas": "all",
-      "semicolons": "always",
-      "arrowParentheses": "always",
-      "bracketSpacing": true
+	"$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"ignoreUnknown": false
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab"
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"correctness": {
+				"noUnusedVariables": "warn",
+				"noUnusedImports": "warn",
+				"useExhaustiveDependencies": "warn"
+			},
+			"suspicious": {
+				"noExplicitAny": "warn",
+				"noConsole": "off"
+			},
+			"style": {
+				"useConst": "error",
+				"noNonNullAssertion": "warn",
+				"useTemplate": "error"
+			},
+			"performance": {
+				"noBarrelFile": "off"
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"trailingCommas": "all",
+			"semicolons": "always",
+			"arrowParentheses": "always",
+			"bracketSpacing": true
+		},
+		"globals": [
+			"Bun",
+			"process",
+			"console",
+			"fetch",
+			"crypto",
+			"URL",
+			"TextDecoder",
+			"TextEncoder",
+			"ReadableStream",
+			"Timer"
+		]
+	},
+    "css": {
+        "parser": {
+            "tailwindDirectives": true
+        }
     },
-    "globals": [
-      "Bun",
-      "process",
-      "console",
-      "fetch",
-      "crypto",
-      "URL",
-      "TextDecoder",
-      "TextEncoder",
-      "ReadableStream",
-      "Timer"
-    ]
-  },
-  "organizeImports": {
-    "enabled": true
-  }
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	}
 }

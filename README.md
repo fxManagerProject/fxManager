@@ -7,35 +7,23 @@ Single binary deployment - no runtime dependencies required on the target machin
 > This project is still in intensive development, it is **not** to be considered stable until a `v1.0.0+` release.
 > If this repository is public, it's for transparency, feedback and open source contributions to help it achieve this milestone.
 
----
+## Structure
 
-## Stack
-
-| Layer             | Tech                            | Location            |
-|-------------------|---------------------------------|---------------------|
-| Runtime           | Bun (compiled into binary)      |                     |
-| Monorepo          | Turbo + Bun Workspaces          |                     |
-| Linting           | Biome (lint + format + imports) |                     |
-| Process Manager   | Bun                             | `packages/core`     |
-| Web Server        | ElysiaJS                        | `packages/core`     |
-| Frontend          | React + Vite SPA                | `packages/panel-ui` |
-| Database          | Bun SQLite + Drizzle ORM        | `packages/database` |
-| FiveM/RedM Bridge | Lua resource                    | `packages/resource` |
-
----
-
-## Project Structure
+Each app/package will have it's own more detailled structure in it's README.
 
 ```
-packages/
-  core/       - Process manager: spawns & supervises FiveM/RedM
-              - Webserver: ElysiaJS API for the panel & game resource communication
-  panel-ui/   - React SPA
-  database/   - Drizzle schema, migrations, repositories
-  resource/   - Drop-in FiveM/RedM Lua resource
-shared/
-  types/      - Shared TypeScript types
-  utils/      - Shared helper functions
+fxManager/
+├── apps/
+│   ├── core/          # Process Manager & Webserver
+│   ├── resource/      # FxServer resource to connect to panel
+│   └── webpanel/      # React SPA served by the webserver
+├── packages/
+│   ├── database/      # Drizzle schema & Migration handler
+│   ├── shared/        # Enums, types, and utils
+│   └── ui/            # Shared React ShadCN components
+├── biome.json         # Root linting/formatting
+├── package.json       # Workspace definitions
+└── turbo.json         # Build pipeline config
 ```
 
 ---
@@ -50,7 +38,7 @@ bun install
 bun dev
 ```
 
-The React dev server runs on `:5173` and proxies API/WS calls to Elysia on `:4000`.
+The React dev server runs on `:5173` and proxies API/WS calls on `:3000`.
 
 ---
 
@@ -64,7 +52,25 @@ bun typecheck    # tsc --noEmit across all packages (via Turbo)
 bun db:studio    # open Drizzle Studio to browse the database (optional)
 ```
 
-### Adding a migration
+---
+
+## Development & Code Quality
+
+* **`bun lint`** – Runs linting across the entire monorepo to find and fix code smells.
+* **`bun format`** – Automatically formats all source code and internal build scripts.
+* **`bun typecheck`** – Validates TypeScript types across all packages via Turbo.
+* **`bun db:studio`** – Opens a browser-based GUI to manage and browse your database.
+* **`bun build`** – Compiles all packages and prepares the production bundle.
+* **`bun dev`** – Starts the development environment with hot-reloading.
+
+### Game Resource ( [`apps/resource`](./apps/resource) )
+Commands specific to the game-side resource and NUI:
+
+* **`bun web:dev`** – Runs the Vite dev server for the NUI frontend.
+* **`bun watch`** – Rebuilds the resource automatically as you save files.
+* **`bun deploy`** – Bundles the resource and copies it to the path defined in your `DEPLOY_PATH` environment variable.
+
+## Adding a migration
 
 Edit `packages/database/src/migrations/index.ts` and append to the array:
 
@@ -88,11 +94,11 @@ Biome handles everything ESLint + Prettier would - faster, single config at the 
 
 ```bash
 # Build for both platforms
-bun run build.ts
+bun run build
 
 # Build for a specific platform
-bun run build.ts --target=linux
-bun run build.ts --target=windows
+bun run build --target=linux
+bun run build --target=windows
 ```
 
 Turbo caches build outputs - subsequent builds only rebuild what changed.
@@ -137,9 +143,15 @@ The panel will be available at `http://your-server-ip:4000`.
 
 ## Environment Variables
 
-| Variable              | Default           | Description                       |
-|-----------------------|-------------------|-----------------------------------|
-| `PANEL_PORT`          | `4000`            | Web panel port                    |
-| `FXSERVER_EXECUTABLE` | `./FXServer`      | Path to FXServer binary           |
-| `FXSERVER_DATA_PATH`  | `./server-data`   | Path to server-data folder        |
-| `FXSERVER_CFG`        | `server.cfg`      | Config file name inside data path |
+| Variable              | Default           | Description                          |
+|-----------------------|-------------------|--------------------------------------|
+| `FXSERVER_EXECUTABLE` | `./FXServer`      | Path to FXServer binary              |
+| `FXSERVER_DATA_PATH`  | `./server-data`   | Path to server-data folder           |
+| `FXSERVER_CFG`        | `server.cfg`      | Config file name inside data path    |
+| `PANEL_PORT`          | `3000` (opt)      | Web panel port                       |
+| `COOKIE_SECRET`       | N/A (opt)         | Defines the secret for cookie sign   |
+| `DEPLOY_PATH`         | N/A               | Used in development for the resource |
+
+## Errrh anything else ?
+
+![dumb monke](.github/image.png)

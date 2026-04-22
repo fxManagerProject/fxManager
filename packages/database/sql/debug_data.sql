@@ -1,14 +1,14 @@
 INSERT INTO players (name, playtime, first_seen, last_seen) VALUES
-    ('StreetRacer99', 120, strftime('%s', datetime('now', '-30 days')), strftime('%s', datetime('now', '-1 hour'))),
-    ('NightOwlGamer', 450, strftime('%s', datetime('now', '-60 days')), strftime('%s', datetime('now', '-3 hours'))),
-    ('ShadowWalker', 85, strftime('%s', datetime('now', '-5 days')), strftime('%s', datetime('now', '-30 minutes'))),
-    ('IronFistMike', 920, strftime('%s', datetime('now', '-120 days')), strftime('%s', datetime('now', '-2 days'))),
-    ('QuickSilverX', 310, strftime('%s', datetime('now', '-45 days')), strftime('%s', datetime('now', '-5 hours'))),
-    ('DarkMatterZ', 15, strftime('%s', datetime('now', '-1 days')), strftime('%s', datetime('now', '-10 minutes'))),
-    ('BlazingFury', 670, strftime('%s', datetime('now', '-90 days')), strftime('%s', datetime('now', '-1 day'))),
-    ('GhostProtocol', 230, strftime('%s', datetime('now', '-20 days')), strftime('%s', datetime('now', '-4 hours'))),
-    ('ThunderStrike', 1200, strftime('%s', datetime('now', '-200 days')), strftime('%s', datetime('now', '-6 hours'))),
-    ('NeonViper', 55, strftime('%s', datetime('now', '-3 days')), strftime('%s', datetime('now', '-45 minutes')));
+    ('StreetRacer99', 7200000, strftime('%s', datetime('now', '-30 days')), strftime('%s', datetime('now', '-1 hour'))),
+    ('NightOwlGamer', 27000000, strftime('%s', datetime('now', '-60 days')), strftime('%s', datetime('now', '-3 hours'))),
+    ('ShadowWalker', 5100000, strftime('%s', datetime('now', '-5 days')), strftime('%s', datetime('now', '-30 minutes'))),
+    ('IronFistMike', 55200000, strftime('%s', datetime('now', '-120 days')), strftime('%s', datetime('now', '-2 days'))),
+    ('QuickSilverX', 18600000, strftime('%s', datetime('now', '-45 days')), strftime('%s', datetime('now', '-5 hours'))),
+    ('DarkMatterZ', 900000, strftime('%s', datetime('now', '-1 days')), strftime('%s', datetime('now', '-10 minutes'))),
+    ('BlazingFury', 40200000, strftime('%s', datetime('now', '-90 days')), strftime('%s', datetime('now', '-1 day'))),
+    ('GhostProtocol', 13800000, strftime('%s', datetime('now', '-20 days')), strftime('%s', datetime('now', '-4 hours'))),
+    ('ThunderStrike', 72000000, strftime('%s', datetime('now', '-200 days')), strftime('%s', datetime('now', '-6 hours'))),
+    ('NeonViper', 3300000, strftime('%s', datetime('now', '-3 days')), strftime('%s', datetime('now', '-45 minutes')));
 
 INSERT INTO player_identifiers (player_id, type, value) VALUES
     (2, 'license', 'license:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2'),

@@ -1,0 +1,35 @@
+{
+	"name": "@fxmanager/webpanel",
+	"version": "0.1.0",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc -b && vite build",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit",
+		"preview": "vite preview"
+	},
+	"dependencies": {
+		"@fxmanager/shared": "workspace:*",
+		"@fxmanager/ui": "workspace:*",
+		"ansi-to-react": "^6.2.6",
+		"lucide-react": "^1.0.1",
+		"react": "^19.2.4",
+		"react-dom": "^19.2.4",
+		"react-router-dom": "^7.13.2",
+		"sonner": "^2.0.7"
+	},
+	"devDependencies": {
+		"@fxmanager/database": "workspace:*",
+		"@tailwindcss/vite": "^4.1.18",
+		"@types/node": "^25.1.0",
+		"@types/react": "^19.2.10",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^5.1.1",
+		"globals": "^17.2.0",
+		"typescript": "^5.9.3",
+		"vite": "^7.2.4"
+	}
+}
