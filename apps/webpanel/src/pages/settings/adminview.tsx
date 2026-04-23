@@ -15,6 +15,7 @@ import {
 	TabsTrigger,
 } from '@fxmanager/ui/components/tabs';
 import {
+	AlertCircle,
 	AlertTriangle,
 	ArrowLeft,
 	Clock,
@@ -31,6 +32,12 @@ import { StatCard } from '@/components/stat-card';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import type { AdminProfile } from '@fxmanager/database/types';
 import PermissionEditor from './components/permissioneditor';
+import { UserPermissions } from '@fxmanager/shared/constants';
+import {
+	Alert,
+	AlertDescription,
+	AlertTitle,
+} from '@fxmanager/ui/components/alert';
 
 function LoadingSkeleton() {
 	return (
@@ -155,7 +162,7 @@ export default function AdminView() {
 					/>
 					<StatCard
 						icon={Gavel}
-            className='hidden lg:block'
+						className="hidden lg:block"
 						label={`Action Distribution (total: ${totalActions})`}
 						value={
 							<div className="mt-1">
@@ -270,7 +277,24 @@ export default function AdminView() {
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-                <PermissionEditor value={adminData.permissions} />
+								{adminData.permissions & UserPermissions.MASTER ? (
+									<Alert
+										variant="destructive"
+										className="bg-destructive/5 border-destructive/20"
+									>
+										<AlertCircle className="h-4 w-4" />
+										<AlertTitle className="font-bold">
+											Access Restricted
+										</AlertTitle>
+										<AlertDescription>
+											This is a <strong>Master Account</strong>. Permissions are
+											hardcoded and cannot be modified via the dashboard for
+											security reasons.
+										</AlertDescription>
+									</Alert>
+								) : (
+									<PermissionEditor value={adminData.permissions} />
+								)}
 							</CardContent>
 						</Card>
 					</TabsContent>
