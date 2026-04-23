@@ -131,18 +131,19 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 	const togglePermission = (bit: number) => {
 		if (!canEdit || bit === UserPermissions.MASTER) return;
 		setBitField((prev) => prev ^ bit);
+
+		if (skipServerSave) {
+			updatePerms(bitfield & ~UserPermissions.MASTER);
+			return;
+		}
 	};
 
 	const hasPermission = (bit: number) => (bitfield & bit) !== 0;
 
 	const handleSave = async () => {
-		setIsSaving(true);
+		if (skipServerSave) return;
 
-		if (skipServerSave) {
-			updatePerms(bitfield & ~UserPermissions.MASTER);
-			setIsSaving(false);
-			return;
-		}
+		setIsSaving(true);
 
 		try {
 			const response = await QueryService<ApiResponse<number>>({
