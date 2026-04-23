@@ -104,24 +104,32 @@ export const PERMISSION_LABELS: Record<
 	},
 };
 
-interface PermissionEditorProps {
-  editable: boolean;
-	adminId: string;
-	value: number;
-	updatePerms: (perms: number) => void;
-}
+type PermissionEditorProps =
+	| {
+			adminId: string;
+			editable: boolean;
+			value: number;
+			skipServerSave?: false;
+			updatePerms: (perms: number) => void;
+	  }
+	| {
+			skipServerSave: true;
+			value: number;
+			updatePerms: (perms: number) => void;
+			adminId?: never;
+			editable?: never;
+	  };
 
-export default function PermissionEditor({
-  editable,
-	adminId,
-	value,
-	updatePerms,
-}: PermissionEditorProps) {
+export default function PermissionEditor(props: PermissionEditorProps) {
+	const { value, updatePerms, skipServerSave = false } = props;
+
 	const [bitfield, setBitField] = useState<number>(value ?? 0);
 	const [isSaving, setIsSaving] = useState(false);
 
+	const canEdit = skipServerSave || props.editable;
+
 	const togglePermission = (bit: number) => {
-		if (bit === UserPermissions.MASTER) return;
+		if (!canEdit || bit === UserPermissions.MASTER) return;
 		setBitField((prev) => prev ^ bit);
 	};
 
@@ -129,31 +137,36 @@ export default function PermissionEditor({
 
 	const handleSave = async () => {
 		setIsSaving(true);
+
+		if (skipServerSave) {
+			updatePerms(bitfield & ~UserPermissions.MASTER);
+			setIsSaving(false);
+			return;
+		}
+
 		try {
 			const response = await QueryService<ApiResponse<number>>({
-				endpoint: `/settings/admins/${adminId}/permissions`,
+				endpoint: `/settings/admins/${props.adminId}/permissions`,
 				method: 'POST',
 				body: { permissions: bitfield },
 			});
 
 			if (response.success) {
 				updatePerms(response.data);
-				toast.success('Permissions updated for admin.');
+				toast.success('Permissions updated successfully');
 			} else {
 				toast.error(response.error);
 			}
 		} catch (err) {
-			toast.error('Unable to update permissions', {
-				description: (err as Error).message,
-			});
+			toast.error('Sync failed', { description: (err as Error).message });
 		} finally {
 			setIsSaving(false);
 		}
 	};
 
 	return (
-		<div className="space-y-2">
-			<div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border bg-card shadow-sm">
+		<div className="flex flex-col flex-1 min-h-0 space-y-4">
+			<div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border bg-card shadow-sm shrink-0">
 				<div className="flex items-center gap-4">
 					<div className="flex flex-row gap-2 items-center">
 						<Hash className="h-6 w-6 text-muted-foreground" />
@@ -164,7 +177,7 @@ export default function PermissionEditor({
 							<Input
 								type="text"
 								value={bitfield}
-                disabled={!editable}
+								disabled={!canEdit}
 								onChange={(e) => setBitField(Number(e.target.value) || 0)}
 								className="bg-muted border-none rounded px-2 py-1 text-sm font-mono w-32 text-right"
 							/>
@@ -172,42 +185,46 @@ export default function PermissionEditor({
 					</div>
 				</div>
 
-				{editable && <div className="flex items-center gap-2">
-					<button
-						onClick={() => setBitField(0)}
-						disabled={bitfield === 0}
-						className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						<Trash2 className="h-4 w-4" />
-						Clear
-					</button>
+				{canEdit && (
+					<div className="flex items-center gap-2">
+						<button
+							onClick={() => setBitField(0)}
+							disabled={bitfield === 0}
+							className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
+						>
+							<Trash2 className="h-4 w-4" />
+							Clear
+						</button>
 
-					<button
-						onClick={() => setBitField(value)}
-						disabled={bitfield === value}
-						className="flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						<RotateCcw className="h-4 w-4" />
-						Reset
-					</button>
+						<button
+							onClick={() => setBitField(value)}
+							disabled={bitfield === value}
+							className="flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+						>
+							<RotateCcw className="h-4 w-4" />
+							Reset
+						</button>
 
-					<button
-						onClick={handleSave}
-						disabled={isSaving || bitfield === value}
-						className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-transparent disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm transition-all"
-					>
-						{isSaving ? (
-							<Loader2 className="h-4 w-4 animate-spin" />
-						) : (
-							<Save className="h-4 w-4" />
+						{!skipServerSave && (
+							<button
+								onClick={handleSave}
+								disabled={isSaving || bitfield === value}
+								className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 rounded-lg shadow-sm transition-all"
+							>
+								{isSaving ? (
+									<Loader2 className="h-4 w-4 animate-spin" />
+								) : (
+									<Save className="h-4 w-4" />
+								)}
+								{isSaving ? 'Saving...' : 'Save Changes'}
+							</button>
 						)}
-						{isSaving ? 'Saving...' : 'Save Changes'}
-					</button>
-				</div>}
+					</div>
+				)}
 			</div>
 
-			<ScrollArea className="min-h-[40vh] h-[calc(100vh-32rem)]">
-				<div className="p-2 pr-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+			<ScrollArea className="flex-1 border rounded-xl bg-muted/5 overflow-y-auto">
+				<div className="p-4 pr-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
 					{Object.entries(PERMISSION_LABELS).map(([bitStr, info]) => {
 						const bit = parseInt(bitStr);
 						const active = hasPermission(bit);
@@ -215,7 +232,7 @@ export default function PermissionEditor({
 						return (
 							<button
 								key={bit}
-                disabled={!editable}
+								disabled={!canEdit}
 								onClick={() => togglePermission(bit)}
 								type="button"
 								className={`flex items-start gap-3 p-4 rounded-lg border-2 text-left transition-all ${
