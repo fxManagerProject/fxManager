@@ -15,6 +15,17 @@ import {
 	TabsTrigger,
 } from '@fxmanager/ui/components/tabs';
 import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@fxmanager/ui/components/alert-dialog';
+import {
 	AlertCircle,
 	AlertTriangle,
 	ArrowLeft,
@@ -22,6 +33,7 @@ import {
 	FileUser,
 	Gavel,
 	Info,
+	Trash,
 	UserPlus,
 } from 'lucide-react';
 import { formatDate, initials } from '@/lib/utils';
@@ -39,6 +51,7 @@ import {
 	AlertTitle,
 } from '@fxmanager/ui/components/alert';
 import { useAuth } from '@/hooks/use-auth';
+import { toast } from 'sonner';
 
 function LoadingSkeleton() {
 	return (
@@ -97,6 +110,31 @@ export default function AdminView() {
 			.finally(() => setLoading(false));
 	}, [params.adminId]);
 
+	async function handleDelete() {
+		const deletePromise = QueryService<ApiResponse<undefined>>({
+			endpoint: `/settings/admins/${params.adminId}/delete`,
+			method: 'POST',
+		});
+
+		toast.promise(deletePromise, {
+			loading: 'Deleting admin account...',
+			success: (r) => {
+				if (!r.success) throw new Error(r.error);
+
+				setTimeout(
+					() => navigate('/settings/admins', { replace: true }),
+					1_500,
+				);
+
+				return `Admin has been successfully removed.`;
+			},
+			error: (err) => {
+				console.error('Failed to delete admin', err.message);
+				return `Deletion failed: ${err.message}`;
+			},
+		});
+	}
+
 	if (loading) return <LoadingSkeleton />;
 
 	if (error || !adminData || !params.adminId) {
@@ -123,24 +161,63 @@ export default function AdminView() {
 
 	const { stats } = adminData;
 	const totalActions = stats.totalBans + stats.totalKicks + stats.totalWarns;
+	const isMaster = adminData.permissions & UserPermissions.MASTER;
 
 	return (
 		<div>
-			<div className="flex items-center gap-3 my-4">
-				<Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-					<ArrowLeft className="h-4 w-4" />
-				</Button>
+			<div className="flex flex-row justify-between items-center pr-4">
+				<div className="flex items-center gap-3 my-4">
+					<Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+						<ArrowLeft className="h-4 w-4" />
+					</Button>
 
-				<Avatar className="h-12 w-12 text-base shrink-0">
-					<AvatarFallback>{initials(adminData.username)}</AvatarFallback>
-				</Avatar>
+					<Avatar className="h-12 w-12 text-base shrink-0">
+						<AvatarFallback>{initials(adminData.username)}</AvatarFallback>
+					</Avatar>
 
-				<div className="flex-1 min-w-0">
-					<div className="flex flex-wrap items-center gap-2">
-						<h1 className="text-lg font-bold truncate">{adminData.username}</h1>
+					<div className="flex-1 min-w-0">
+						<div className="flex flex-wrap items-center gap-2">
+							<h1 className="text-lg font-bold truncate">
+								{adminData.username}
+							</h1>
+						</div>
+						<p className="text-xs text-muted-foreground">
+							Admin #{adminData.id}
+						</p>
 					</div>
-					<p className="text-xs text-muted-foreground">Admin #{adminData.id}</p>
 				</div>
+
+				{!isMaster && (
+					<AlertDialog>
+						<AlertDialogTrigger asChild>
+							<Button variant="destructive">
+								<Trash />
+								<span className="hidden md:block">Delete User</span>
+							</Button>
+						</AlertDialogTrigger>
+
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+								<AlertDialogDescription>
+									This action cannot be undone. This will permanently delete the
+									admin account for{' '}
+									<span className="font-bold text-foreground">
+										{adminData.username}{' '}
+									</span>
+									and remove their access from the panel.
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+
+							<AlertDialogFooter>
+								<AlertDialogCancel>Cancel</AlertDialogCancel>
+								<AlertDialogAction onClick={handleDelete} variant="destructive">
+									Delete User
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
+				)}
 			</div>
 
 			<div className="space-y-6 pt-2 pb-0 pl-0 pr-4">
@@ -280,7 +357,7 @@ export default function AdminView() {
 							</CardHeader>
 
 							<CardContent className="flex-1 flex flex-col min-h-0 px-6 pt-0 overflow-hidden">
-								{adminData.permissions & UserPermissions.MASTER ? (
+								{isMaster ? (
 									<Alert
 										variant="destructive"
 										className="bg-destructive/5 border-destructive/20"
