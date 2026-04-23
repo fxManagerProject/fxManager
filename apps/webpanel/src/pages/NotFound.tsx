@@ -27,24 +27,28 @@ export default function NotFound() {
 							<span className="text-destructive">404 Not Found</span>
 						</p>
 						<p className="text-muted-foreground text-xs pt-1">
-							The requested resource does not exist or has been removed.
+							{user
+								? 'The requested resource does not exist or has been moved.'
+								: 'Authentication required to access this resource.'}
 						</p>
 					</div>
 				</div>
 
 				<div className="w-full flex justify-around items-center gap-3">
-					<Button
-						variant="outline"
-						className="w-30"
-						onClick={() => navigate(-1)}
-					>
-						<ArrowLeft className="h-4 w-4" />
-						Go back
-					</Button>
+					{user && (
+						<Button
+							variant="outline"
+							className="w-30"
+							onClick={() => navigate(-1)}
+						>
+							<ArrowLeft className="h-4 w-4" />
+							Go back
+						</Button>
+					)}
 					<Button
 						variant="default"
 						className="w-30"
-						onClick={() => navigate(user ? '/' : '/login')}
+						onClick={() => navigate(user ? '/dashboard' : '/login')}
 					>
 						{user ? (
 							<Home className="h-4 w-4" />
