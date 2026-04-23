@@ -30,6 +30,7 @@ import type { ApiError, ApiResponse } from '@fxmanager/shared/types';
 import { StatCard } from '@/components/stat-card';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import type { AdminProfile } from '@fxmanager/database/types';
+import PermissionEditor from './components/permissioneditor';
 
 function LoadingSkeleton() {
 	return (
@@ -134,7 +135,7 @@ export default function AdminView() {
 			</div>
 
 			<div className="space-y-6 pt-2 pb-0 pl-0 pr-4">
-				<div className="flex flex-wrap gap-3">
+				<div className="flex flex-wrap gap-3 flex-col md:flex-row">
 					<StatCard
 						icon={FileUser}
 						label="Linked Player"
@@ -154,6 +155,7 @@ export default function AdminView() {
 					/>
 					<StatCard
 						icon={Gavel}
+            className='hidden lg:block'
 						label={`Action Distribution (total: ${totalActions})`}
 						value={
 							<div className="mt-1">
