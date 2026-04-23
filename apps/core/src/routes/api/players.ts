@@ -99,7 +99,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 				playerId,
 				expiresAt,
 				reason,
-				admin.username,
+				admin.id,
 			);
 
 			const onlinePlayer = gm.getPlayer(playerId);
