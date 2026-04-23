@@ -6,7 +6,11 @@ import type {
 import { sessionAuth } from '../../middleware/session';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
-import type { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
+import type {
+	ApiResponse,
+	BaseAdminUser,
+	PaginatedResponse,
+} from '@fxmanager/shared/types';
 import { repo } from '@fxmanager/database';
 
 const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
@@ -58,6 +62,46 @@ const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
 
 		return { success: true, data: profile };
 	});
+
+	fastify.post(
+		'/admins/:adminId/permissions',
+		async (request, reply): Promise<ApiResponse<number>> => {
+			const { admin } = request as AuthedRequest;
+			const { adminId: adminIdRaw } = request.params as { adminId: string };
+			const { permissions } = request.body as { permissions: number };
+			const adminId = parseInt(adminIdRaw);
+
+			const allowed = PermissionManager.has(
+				admin.permissions,
+				UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+			);
+
+			if (!allowed) throw new Error('Unauthorized');
+
+			try {
+				const { newPerms } = await repo.settings.updateAdminPermissions(
+					adminId,
+					permissions,
+				);
+
+				return {
+					success: true,
+					data: newPerms,
+				};
+			} catch (err) {
+				const msg = (err as Error).message;
+
+				if (msg === 'not_found')
+					return { success: false, error: 'Admin not found' };
+				else if (msg === 'admin_is_master')
+					return {
+						success: false,
+						error: 'Can not change permissions of master account',
+					};
+				else throw err;
+			}
+		},
+	);
 };
 
 export default {
