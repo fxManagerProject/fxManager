@@ -34,29 +34,39 @@ export default function AdminCreate() {
 
 	async function handleSubmit() {
 		setSaving(true);
-		try {
-			const r = await QueryService<ApiResponse<number>>({
-				endpoint: '/settings/admin/create',
-				method: 'POST',
-				body: formData,
-			});
 
-			if (r.success) {
-				toast.success(`Admin created`, {
-					description: 'Returning to admin view',
-				});
-				setTimeout(
-					() => navigate('/settings/admins', { replace: true }),
-					2_000,
+		const createPromise = QueryService<ApiResponse<{ password?: string }>>({
+			endpoint: '/settings/admins/create',
+			method: 'POST',
+			body: formData,
+		});
+
+		toast.promise(createPromise, {
+			loading: 'Generating admin account...',
+			success: (r) => {
+				if (!r.success) throw new Error(r.error);
+
+				if (r.data.password) {
+					navigator.clipboard.writeText(r.data.password);
+				}
+
+				setTimeout(() => navigate('/settings/admins', { replace: true }), 2000);
+
+				return (
+					<div className="flex flex-col gap-1">
+						<span className="font-bold">Admin Created!</span>
+						<span className="text-xs opacity-90">
+							Password copied to clipboard. Redirecting...
+						</span>
+					</div>
 				);
-			} else {
-				toast.error('Unable to save', { description: r.error });
-			}
-		} catch (err) {
-			toast.error('Unable to save', { description: (err as Error).message });
-		} finally {
-			setSaving(false);
-		}
+			},
+			error: (err) => {
+				console.log('Failed to create admin:', err);
+				return `Failed to create admin: ${err.message}`;
+			},
+			finally: () => setSaving(false),
+		});
 	}
 
 	return (
