@@ -271,14 +271,15 @@ export default function AdminView() {
 						</Card>
 					</TabsContent>
 
-					<TabsContent value="settings">
-						<Card>
-							<CardHeader>
+					<TabsContent value="settings" className="mt-0 outline-none">
+						<Card className="h-[100vh] md:h-[64vh] flex flex-col overflow-hidden">
+							<CardHeader className="shrink-0">
 								<CardTitle className="text-lg font-bold">
 									Permissions Editor
 								</CardTitle>
 							</CardHeader>
-							<CardContent>
+
+							<CardContent className="flex-1 flex flex-col min-h-0 px-6 pt-0 overflow-hidden">
 								{adminData.permissions & UserPermissions.MASTER ? (
 									<Alert
 										variant="destructive"
@@ -296,7 +297,7 @@ export default function AdminView() {
 									</Alert>
 								) : (
 									<PermissionEditor
-                    editable={adminData.id !== user!.id}
+										editable={adminData.id !== user!.id}
 										adminId={params.adminId}
 										value={adminData.permissions}
 										updatePerms={(permissions) =>
