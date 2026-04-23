@@ -1,4 +1,6 @@
+import { QueryService } from '@/lib/query';
 import { UserPermissions } from '@fxmanager/shared/constants';
+import type { ApiResponse } from '@fxmanager/shared/types';
 import { Input } from '@fxmanager/ui/components/input';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import {
@@ -10,6 +12,7 @@ import {
 	Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export const PERMISSION_LABELS: Record<
 	number,
@@ -102,15 +105,23 @@ export const PERMISSION_LABELS: Record<
 };
 
 interface PermissionEditorProps {
+  editable: boolean;
+	adminId: string;
 	value: number;
+	updatePerms: (perms: number) => void;
 }
 
-export default function PermissionEditor({ value }: PermissionEditorProps) {
+export default function PermissionEditor({
+  editable,
+	adminId,
+	value,
+	updatePerms,
+}: PermissionEditorProps) {
 	const [bitfield, setBitField] = useState<number>(value ?? 0);
 	const [isSaving, setIsSaving] = useState(false);
 
 	const togglePermission = (bit: number) => {
-    if (bit === UserPermissions.MASTER) return;
+		if (bit === UserPermissions.MASTER) return;
 		setBitField((prev) => prev ^ bit);
 	};
 
@@ -119,6 +130,22 @@ export default function PermissionEditor({ value }: PermissionEditorProps) {
 	const handleSave = async () => {
 		setIsSaving(true);
 		try {
+			const response = await QueryService<ApiResponse<number>>({
+				endpoint: `/settings/admins/${adminId}/permissions`,
+				method: 'POST',
+				body: { permissions: bitfield },
+			});
+
+			if (response.success) {
+				updatePerms(response.data);
+				toast.success('Permissions updated for admin.');
+			} else {
+				toast.error(response.error);
+			}
+		} catch (err) {
+			toast.error('Unable to update permissions', {
+				description: (err as Error).message,
+			});
 		} finally {
 			setIsSaving(false);
 		}
@@ -137,6 +164,7 @@ export default function PermissionEditor({ value }: PermissionEditorProps) {
 							<Input
 								type="text"
 								value={bitfield}
+                disabled={!editable}
 								onChange={(e) => setBitField(Number(e.target.value) || 0)}
 								className="bg-muted border-none rounded px-2 py-1 text-sm font-mono w-32 text-right"
 							/>
@@ -144,7 +172,7 @@ export default function PermissionEditor({ value }: PermissionEditorProps) {
 					</div>
 				</div>
 
-				<div className="flex items-center gap-2">
+				{editable && <div className="flex items-center gap-2">
 					<button
 						onClick={() => setBitField(0)}
 						disabled={bitfield === 0}
@@ -175,7 +203,7 @@ export default function PermissionEditor({ value }: PermissionEditorProps) {
 						)}
 						{isSaving ? 'Saving...' : 'Save Changes'}
 					</button>
-				</div>
+				</div>}
 			</div>
 
 			<ScrollArea className="min-h-[40vh] h-[calc(100vh-32rem)]">
@@ -187,12 +215,13 @@ export default function PermissionEditor({ value }: PermissionEditorProps) {
 						return (
 							<button
 								key={bit}
+                disabled={!editable}
 								onClick={() => togglePermission(bit)}
 								type="button"
 								className={`flex items-start gap-3 p-4 rounded-lg border-2 text-left transition-all ${
 									active
 										? 'border-primary bg-primary/5 ring-1 ring-primary'
-										: 'border-transparent bg-muted/40 hover:bg-muted'
+										: 'border-transparent bg-muted/40 hover:bg-muted disabled:hover:bg-muted/40'
 								}`}
 							>
 								<div

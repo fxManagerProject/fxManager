@@ -38,6 +38,7 @@ import {
 	AlertDescription,
 	AlertTitle,
 } from '@fxmanager/ui/components/alert';
+import { useAuth } from '@/hooks/use-auth';
 
 function LoadingSkeleton() {
 	return (
@@ -67,6 +68,7 @@ function LoadingSkeleton() {
 
 export default function AdminView() {
 	const navigate = useNavigate();
+	const { user } = useAuth();
 	const params = useParams<{ adminId: string }>();
 	const [adminData, setAdminData] = useState<AdminProfile | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -97,7 +99,7 @@ export default function AdminView() {
 
 	if (loading) return <LoadingSkeleton />;
 
-	if (error || !adminData) {
+	if (error || !adminData || !params.adminId) {
 		return (
 			<Card className="w-full mt-12">
 				<CardContent className="py-6 flex flex-col items-center gap-3 text-center">
@@ -293,7 +295,14 @@ export default function AdminView() {
 										</AlertDescription>
 									</Alert>
 								) : (
-									<PermissionEditor value={adminData.permissions} />
+									<PermissionEditor
+                    editable={adminData.id !== user!.id}
+										adminId={params.adminId}
+										value={adminData.permissions}
+										updatePerms={(permissions) =>
+											setAdminData((prev) => ({ ...prev!, permissions }))
+										}
+									/>
 								)}
 							</CardContent>
 						</Card>
