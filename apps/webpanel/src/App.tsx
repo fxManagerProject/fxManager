@@ -31,23 +31,29 @@ export function App() {
 				/>
 			))}
 
-			<Route element={<AppLayout />}>
-				{layoutRoutes.map(({ path, element, auth, permission }) => {
-					if (
-						permission &&
-						!PermissionManager.has(user!.permissions, permission)
-					)
-						return;
+			{user && (
+				<Route element={<AppLayout />}>
+					{layoutRoutes.map(({ path, element, auth, permission }) => {
+						if (
+							permission &&
+							!PermissionManager.has(user!.permissions, permission)
+						)
+							return;
 
-					return (
-						<Route
-							key={path}
-							path={path}
-							element={<ProtectedRoute element={element} auth={auth} />}
-						/>
-					);
-				})}
-			</Route>
+						return (
+							<Route
+								key={path}
+								path={path}
+								element={<ProtectedRoute element={element} auth={auth} />}
+							/>
+						);
+					})}
+					<Route
+						path="*"
+						element={<ProtectedRoute element={NotFound} auth={false} />}
+					/>
+				</Route>
+			)}
 
 			<Route
 				path="*"
