@@ -264,19 +264,11 @@ export default function AdminView() {
 						<Card>
 							<CardHeader>
 								<CardTitle className="text-lg font-bold">
-									Action Recap
+									Permissions Editor
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">
-									<Info className="h-8 w-8 text-muted-foreground/60 mb-2" />
-									<p className="text-sm font-medium text-muted-foreground">
-										Permission Editor
-									</p>
-									<p className="text-xs text-muted-foreground/70">
-										Permission Editor is not yet available.
-									</p>
-								</div>
+                <PermissionEditor value={adminData.permissions} />
 							</CardContent>
 						</Card>
 					</TabsContent>
