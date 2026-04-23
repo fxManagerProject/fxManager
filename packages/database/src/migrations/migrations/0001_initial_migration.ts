@@ -86,10 +86,11 @@ export const migration_0001_initial: Migration = {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       player_id INTEGER NOT NULL REFERENCES players (id),
       reason TEXT NOT NULL,
-      banned_by TEXT NOT NULL,
+      issuer INTEGER NULL,
       expires_at INTEGER,
       created_at INTEGER NOT NULL,
-      revoked_at INTEGER
+      revoked_at INTEGER,
+      FOREIGN KEY (issuer) REFERENCES admin_users (id) ON DELETE SET NULL
     )`,
 
 		`CREATE INDEX bans_player_idx ON bans (player_id)`,

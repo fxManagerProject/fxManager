@@ -78,7 +78,9 @@ export const bans = sqliteTable(
 			.notNull()
 			.references(() => players.id, { onDelete: 'cascade' }),
 		reason: text('reason').notNull(),
-		bannedBy: text('banned_by').notNull(),
+    issuer: integer('issuer').references(() => adminUsers.id, {
+      onDelete: 'set null',
+    }),
 		expiresAt: integer('expires_at', { mode: 'timestamp' }),
 		createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 		revokedAt: integer('revoked_at', { mode: 'timestamp' }),
