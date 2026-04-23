@@ -146,6 +146,42 @@ const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
 			}
 		},
 	);
+
+	fastify.post(
+		'/admins/:adminId/delete',
+		async (request): Promise<ApiResponse<undefined>> => {
+			const { admin } = request as AuthedRequest;
+			const { adminId: adminIdRaw } = request.params as { adminId: string };
+			const adminId = parseInt(adminIdRaw);
+
+			const allowed = PermissionManager.has(
+				admin.permissions,
+				UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+			);
+
+			if (!allowed) throw new Error('Unauthorized');
+
+			try {
+				await repo.auth.deleteUser(adminId);
+
+				return {
+					success: true,
+					data: undefined,
+				};
+			} catch (err) {
+				const msg = (err as Error).message;
+
+				if (msg === 'not_found')
+					return { success: false, error: 'Admin not found' };
+				else if (msg === 'admin_is_master')
+					return {
+						success: false,
+						error: 'Cannot delete master account',
+					};
+				else throw err;
+			}
+		},
+	);
 };
 
 export default {
