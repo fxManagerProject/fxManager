@@ -8,3 +8,9 @@ export interface BaseAdminUser {
 	createdAt: Date;
 	lastLoginAt: Date | null;
 }
+
+export interface CreateAdminForm {
+	username: string;
+	permissions: UserPermissionsType;
+	playerId: number | null;
+}
