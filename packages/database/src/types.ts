@@ -1,5 +1,17 @@
-import type { Player, PlayerIdentifiers } from '@fxmanager/shared/types';
-import { adminUsers, bans, kicks, playerNotes, reports, warns } from './schema';
+import type {
+	BaseAdminUser,
+	Player,
+	PlayerIdentifiers,
+} from '@fxmanager/shared/types';
+import {
+	adminUsers,
+	auditLog,
+	bans,
+	kicks,
+	playerNotes,
+	reports,
+	warns,
+} from './schema';
 
 export type Ban = typeof bans.$inferSelect;
 export type Warn = typeof warns.$inferSelect;
@@ -18,4 +30,16 @@ export interface PlayerProfile extends Player {
 	};
 	reports: (typeof reports.$inferSelect)[];
 	notes: (typeof playerNotes.$inferSelect)[];
+}
+
+export type AuditLog = typeof auditLog.$inferSelect;
+
+export interface AdminProfile extends BaseAdminUser {
+	auditLogs: AuditLog[];
+	stats: {
+		totalBans: number;
+		totalKicks: number;
+		totalWarns: number;
+		totalNotes: number;
+	};
 }
