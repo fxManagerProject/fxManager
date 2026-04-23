@@ -9,6 +9,7 @@ import SettingsPage from './settings';
 import PlayerView from './players/playerview';
 import AdminManagementList from './settings/adminmanagement';
 import AdminView from './settings/adminview';
+import AdminCreate from './settings/admincreate';
 
 type RouteConfig = {
 	path: string;
@@ -37,6 +38,11 @@ export const routes: RouteConfig[] = [
 	{
 		path: '/settings/admins',
 		element: AdminManagementList,
+		permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+	},
+	{
+		path: '/settings/admins/create',
+		element: AdminCreate,
 		permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
 	},
 	{
