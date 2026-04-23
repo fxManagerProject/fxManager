@@ -9,9 +9,11 @@ import { UserPermissions } from '@fxmanager/shared/constants';
 import type {
 	ApiResponse,
 	BaseAdminUser,
+	CreateAdminForm,
 	PaginatedResponse,
 } from '@fxmanager/shared/types';
 import { repo } from '@fxmanager/database';
+import { generatePassword } from '../../common/utils';
 
 const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
 	// enforces that admin key exists in request otherwise returns 401
@@ -38,6 +40,48 @@ const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
 			sortOrder: query.sortOrder as any,
 		});
 	});
+
+	fastify.post(
+		'/admins/create',
+		async (request): Promise<ApiResponse<{ id: number; password: string }>> => {
+			const { admin } = request as AuthedRequest;
+
+			const allowed = PermissionManager.has(
+				admin.permissions,
+				UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+			);
+
+			if (!allowed) throw new Error('Unauthorized');
+
+			const { username, permissions } = request.body as CreateAdminForm;
+			const password = generatePassword(20);
+
+			try {
+				const profile = await repo.auth.createUser(
+					username,
+					password,
+					permissions,
+					false,
+				);
+
+				return {
+					success: true,
+					data: {
+						id: profile.id,
+						password,
+					},
+				};
+			} catch (err) {
+				const message = (err as Error).message;
+				return {
+					success: false,
+					error: message.includes('UNIQUE constraint failed')
+						? 'Username is already taken'
+						: message,
+				};
+			}
+		},
+	);
 
 	fastify.get('/admins/:adminId', async (request, reply) => {
 		const { admin } = request as AuthedRequest;
