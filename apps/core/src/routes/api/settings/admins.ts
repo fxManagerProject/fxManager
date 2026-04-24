@@ -2,8 +2,8 @@ import type {
 	AuthedRequest,
 	RouteModule,
 	SearchQueryRequest,
-} from '../../types';
-import { sessionAuth } from '../../middleware/session';
+} from '../../../types';
+import { sessionAuth } from '../../../middleware/session';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type {
@@ -13,13 +13,10 @@ import type {
 	PaginatedResponse,
 } from '@fxmanager/shared/types';
 import { repo } from '@fxmanager/database';
-import { generatePassword } from '../../common/utils';
+import { generatePassword } from '../../../common/utils';
 
-const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
-	// enforces that admin key exists in request otherwise returns 401
-	fastify.addHook('preHandler', sessionAuth);
-
-	fastify.get('/admins', (request, reply): PaginatedResponse<BaseAdminUser> => {
+const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
+	fastify.get('/', (request, reply): PaginatedResponse<BaseAdminUser> => {
 		const { admin } = request as AuthedRequest;
 
 		const allowed = PermissionManager.has(
@@ -42,7 +39,7 @@ const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
 	});
 
 	fastify.post(
-		'/admins/create',
+		'/create',
 		async (request): Promise<ApiResponse<{ id: number; password: string }>> => {
 			const { admin } = request as AuthedRequest;
 
@@ -83,7 +80,7 @@ const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
 		},
 	);
 
-	fastify.get('/admins/:adminId', async (request, reply) => {
+	fastify.get('/:adminId', async (request, reply) => {
 		const { admin } = request as AuthedRequest;
 
 		const allowed = PermissionManager.has(
@@ -108,7 +105,7 @@ const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
 	});
 
 	fastify.post(
-		'/admins/:adminId/permissions',
+		'/:adminId/permissions',
 		async (request, reply): Promise<ApiResponse<number>> => {
 			const { admin } = request as AuthedRequest;
 			const { adminId: adminIdRaw } = request.params as { adminId: string };
@@ -148,7 +145,7 @@ const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
 	);
 
 	fastify.post(
-		'/admins/:adminId/delete',
+		'/:adminId/delete',
 		async (request): Promise<ApiResponse<undefined>> => {
 			const { admin } = request as AuthedRequest;
 			const { adminId: adminIdRaw } = request.params as { adminId: string };
@@ -185,6 +182,6 @@ const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
 };
 
 export default {
-	prefix: '/settings',
-	handler: SettingsEndpoints,
+	prefix: '/admins',
+	handler: AdminManagementEndpoints,
 } satisfies RouteModule;
