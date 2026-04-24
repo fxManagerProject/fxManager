@@ -70,23 +70,32 @@ Commands specific to the game-side resource and NUI:
 * **`bun watch`** – Rebuilds the resource automatically as you save files.
 * **`bun deploy`** – Bundles the resource and copies it to the path defined in your `DEPLOY_PATH` environment variable.
 
-## Adding a migration
+## Database Migrations
 
-Edit `packages/database/src/migrations/index.ts` and append to the array:
+Migrations are automated via a synchronization utility. Do not manually edit the migration registry.
 
-```ts
-{
-  version: 2,
-  description: 'Add player notes',
-  up: [
-    'ALTER TABLE players ADD COLUMN notes TEXT',
-  ],
-},
-```
+### Adding a Migration
 
-Migrations run automatically on next startup. No CLI commands needed.
+1. **Generate Migration**: Run the generation script using:
+   ```bash
+   bun run db:migrate
+   ```
+2. **Describe**: When prompted, provide a short description of the changes.
 
-Biome handles everything ESLint + Prettier would - faster, single config at the root.
+The utility will automatically:
+* Sanitize and split the SQL queries.
+* Create a structured `.ts` migration file in `packages/database/src/migrations/migrations/`.
+* Register the new migration in `packages/database/src/migrations/index.ts`.
+
+### Rules
+* **Immutability**: Never modify a migration file (`.sql`, `.ts`, or `.json`) once it has been deployed to production.
+* **Automation**: Migrations are applied automatically on the next application startup.
+
+---
+
+## Tooling
+
+**Biome** handles linting and formatting (replacing ESLint and Prettier) using a single, high-performance configuration at the root.
 
 ---
 

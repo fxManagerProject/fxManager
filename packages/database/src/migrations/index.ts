@@ -22,7 +22,7 @@ function getCurrentVersion(sqlite: Database): number {
 			'SELECT MAX(version) as version FROM schema_version',
 		)
 		.get();
-	return row?.version ?? 0;
+	return row?.version ?? -1;
 }
 
 // ─── Runner ───────────────────────────────────────────────────────────────────

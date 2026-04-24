@@ -1,25 +1,20 @@
-import { migration_0001_initial } from './0001_initial_migration';
+import { m0000_grey_mother_askani } from './0000_grey_mother_askani';
 import type { Migration } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATABASE MIGRATION GUIDE
 //
-// Follow these steps to modify the database schema:
+// Do not manually create or register files in this directory. 
+// Use the automated migration utility:
 //
-// 1. CREATE: Add a new file in `./migrations/` using the naming convention:
-//    `XXXX_short_description.ts` (e.g., 0002_add_player_notes.ts)
-//
-// 2. IMPLEMENT: Define the `Migration` object.
-//    - Increment the `version` number by 1.
-//    - Use the `up` array for your SQL statements.
-//
-// 3. REGISTER: Import and add your new migration to the `migrations` array below.
-//    The order in this array determines the execution order.
+// 1. PROCESS: Run `bun run db:migrate` to detect new SQL files,
+//    prompt for a description, and automatically:
+//    - Create the corresponding .ts migration file.
+//    - Sanitize and split the SQL queries.
+//    - Register the migration in the array below.
 //
 // RULES:
-// - IMMUTABILITY: Never edit a migration that has already been deployed.
-// - ATOMICITY: Each string in the `up` array should be a single logical command.
-// - CONSISTENCY: Ensure `version` matches the filename prefix.
+// - IMMUTABILITY: Never edit a migration file (.ts or .sql or .json) once deployed.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const migrations: Migration[] = [migration_0001_initial];
+export const migrations: Migration[] = [m0000_grey_mother_askani];

@@ -1,0 +1,35 @@
+# .github/labeler.yml
+# Maps labels to changed file patterns.
+# Uses actions/labeler@v5 syntax (glob patterns).
+# Docs: https://github.com/actions/labeler
+
+"area: docs":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "docs/**"
+      - "**/*.md"
+
+"area: packages":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "packages/**"
+
+"area: apps":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "apps/**"
+
+"type: ci":
+  - changed-files:
+    - any-glob-to-any-file:
+      - ".github/**"
+      - "scripts/**"
+
+"type: config":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "biome.json"
+      - "turbo.json"
+      - "*.env*"
+      - "drizzle.config.ts"
+      - "tsconfig*"

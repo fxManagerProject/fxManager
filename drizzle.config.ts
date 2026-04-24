@@ -6,7 +6,7 @@ import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
   schema: './packages/database/src/schema.ts',
-  out: './packages/database/src/migrations/generated',
+  out: './packages/database/migrations',
   dialect: 'sqlite',
   dbCredentials: {
     url: './data/panel.db',
