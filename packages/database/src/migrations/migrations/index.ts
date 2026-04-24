@@ -1,4 +1,4 @@
-import { m0000_initial } from './0000_initial';
+import { m0000_grey_mother_askani } from './0000_grey_mother_askani';
 import type { Migration } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,4 +22,4 @@ import type { Migration } from '../types';
 // - CONSISTENCY: Ensure `version` matches the filename prefix.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const migrations: Migration[] = [m0000_initial];
+export const migrations: Migration[] = [m0000_grey_mother_askani];

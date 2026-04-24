@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "7ed0754e-9198-44a0-8c35-042f196a9707",
+	"id": "5a38127d-9c0d-45bf-b637-cc5ed0f55e9a",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"tables": {
 		"admin_users": {
@@ -245,11 +245,11 @@
 					"notNull": true,
 					"autoincrement": false
 				},
-				"issuer": {
-					"name": "issuer",
-					"type": "integer",
+				"banned_by": {
+					"name": "banned_by",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false,
+					"notNull": true,
 					"autoincrement": false
 				},
 				"expires_at": {
@@ -289,15 +289,6 @@
 					"columnsFrom": ["player_id"],
 					"columnsTo": ["id"],
 					"onDelete": "cascade",
-					"onUpdate": "no action"
-				},
-				"bans_issuer_admin_users_id_fk": {
-					"name": "bans_issuer_admin_users_id_fk",
-					"tableFrom": "bans",
-					"tableTo": "admin_users",
-					"columnsFrom": ["issuer"],
-					"columnsTo": ["id"],
-					"onDelete": "set null",
 					"onUpdate": "no action"
 				}
 			},

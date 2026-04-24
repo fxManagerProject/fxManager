@@ -38,12 +38,11 @@ CREATE TABLE `bans` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`player_id` integer NOT NULL,
 	`reason` text NOT NULL,
-	`issuer` integer,
+	`banned_by` text NOT NULL,
 	`expires_at` integer,
 	`created_at` integer NOT NULL,
 	`revoked_at` integer,
-	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`issuer`) REFERENCES `admin_users`(`id`) ON UPDATE no action ON DELETE set null
+	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE INDEX `bans_player_idx` ON `bans` (`player_id`);--> statement-breakpoint
