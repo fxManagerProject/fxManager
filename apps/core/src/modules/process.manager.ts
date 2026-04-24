@@ -1,6 +1,3 @@
-import EventEmitter from 'events';
-import { loadConfig } from '../common/config';
-import { EventNames } from '@fxmanager/shared/constants';
 import {
 	type ProcessOutputLine,
 	type ProcessState,
@@ -8,6 +5,7 @@ import {
 } from '@fxmanager/shared/types';
 import { wsManager } from './ws.manager';
 import { LogBuffer } from './buffer.manager';
+import { ConfigManager } from './config.manager';
 
 export class ProcessManager {
 	private state: ServerState = { status: 'stopped', startedAt: null };
@@ -18,30 +16,21 @@ export class ProcessManager {
 
 	// region process methods
 	async start() {
-		const config = loadConfig();
+		ConfigManager.regenerateApiToken();
+		const config = await ConfigManager.load();
+
 		this.setState('starting');
 
+		// biome-ignore format: the array should not be formatted
 		const args: string[] = [
-			'+exec',
-			config.configFile,
-			'+set',
-			'onesync',
-			'on',
-			'+set',
-			'resource-api-token',
-			config.resourceApiToken,
-			'+set',
-			'api-port',
-			`${config.webServerPort}`,
+			'+exec',                      config.configFile,
+			'+set', 'onesync',            config.onesync,
+			'+set', 'resource-api-token', config.resourceApiToken,
+			'+set', 'api-port',           `${config.webServerPort}`,
+
 			// Check if this actually works, would be neat to be able to hide it in console or have it read only
-			'+add_convar_permission',
-			'fxManager',
-			'read',
-			'resource-api-token',
-			'+add_convar_permission',
-			'fxManager',
-			'read',
-			'api-port',
+			'+add_convar_permission', 'fxManager', 'read', 'resource-api-token',
+			'+add_convar_permission', 'fxManager', 'read', 'api-port',
 		];
 
 		console.log(`[core] Starting fxServer`);
@@ -240,6 +229,7 @@ export class ProcessManager {
 
 		// ToDo: check for better approach, ts error on TextDecoderStream()
 		const lineStream = stream
+      // @ts-ignore
 			.pipeThrough(new TextDecoderStream())
 			.pipeThrough(this.createLineBreakTransformer());
 
