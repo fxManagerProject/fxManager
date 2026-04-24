@@ -5,6 +5,13 @@ import type * as schema from '../schema';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
+export const EDITABLE_SETTINGS_KEYS = [
+	'executable',
+	'serverDataPath',
+	'serverConfigFile',
+	'onesync',
+] as const;
+
 export function createSettingsRepository(db: DB) {
 	return {
 		get<T = unknown>(key: string): T | undefined {
@@ -12,7 +19,11 @@ export function createSettingsRepository(db: DB) {
 			return row?.value as T | undefined;
 		},
 
-		set(key: string, value: unknown) {
+		set(key: (typeof EDITABLE_SETTINGS_KEYS)[number], value: unknown) {
+			if (!EDITABLE_SETTINGS_KEYS.includes(key)) {
+				throw new Error(`The setting "${key}" is not listed as editable.`);
+			}
+
 			return db
 				.insert(settings)
 				.values({ key, value, updatedAt: new Date() })
