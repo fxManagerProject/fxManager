@@ -189,18 +189,20 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 				{canEdit && (
 					<div className="flex items-center gap-2">
 						<button
+							type="button"
 							onClick={() => setBitField(0)}
 							disabled={bitfield === 0}
-							className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
+							className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-destructive enabled:hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
 						>
 							<Trash2 className="h-4 w-4" />
 							Clear
 						</button>
 
 						<button
+							type="button"
 							onClick={() => setBitField(value)}
 							disabled={bitfield === value}
-							className="flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+							className="flex items-center gap-2 px-3 py-2 text-xs font-medium enabled:hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
 						>
 							<RotateCcw className="h-4 w-4" />
 							Reset
@@ -208,9 +210,10 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 
 						{!skipServerSave && (
 							<button
+								type="button"
 								onClick={handleSave}
 								disabled={isSaving || bitfield === value}
-								className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 rounded-lg shadow-sm transition-all"
+								className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground enabled:hover:bg-primary/90 disabled:opacity-50 rounded-lg shadow-sm transition-all"
 							>
 								{isSaving ? (
 									<Loader2 className="h-4 w-4 animate-spin" />
