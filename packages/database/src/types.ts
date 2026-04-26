@@ -36,10 +36,4 @@ export type AuditLog = typeof auditLog.$inferSelect;
 
 export interface AdminProfile extends BaseAdminUser {
 	auditLogs: AuditLog[];
-	stats: {
-		totalBans: number;
-		totalKicks: number;
-		totalWarns: number;
-		totalNotes: number;
-	};
 }

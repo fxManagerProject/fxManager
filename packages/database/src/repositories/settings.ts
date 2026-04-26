@@ -12,6 +12,8 @@ import {
 import type * as schema from '../schema';
 import { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
 import { UserPermissions } from '@fxmanager/shared/constants';
+import { PermissionManager } from '@fxmanager/shared/utils';
+import { AdminProfile } from '../types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -90,14 +92,17 @@ export function createSettingsRepository(db: DB) {
 				.all();
 
 			return {
-				items: response,
+				items: response.map((admin) => ({
+					...admin,
+					group: PermissionManager.getGroup(admin.permissions),
+				})),
 				total,
 				page,
 				pageSize,
 			};
 		},
 
-		async getAdminProfile(adminId: number) {
+		async getAdminProfile(adminId: number): Promise<AdminProfile | null> {
 			const profile = await db.query.adminUsers.findFirst({
 				where: eq(adminUsers.id, adminId),
 				columns: {
@@ -118,30 +123,8 @@ export function createSettingsRepository(db: DB) {
 
 			if (!profile) return null;
 
-			const stats = db
-				.select({
-					totalBans: countDistinct(bans.id),
-					totalKicks: countDistinct(kicks.id),
-					totalWarns: countDistinct(warns.id),
-					totalNotes: countDistinct(playerNotes.id),
-				})
-				.from(adminUsers)
-				.leftJoin(bans, eq(bans.issuer, adminUsers.id))
-				.leftJoin(kicks, eq(kicks.issuer, adminUsers.id))
-				.leftJoin(warns, eq(warns.issuer, adminUsers.id))
-				.leftJoin(playerNotes, eq(playerNotes.issuer, adminUsers.id))
-				.where(eq(adminUsers.id, adminId))
-				.groupBy(adminUsers.id)
-				.get();
-
 			return {
 				...profile,
-				stats: stats || {
-					totalBans: 0,
-					totalKicks: 0,
-					totalWarns: 0,
-					totalNotes: 0,
-				},
 			};
 		},
 
