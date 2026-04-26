@@ -31,10 +31,10 @@ import {
 	ArrowLeft,
 	Clock,
 	FileUser,
-	Gavel,
 	Info,
 	Trash,
 	UserPlus,
+	UsersRound,
 } from 'lucide-react';
 import { formatDate, initials } from '@/lib/utils';
 import { Button } from '@fxmanager/ui/components/button';
@@ -52,6 +52,10 @@ import {
 } from '@fxmanager/ui/components/alert';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
+import {
+	DynamicIcon,
+	type LucidIconName,
+} from '@fxmanager/ui/components/dynamic-icon';
 
 function LoadingSkeleton() {
 	return (
@@ -159,8 +163,6 @@ export default function AdminView() {
 		);
 	}
 
-	const { stats } = adminData;
-	const totalActions = stats.totalBans + stats.totalKicks + stats.totalWarns;
 	const isMaster = adminData.permissions & UserPermissions.MASTER;
 
 	return (
@@ -240,38 +242,21 @@ export default function AdminView() {
 						value={formatDate(adminData.lastLoginAt)}
 					/>
 					<StatCard
-						icon={Gavel}
-						className="hidden lg:block"
-						label={`Action Distribution (total: ${totalActions})`}
-						value={
-							<div className="mt-1">
-								<div className="flex h-2 w-full overflow-hidden rounded-full bg-secondary">
-									<div
-										style={{
-											width: `${(stats.totalBans / totalActions) * 100}%`,
-										}}
-										className="bg-red-500"
-									/>
-									<div
-										style={{
-											width: `${(stats.totalKicks / totalActions) * 100}%`,
-										}}
-										className="bg-orange-500"
-									/>
-									<div
-										style={{
-											width: `${(stats.totalWarns / totalActions) * 100}%`,
-										}}
-										className="bg-yellow-500"
-									/>
-								</div>
-								<div className="mt-1 flex justify-around text-[10px] uppercase text-muted-foreground">
-									<span>Bans: {stats.totalBans}</span>
-									<span>Kicks: {stats.totalKicks}</span>
-									<span>Warns: {stats.totalWarns}</span>
-								</div>
-							</div>
+						icon={
+							adminData.group?.icon
+								? () => (
+										<DynamicIcon
+											name={
+												adminData.group?.icon as LucidIconName
+											}
+                      // color={adminData.group?.colour}
+										/>
+									)
+								: UsersRound
 						}
+						className="hidden lg:block"
+						label={`Staff Group`}
+						value={adminData.group?.label ?? 'None'}
 					/>
 				</div>
 
