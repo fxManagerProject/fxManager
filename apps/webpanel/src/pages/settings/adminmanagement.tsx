@@ -33,9 +33,11 @@ import { Button } from '@fxmanager/ui/components/button';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import PageSizeSelector from '@/components/page-size-selector';
 import PageSelector from '@/components/page-selector';
-import { UserPermissions } from '@fxmanager/shared/constants';
 import { Badge } from '@fxmanager/ui/components/badge';
-import { PermissionManager } from '../../../../../packages/shared/src/utils/permissions';
+import {
+	DynamicIcon,
+	type LucidIconName,
+} from '@fxmanager/ui/components/dynamic-icon';
 
 type SortBy = 'createdAt' | 'lastLoginAt';
 type SortOrder = 'asc' | 'desc';
@@ -245,19 +247,19 @@ export default function AdminManagementList() {
 											<TableCell className="font-medium pl-4 flex-1 flex items-center gap-2 truncate">
 												<span>{a.username}</span>
 
-												{a.permissions & UserPermissions.MASTER ? (
-													<Badge>Master</Badge>
-												) : PermissionManager.has(
-														a.permissions,
-														UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
-													) ? (
+												{a.group && (
 													<Badge
-														variant="outline"
-														className="border-blue-500 text-blue-500"
+														style={{ backgroundColor: a.group.colour }}
+														className="text-white"
 													>
-														Admin Management
+														{a.group.icon && (
+															<DynamicIcon
+																name={a.group.icon as LucidIconName}
+															/>
+														)}
+														{a.group.label}
 													</Badge>
-												) : null}
+												)}
 											</TableCell>
 											<TableCell className="text-sm text-muted-foreground flex-1">
 												{new Date(a.createdAt).toLocaleDateString()}
