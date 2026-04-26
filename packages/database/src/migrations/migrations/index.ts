@@ -4,7 +4,7 @@ import type { Migration } from '../types';
 // ─────────────────────────────────────────────────────────────────────────────
 // DATABASE MIGRATION GUIDE
 //
-// Do not manually create or register files in this directory. 
+// Do not manually create or register files in this directory.
 // Use the automated migration utility:
 //
 // 1. PROCESS: Run `bun run db:migrate` to detect new SQL files,

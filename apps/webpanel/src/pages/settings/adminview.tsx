@@ -246,10 +246,8 @@ export default function AdminView() {
 							adminData.group?.icon
 								? () => (
 										<DynamicIcon
-											name={
-												adminData.group?.icon as LucidIconName
-											}
-                      // color={adminData.group?.colour}
+											name={adminData.group?.icon as LucidIconName}
+											// color={adminData.group?.colour}
 										/>
 									)
 								: UsersRound
