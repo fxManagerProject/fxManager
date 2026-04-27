@@ -2,7 +2,7 @@ import { PageHeader } from '@/components/page-header';
 import { QueryService } from '@/lib/query';
 import type { ApiResponse, CreateAdminForm } from '@fxmanager/shared/types';
 import { UserPlus } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import PermissionEditor from './components/permissioneditor';
@@ -10,6 +10,7 @@ import { Button } from '@fxmanager/ui/components/button';
 import { Card, CardContent } from '@fxmanager/ui/components/card';
 import { Label } from '@fxmanager/ui/components/label';
 import { Input } from '@fxmanager/ui/components/input';
+import { PlayerSearch } from './components/player-search';
 
 export default function AdminCreate() {
 	const navigate = useNavigate();
@@ -19,18 +20,6 @@ export default function AdminCreate() {
 		permissions: 0,
 		playerId: null,
 	});
-
-	function handlePlayerIdChange(
-		e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>,
-	) {
-		const { value } = e.target;
-
-		if (/[0-9]+/.test(value)) {
-			setFormData((prev) => ({ ...prev, playerId: parseInt(value) }));
-		} else {
-			setFormData((prev) => ({ ...prev, playerId: null }));
-		}
-	}
 
 	async function handleSubmit() {
 		setSaving(true);
@@ -90,16 +79,12 @@ export default function AdminCreate() {
 								}
 							/>
 						</div>
-						<div className="space-y-2">
-							<Label className="text-sm font-medium">
-								Player ID (Optional)
-							</Label>
-							<Input
-								disabled
-								type="text"
-								placeholder="To Be Integrated"
-								value={formData.playerId ?? ''}
-								onChange={handlePlayerIdChange}
+
+						<div className="space-y-2 flex flex-col">
+							<Label className="text-sm font-medium">Player (Optional)</Label>
+							<PlayerSearch
+								value={formData.playerId}
+								onChange={(playerId) => setFormData({ ...formData, playerId })}
 							/>
 						</div>
 					</div>
