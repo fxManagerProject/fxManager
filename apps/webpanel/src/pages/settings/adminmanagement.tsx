@@ -207,6 +207,9 @@ export default function AdminManagementList() {
 									Name
 								</TableHead>
 								<TableHead className="flex-1 flex items-center">
+									Role
+								</TableHead>
+								<TableHead className="flex-1 flex items-center">
 									Created At
 								</TableHead>
 								<TableHead className="flex-1 flex items-center">
@@ -246,8 +249,9 @@ export default function AdminManagementList() {
 										>
 											<TableCell className="font-medium pl-4 flex-1 flex items-center gap-2 truncate">
 												<span>{a.username}</span>
-
-												{a.group && (
+											</TableCell>
+                      <TableCell className="flex-1 flex items-center gap-2 truncate">
+                        {a.group && (
 													<Badge
 														style={{ backgroundColor: a.group.colour }}
 														className="text-white"
@@ -260,7 +264,7 @@ export default function AdminManagementList() {
 														{a.group.label}
 													</Badge>
 												)}
-											</TableCell>
+                      </TableCell>
 											<TableCell className="text-sm text-muted-foreground flex-1">
 												{new Date(a.createdAt).toLocaleDateString()}
 											</TableCell>
