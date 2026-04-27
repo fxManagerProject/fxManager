@@ -14,6 +14,7 @@ import type {
 } from '@fxmanager/shared/types';
 import { repo } from '@fxmanager/database';
 import { generatePassword } from '../../../common/utils';
+import type { AdminProfile } from '@fxmanager/database/types';
 
 const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 	fastify.get('/', (request, reply): PaginatedResponse<BaseAdminUser> => {
@@ -128,6 +129,52 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 				return {
 					success: true,
 					data: newPerms,
+				};
+			} catch (err) {
+				const msg = (err as Error).message;
+
+				if (msg === 'not_found')
+					return { success: false, error: 'Admin not found' };
+				else if (msg === 'admin_is_master')
+					return {
+						success: false,
+						error: 'Can not change permissions of master account',
+					};
+				else throw err;
+			}
+		},
+	);
+
+	fastify.post(
+		'/:adminId/player',
+		async (
+			request,
+			reply,
+		): Promise<ApiResponse<{ newPlayerId: AdminProfile['playerId'] }>> => {
+			const { admin } = request as AuthedRequest;
+			const { adminId: adminIdRaw } = request.params as { adminId: string };
+			const { playerId } = request.body as {
+				playerId: AdminProfile['playerId'];
+			};
+			const adminId = parseInt(adminIdRaw);
+
+			const allowed = PermissionManager.has(
+				admin.permissions,
+				UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+			);
+
+			if (!allowed) throw new Error('Unauthorized');
+
+			try {
+				const { newPlayerId } = await repo.settings.updateAdminLinkedPlayer(
+					adminId,
+					playerId,
+					PermissionManager.has(admin.permissions, UserPermissions.MASTER),
+				);
+
+				return {
+					success: true,
+					data: { newPlayerId },
 				};
 			} catch (err) {
 				const msg = (err as Error).message;
