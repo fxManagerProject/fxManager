@@ -50,18 +50,10 @@ bun lint         # lint only
 bun format       # format only
 bun typecheck    # tsc --noEmit across all packages (via Turbo)
 bun db:studio    # open Drizzle Studio to browse the database (optional)
+bun db:migrate   # creates a new migration file
 ```
 
 ---
-
-## Development & Code Quality
-
-* **`bun lint`** – Runs linting across the entire monorepo to find and fix code smells.
-* **`bun format`** – Automatically formats all source code and internal build scripts.
-* **`bun typecheck`** – Validates TypeScript types across all packages via Turbo.
-* **`bun db:studio`** – Opens a browser-based GUI to manage and browse your database.
-* **`bun build`** – Compiles all packages and prepares the production bundle.
-* **`bun dev`** – Starts the development environment with hot-reloading.
 
 ### Game Resource ( [`apps/resource`](./apps/resource) )
 Commands specific to the game-side resource and NUI:
@@ -69,6 +61,8 @@ Commands specific to the game-side resource and NUI:
 * **`bun web:dev`** – Runs the Vite dev server for the NUI frontend.
 * **`bun watch`** – Rebuilds the resource automatically as you save files.
 * **`bun deploy`** – Bundles the resource and copies it to the path defined in your `DEPLOY_PATH` environment variable.
+
+---
 
 ## Database Migrations
 
