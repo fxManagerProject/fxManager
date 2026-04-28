@@ -1,8 +1,4 @@
 'use client';
-
-import * as React from 'react';
-import { PanelLeftClose, PanelLeftOpen, Server } from 'lucide-react';
-
 import {
 	Sidebar,
 	SidebarContent,
@@ -12,6 +8,8 @@ import {
 	SidebarRail,
 	useSidebar,
 } from '@fxmanager/ui/components/sidebar';
+import { PanelLeftClose, PanelLeftOpen, Server } from 'lucide-react';
+import type * as React from 'react';
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
 import { ServerStatusCard } from './server-status';

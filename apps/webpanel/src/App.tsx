@@ -1,10 +1,10 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
-import { routes } from './pages';
-import AppLayout from './components/sidebar';
-import { ProtectedRoute } from './components/protected-route';
-import NotFound from './pages/NotFound';
-import { useAuth } from './hooks/use-auth';
 import { PermissionManager } from '@fxmanager/shared/utils';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { ProtectedRoute } from './components/protected-route';
+import AppLayout from './components/sidebar';
+import { useAuth } from './hooks/use-auth';
+import { routes } from './pages';
+import NotFound from './pages/NotFound';
 
 export function App() {
 	const { user } = useAuth();
@@ -36,9 +36,9 @@ export function App() {
 					{layoutRoutes.map(({ path, element, auth, permission }) => {
 						if (
 							permission &&
-							!PermissionManager.has(user!.permissions, permission)
+							!PermissionManager.has(user.permissions, permission)
 						)
-							return;
+							return null;
 
 						return (
 							<Route

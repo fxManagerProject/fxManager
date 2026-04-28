@@ -37,7 +37,7 @@ export async function QueryService<T>(
 		const response = await fetch(url, options);
 
 		if (!response.ok) {
-			let errorData;
+			let errorData: { message: string };
 			try {
 				errorData = await response.json();
 			} catch {
