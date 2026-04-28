@@ -1,19 +1,15 @@
-import { asc, countDistinct, desc, eq, like, sql } from 'drizzle-orm';
+import { asc, desc, eq, like, sql } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import {
 	settings,
 	adminUsers,
 	auditLog,
-	bans,
-	kicks,
-	warns,
-	playerNotes,
 } from '../schema';
 import type * as schema from '../schema';
-import { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
+import type { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import { PermissionManager } from '@fxmanager/shared/utils';
-import { AdminProfile } from '../types';
+import type { AdminProfile } from '../types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -68,12 +64,12 @@ export function createSettingsRepository(db: DB) {
 
 			const countQuery = db
 				.select({ count: sql<number>`count(distinct ${adminUsers.id})` })
-				.from(adminUsers);
+				.from(adminUsers).where(filters);
 
 			const totalResult = countQuery.get();
 			const total = totalResult?.count ?? 0;
 
-			let query = db
+			const query = db
 				.select({
 					id: adminUsers.id,
 					username: adminUsers.username,
@@ -83,6 +79,7 @@ export function createSettingsRepository(db: DB) {
 					lastLoginAt: adminUsers.lastLoginAt,
 				})
 				.from(adminUsers)
+        .where(filters)
 				.$dynamic();
 
 			const response = query
