@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type * as React from 'react';
 import { Select as SelectPrimitive } from 'radix-ui';
 
 import { cn } from '@fxmanager/ui/lib/utils';

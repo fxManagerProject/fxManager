@@ -23,12 +23,15 @@ export interface AuthedRequest extends FastifyRequest {
 	admin: RequestAdmin;
 }
 
-export interface SearchQueryRequest extends AuthedRequest {
+/**
+ * @template T - The type of fields allowed for sorting (e.g., 'createdAt' | 'name').
+ */
+export interface SearchQueryRequest<T = unknown> extends AuthedRequest {
 	query: {
 		page: string;
 		pageSize: string;
 		search: string;
-		sortBy: 'playtime' | 'firstSeen' | 'lastSeen' | undefined;
+		sortBy: T | undefined;
 		sortOrder: 'asc' | 'desc' | undefined;
 	};
 }

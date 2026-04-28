@@ -52,7 +52,7 @@ export function useConsoleSocket({
 			offInitial();
 			unsubscribe('console');
 		};
-	}, [maxLines]);
+	}, [subscribe, unsubscribe, on, maxLines]);
 
 	const sendCommand = (command: string) => {
 		emit('console', 'command', { command });

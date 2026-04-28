@@ -185,8 +185,10 @@ export default function PlayerListPage() {
 							<ScrollArea className="h-[65vh]">
 								{loading ? (
 									Array.from({ length: 6 }).map((_, i) => (
+										// biome-ignore lint/suspicious/noArrayIndexKey: indexes are immutable
 										<TableRow key={i} className={`grid ${COL_GRID} w-full`}>
 											{Array.from({ length: 7 }).map((_, j) => (
+												// biome-ignore lint/suspicious/noArrayIndexKey: indexes are immutable
 												<TableCell key={j}>
 													<Skeleton className="h-4 w-full bg-zinc-800 rounded" />
 												</TableCell>

@@ -69,6 +69,7 @@ function LoadingSkeleton() {
 			{/* stat cards */}
 			<div className="flex gap-3 flex-wrap">
 				{Array.from({ length: 4 }).map((_, i) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: indexes are immutable
 					<Skeleton key={i} className="h-16 flex-1 min-w-[140px] rounded-lg" />
 				))}
 			</div>

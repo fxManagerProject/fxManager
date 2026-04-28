@@ -19,6 +19,50 @@ export function WSProvider({ children }: { children: ReactNode }) {
 	const handlersRef = useRef<Map<string, Set<MessageHandler>>>(new Map());
 	const pendingRef = useRef<Set<Channel>>(new Set()); // subscriptions before connect
 
+	useEffect(() => {
+		if (!user) {
+			if (socketRef.current) {
+				socketRef.current.close();
+				socketRef.current = null;
+				setConnected(false);
+			}
+
+			return;
+		}
+
+		if (socketRef.current) return;
+
+		const ws = new WebSocket(WSUrl());
+		socketRef.current = ws;
+
+		ws.onopen = () => {
+			setConnected(true);
+			// Flush subscriptions that were registered before the socket connected
+			for (const channel of pendingRef.current) {
+				ws.send(JSON.stringify({ type: 'subscribe', channel }));
+			}
+			pendingRef.current.clear();
+		};
+
+		ws.onclose = () => setConnected(false);
+
+		ws.onmessage = (event) => {
+			try {
+				const msg: WSMessage = JSON.parse(event.data);
+				const key = `${msg.channel}:${msg.event}`;
+				handlersRef.current.get(key)?.forEach((h) => {
+					h(msg);
+				});
+			} catch {}
+		};
+
+		return () => {
+			socketRef.current?.close();
+			socketRef.current = null;
+			setConnected(false);
+		};
+	}, [user]);
+
 	const send = useCallback((payload: object) => {
 		if (socketRef.current?.readyState === WebSocket.OPEN) {
 			socketRef.current.send(JSON.stringify(payload));
@@ -54,7 +98,7 @@ export function WSProvider({ children }: { children: ReactNode }) {
 			if (!handlersRef.current.has(key)) {
 				handlersRef.current.set(key, new Set());
 			}
-			handlersRef.current.get(key)!.add(handler as MessageHandler);
+			handlersRef.current.get(key)?.add(handler as MessageHandler);
 
 			return () => {
 				handlersRef.current.get(key)?.delete(handler as MessageHandler);
@@ -63,63 +107,17 @@ export function WSProvider({ children }: { children: ReactNode }) {
 		[],
 	);
 
-	useEffect(() => {
-		if (!user) {
-			if (socketRef.current) {
-				socketRef.current.close();
-				socketRef.current = null;
-				setConnected(false);
-			}
-
-			return;
+	const emit = useCallback(<T,>(channel: Channel, event: string, data: T) => {
+		if (socketRef.current?.readyState === WebSocket.OPEN) {
+			socketRef.current.send(
+				JSON.stringify({ type: 'emit', channel, event, data }),
+			);
+		} else {
+			console.warn(
+				`[ws] Cannot emit — not connected (channel: ${channel}, event: ${event})`,
+			);
 		}
-
-		if (socketRef.current) return;
-
-		console.log('WSUrl', WSUrl());
-		const ws = new WebSocket(WSUrl());
-		socketRef.current = ws;
-
-		ws.onopen = () => {
-			setConnected(true);
-			// Flush subscriptions that were registered before the socket connected
-			for (const channel of pendingRef.current) {
-				ws.send(JSON.stringify({ type: 'subscribe', channel }));
-			}
-			pendingRef.current.clear();
-		};
-
-		ws.onclose = () => setConnected(false);
-
-		ws.onmessage = (event) => {
-			try {
-				const msg: WSMessage = JSON.parse(event.data);
-				const key = `${msg.channel}:${msg.event}`;
-				handlersRef.current.get(key)?.forEach((h) => h(msg));
-			} catch {}
-		};
-
-		return () => {
-			socketRef.current?.close();
-			socketRef.current = null;
-			setConnected(false);
-		};
-	}, [user]);
-
-	const emit = useCallback(
-		<T,>(channel: Channel, event: string, data: T) => {
-			if (socketRef.current?.readyState === WebSocket.OPEN) {
-				socketRef.current.send(
-					JSON.stringify({ type: 'emit', channel, event, data }),
-				);
-			} else {
-				console.warn(
-					`[ws] Cannot emit — not connected (channel: ${channel}, event: ${event})`,
-				);
-			}
-		},
-		[user],
-	);
+	}, []);
 
 	return (
 		<WSContext.Provider value={{ subscribe, unsubscribe, on, emit, connected }}>

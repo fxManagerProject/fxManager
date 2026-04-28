@@ -1,19 +1,19 @@
 import './common/env';
 
+import path, { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
-import path, { join } from 'path';
-import { isFxManagerSetup, isProduction } from './common/utils';
+import fastifyWebsocket from '@fastify/websocket';
+import fastifyCookie from '@fastify/cookie';
 import { applyMigrations } from '@fxmanager/database';
+import { isFxManagerSetup, isProduction } from './common/utils';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
-import { readFileSync } from 'fs';
 import { loadConfig } from './common/config';
-import fastifyCookie from '@fastify/cookie';
 import { ProcessManager } from './modules/process.manager';
 import { GameManager } from './modules/game.manager';
-import fastifyWebsocket from '@fastify/websocket';
 
 applyMigrations();
 // hardcode for the time being

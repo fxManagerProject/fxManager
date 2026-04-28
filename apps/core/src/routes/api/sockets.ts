@@ -1,14 +1,14 @@
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
+import { UserPermissions } from '@fxmanager/shared/constants';
+import type {
+	OnlinePlayer,
+	ProcessOutputLine,
+	ServerState,
+} from '@fxmanager/shared/types';
+import { PermissionManager } from '@fxmanager/shared/utils';
+import { sessionAuth } from '../../middleware/session';
 import { wsManager } from '../../modules/ws.manager';
 import type { AuthedRequest, RouteModule } from '../../types';
-import type {
-	ServerState,
-	ProcessOutputLine,
-	OnlinePlayer,
-} from '@fxmanager/shared/types';
-import { sessionAuth } from '../../middleware/session';
-import { PermissionManager } from '@fxmanager/shared/utils';
-import { UserPermissions } from '@fxmanager/shared/constants';
 
 wsManager.addCheck('console', (admin) => {
 	return PermissionManager.has(
@@ -40,7 +40,7 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 	wsManager.on<{ command: string }>(
 		'console',
 		'command',
-		({ admin }, event, { command }) => {
+		({ admin }, _event, { command }) => {
 			if (
 				!PermissionManager.has(
 					admin.permissions,

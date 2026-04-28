@@ -74,6 +74,7 @@ function LoadingSkeleton() {
 			{/* stat cards */}
 			<div className="flex gap-3 flex-wrap">
 				{Array.from({ length: 4 }).map((_, i) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: indexes are immutable
 					<Skeleton key={i} className="h-24 flex-1 min-w-[140px] rounded-lg" />
 				))}
 			</div>
@@ -224,7 +225,7 @@ export default function AdminView() {
 				</div>
 
 				<div className="space-x-2">
-					{(!isMaster || adminData.id === user!.id) && (
+					{(!isMaster || adminData.id === user?.id) && (
 						<PlayerSearch
 							value={adminData.playerId}
 							onChange={(id) => handleLinkedPlayerChange(id)}
@@ -409,11 +410,14 @@ export default function AdminView() {
 									</Alert>
 								) : (
 									<PermissionEditor
-										editable={adminData.id !== user!.id}
+										editable={adminData.id !== user?.id}
 										adminId={params.adminId}
 										value={adminData.permissions}
 										updatePerms={(permissions) =>
-											setAdminData((prev) => ({ ...prev!, permissions }))
+											setAdminData((prev) => {
+												if (!prev) return null;
+												return { ...prev, permissions };
+											})
 										}
 									/>
 								)}

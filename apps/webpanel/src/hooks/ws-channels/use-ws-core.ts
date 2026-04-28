@@ -30,7 +30,7 @@ export function useWsChannel<T>(channel: Channel, event: string, initial: T) {
 			off();
 			unsubscribe(channel);
 		};
-	}, [channel, event]);
+	}, [channel, event, subscribe, unsubscribe, on]);
 
 	return { state, setState };
 }

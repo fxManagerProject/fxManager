@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type * as React from 'react';
 import { Dialog as SheetPrimitive } from 'radix-ui';
 
 import { cn } from '@fxmanager/ui/lib/utils';

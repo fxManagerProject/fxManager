@@ -1,8 +1,11 @@
 export type DeferralsKickFunc = (reason: string) => void;
 export type DeferralsDeferObj = {
 	defer: () => void;
-	update: (message: string) => {};
+	update: (message: string) => void;
 	done: (failureReason?: string) => void;
-	handover: (data: Record<string, any>) => void;
-	presentCard: (card: string, cb: (data: any, rawData: string) => void) => void;
+	handover: (data: Record<string, unknown>) => void;
+	presentCard: (
+		card: string,
+		cb: (data: unknown, rawData: string) => void,
+	) => void;
 };
