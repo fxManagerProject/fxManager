@@ -1,19 +1,25 @@
 function compareVersions(current: string, latest: string): number {
 	const parse = (v: string) => {
-		const [main, beta] = v.replace('v', '').split('-');
+		const [main, tag] = v.replace('v', '').split('-') as [
+			`${number}.${number}.${number}`,
+			'b' | undefined,
+		];
+		const parts = main.split('.').map(Number);
+
 		return {
-			parts: main!.split('.').map(Number) as [number, number, number],
-			isBeta: beta === 'b',
+			major: parts[0] ?? 0,
+			minor: parts[1] ?? 0,
+			patch: parts[2] ?? 0,
+			isBeta: tag === 'b',
 		};
 	};
 
 	const c = parse(current);
 	const l = parse(latest);
 
-	for (let i = 0; i < 3; i++) {
-		if (c.parts[i]! < l.parts[i]!) return 1;
-		if (c.parts[i]! > l.parts[i]!) return -1;
-	}
+	if (c.major !== l.major) return l.major - c.major > 0 ? 1 : -1;
+	if (c.minor !== l.minor) return l.minor - c.minor > 0 ? 1 : -1;
+	if (c.patch !== l.patch) return l.patch - c.patch > 0 ? 1 : -1;
 
 	if (c.isBeta && !l.isBeta) return 1;
 	if (!c.isBeta && l.isBeta) return -1;
@@ -41,7 +47,7 @@ export async function checkVersion(currentVersion: string) {
 		const data = (await response.json()) as {
 			tag_name: string;
 			html_url: string;
-			[key: string]: any;
+			[key: string]: unknown;
 		};
 		const latestVersion = data.tag_name;
 		const releaseUrl = data.html_url;
