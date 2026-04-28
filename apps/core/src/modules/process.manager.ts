@@ -1,20 +1,16 @@
-import EventEmitter from 'events';
-import { loadConfig } from '../common/config';
-import { EventNames } from '@fxmanager/shared/constants';
-import {
-	type ProcessOutputLine,
-	type ProcessState,
-	type ServerState,
+import type {
+	ProcessOutputLine,
+	ProcessState,
+	ServerState,
 } from '@fxmanager/shared/types';
-import { wsManager } from './ws.manager';
+import { loadConfig } from '../common/config';
 import { LogBuffer } from './buffer.manager';
+import { wsManager } from './ws.manager';
 
 export class ProcessManager {
 	private state: ServerState = { status: 'stopped', startedAt: null };
 	private proc: ReturnType<typeof Bun.spawn> | null = null;
 	private buffer = new LogBuffer<ProcessOutputLine>();
-
-	constructor() {}
 
 	// region process methods
 	async start() {
@@ -140,7 +136,7 @@ export class ProcessManager {
 		const stdin = this.proc?.stdin;
 		if (!stdin || typeof stdin === 'number')
 			throw new Error('Server stdin not available');
-		stdin.write(command + '\n');
+		stdin.write(`${command}\n`);
 		stdin.flush();
 	}
 
@@ -169,6 +165,7 @@ export class ProcessManager {
 
 		if (!payload) {
 			const paddedProcess = process.slice(0, 20).padStart(20, ' ');
+			// biome-ignore lint: needed to check if the string colour is an ansi code
 			const isAnsi = color && /^\x1b\[[0-9;]*m$/.test(color);
 
 			let ansiColor: string;

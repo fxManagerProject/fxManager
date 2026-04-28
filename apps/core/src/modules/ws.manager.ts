@@ -63,12 +63,12 @@ class WSManager {
 		if (msg.type === 'subscribe') {
 			let canConnectHandler = this.connectionChecks.get(msg.channel);
 
-    if (!canConnectHandler) {
-      const [root] = channel.split(':');
-      const prefix = `${root}:*`;
-      
-      canConnectHandler = this.connectionChecks.get(prefix as Channel);
-    }
+			if (!canConnectHandler) {
+				const [root] = channel.split(':');
+				const prefix = `${root}:*`;
+
+				canConnectHandler = this.connectionChecks.get(prefix as Channel);
+			}
 
 			if (canConnectHandler && !canConnectHandler(sub.admin, channel)) return;
 
@@ -87,8 +87,8 @@ class WSManager {
 		let provider = this.initialProviders.get(channel);
 
 		if (!provider) {
-      const [root] = channel.split(':');
-      const prefix = `${root}:*`;
+			const [root] = channel.split(':');
+			const prefix = `${root}:*`;
 
 			provider = this.initialProviders.get(prefix as Channel);
 		}
@@ -118,13 +118,13 @@ class WSManager {
 	) {
 		const exactKey = `${channel}:${event}`;
 		this.callbacks.get(exactKey)?.forEach((h) => {
-      h(client, event, data)
-    });
+			h(client, event, data);
+		});
 
 		const wildcardKey = `${channel}:*`;
 		this.callbacks.get(wildcardKey)?.forEach((h) => {
-      h(client, event, data)
-    });
+			h(client, event, data);
+		});
 	}
 
 	remove(id: string) {
@@ -154,7 +154,7 @@ class WSManager {
 	): () => void {
 		const key = `${channel}:${event}`;
 		if (!this.callbacks.has(key)) this.callbacks.set(key, new Set());
-		this.callbacks.get(key)!.add(handler as ServerHandler);
+		this.callbacks.get(key)?.add(handler as ServerHandler);
 
 		return () => this.callbacks.get(key)?.delete(handler as ServerHandler);
 	}
