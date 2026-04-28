@@ -145,7 +145,9 @@ if (!isProduction) {
 const start = async () => {
 	try {
 		await fastify.listen({ port: webServerPort, host: '0.0.0.0' });
-		console.log(`[core] Fastify server listening on http://localhost:${webServerPort}`);
+		console.log(
+			`[core] Fastify server listening on http://localhost:${webServerPort}`,
+		);
 	} catch (err) {
 		fastify.log.error(err);
 		process.exit(1);

@@ -228,7 +228,7 @@ export class ProcessManager {
 
 		// ToDo: check for better approach, ts error on TextDecoderStream()
 		const lineStream = stream
-      // @ts-ignore
+			// @ts-ignore
 			.pipeThrough(new TextDecoderStream())
 			.pipeThrough(this.createLineBreakTransformer());
 
