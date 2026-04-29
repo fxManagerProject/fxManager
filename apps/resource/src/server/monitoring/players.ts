@@ -1,11 +1,9 @@
-import { PlayerUpdatePackage } from '@fxmanager/shared/types';
+import type { PlayerUpdatePackage } from '@fxmanager/shared/types';
 import { QueryManager } from '../utils/query';
 
 class PlayerManager {
 	private players: Map<string, { permissions: number }> = new Map();
 	private updateInterval: NodeJS.Timeout | null = null;
-
-	constructor() {}
 
 	addPlayer(source: number, permissions: number = 0) {
 		if (this.players.size === 0) this.startUpdates();

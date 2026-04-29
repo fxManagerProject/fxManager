@@ -1,13 +1,14 @@
+import { Type, type Static } from '@sinclair/typebox';
 import type { FastifyPluginAsync } from 'fastify';
-import type { RouteModule } from '../../types';
+import { repo } from '@fxmanager/database';
+import { UserPermissions } from '@fxmanager/shared/constants';
+
 import {
 	COOKIE_NAME,
 	isFxManagerSetup,
 	isProduction,
 } from '../../common/utils';
-import { repo } from '@fxmanager/database';
-import { UserPermissions } from '@fxmanager/shared/constants';
-import { Type, type Static } from '@sinclair/typebox';
+import type { RouteModule } from '../../types';
 
 const SetupBody = Type.Object({
 	username: Type.String(),
@@ -34,7 +35,7 @@ const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
 				true,
 			);
 
-			const session = repo.auth.createSession(user!.id);
+			const session = repo.auth.createSession(user.id);
 
 			return reply
 				.setCookie(COOKIE_NAME, session.id, {

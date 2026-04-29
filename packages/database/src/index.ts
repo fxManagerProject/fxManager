@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { Database, type SQLiteError } from 'bun:sqlite';
-import { mkdirSync, existsSync } from 'fs';
-import { dirname } from 'path';
+import { mkdirSync, existsSync } from 'node:fs';
+import { dirname } from 'node:path';
 import * as schema from './schema';
 import { migrations, runMigrations } from './migrations';
 import { createPlayersRepository } from './repositories/players';

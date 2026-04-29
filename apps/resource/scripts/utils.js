@@ -1,7 +1,7 @@
 //@ts-check
 
-import { stat, readdir, readFile } from 'fs/promises';
-import { spawn } from 'child_process';
+import { stat, readdir, readFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 
 /**
  * Check if a filepath is valid.
@@ -11,7 +11,7 @@ export async function exists(path) {
 	try {
 		await stat(path);
 		return true;
-	} catch (err) {}
+	} catch {}
 
 	return false;
 }
@@ -56,7 +56,7 @@ export async function getFiles(...args) {
 				);
 
 				return paths.flat();
-			} catch (err) {
+			} catch {
 				return [];
 			}
 		}),

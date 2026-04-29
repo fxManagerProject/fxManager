@@ -4,7 +4,6 @@ import type {
 	WSClientMessage,
 	WSMessage,
 } from '@fxmanager/shared/types';
-import type { FastifyRequest } from 'fastify';
 import type { AuthedRequest } from '../types';
 
 interface Subscription {
@@ -65,7 +64,9 @@ class WSManager {
 			let canConnectHandler = this.connectionChecks.get(msg.channel);
 
 			if (!canConnectHandler) {
-				const prefix = channel.split(':')[0] + ':*';
+				const [root] = channel.split(':');
+				const prefix = `${root}:*`;
+
 				canConnectHandler = this.connectionChecks.get(prefix as Channel);
 			}
 
@@ -86,7 +87,9 @@ class WSManager {
 		let provider = this.initialProviders.get(channel);
 
 		if (!provider) {
-			const prefix = channel.split(':')[0] + ':*';
+			const [root] = channel.split(':');
+			const prefix = `${root}:*`;
+
 			provider = this.initialProviders.get(prefix as Channel);
 		}
 
@@ -114,10 +117,14 @@ class WSManager {
 		data: unknown,
 	) {
 		const exactKey = `${channel}:${event}`;
-		this.callbacks.get(exactKey)?.forEach((h) => h(client, event, data));
+		this.callbacks.get(exactKey)?.forEach((h) => {
+			h(client, event, data);
+		});
 
 		const wildcardKey = `${channel}:*`;
-		this.callbacks.get(wildcardKey)?.forEach((h) => h(client, event, data));
+		this.callbacks.get(wildcardKey)?.forEach((h) => {
+			h(client, event, data);
+		});
 	}
 
 	remove(id: string) {
@@ -147,7 +154,7 @@ class WSManager {
 	): () => void {
 		const key = `${channel}:${event}`;
 		if (!this.callbacks.has(key)) this.callbacks.set(key, new Set());
-		this.callbacks.get(key)!.add(handler as ServerHandler);
+		this.callbacks.get(key)?.add(handler as ServerHandler);
 
 		return () => this.callbacks.get(key)?.delete(handler as ServerHandler);
 	}

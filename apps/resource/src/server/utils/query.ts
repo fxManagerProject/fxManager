@@ -15,12 +15,12 @@ export async function QueryManager<T>(
 		headers?: Record<string, string>;
 	},
 	external: boolean = false,
-	showError: boolean = false,
 ): Promise<T> {
 	const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 	const url = `http://${HOSTNAME}${external ? '' : '/internal'}${cleanEndpoint}`;
 
 	try {
+		// biome-ignore lint/suspicious/noExplicitAny: needed
 		const options: any = {
 			method,
 			headers: {

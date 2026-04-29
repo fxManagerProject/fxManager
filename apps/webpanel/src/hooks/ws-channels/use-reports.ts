@@ -55,7 +55,7 @@ export function useReportsSocket(reportId?: number): UseReportsReturn {
 			offResolved();
 			unsubscribe(channel);
 		};
-	}, [channel]);
+	}, [subscribe, unsubscribe, on, channel]);
 
 	return {
 		reports,

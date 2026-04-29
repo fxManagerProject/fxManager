@@ -76,7 +76,7 @@ export function usePlayerlistSocket(): UsePlayerlistReturn {
 			offUpdate();
 			unsubscribe('playerlist');
 		};
-	}, []);
+	}, [subscribe, unsubscribe, on]);
 
 	return {
 		players,

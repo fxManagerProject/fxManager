@@ -58,7 +58,7 @@ function NavItemWithSubItems({
 								subItem.permission &&
 								!PermissionManager.has(user.permissions, subItem.permission)
 							)
-								return;
+								return null;
 
 							return (
 								<SidebarMenuSubItem key={subItem.title}>

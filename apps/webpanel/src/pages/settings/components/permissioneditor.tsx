@@ -80,7 +80,7 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 		if (cleanValue === '') {
 			setBitField(0);
 		} else {
-			setBitField(parseInt(cleanValue));
+			setBitField(parseInt(cleanValue, 10));
 		}
 	};
 
@@ -147,7 +147,7 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 										: undefined
 								}
 								disabled={!canEdit}
-								onValueChange={(value) => setBitField(parseInt(value))}
+								onValueChange={(value) => setBitField(parseInt(value, 10))}
 							>
 								<SelectTrigger className="w-44 border-none bg-muted">
 									<SelectValue placeholder="Custom" />
@@ -222,7 +222,7 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 			<ScrollArea className="flex-1 border rounded-xl bg-muted/5 overflow-y-auto">
 				<div className="p-4 pr-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
 					{Object.entries(PERMISSION_LABELS).map(([bitStr, info]) => {
-						const bit = parseInt(bitStr);
+						const bit = parseInt(bitStr, 10);
 						const active = hasPermission(bit);
 
 						return (

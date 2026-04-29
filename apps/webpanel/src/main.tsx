@@ -17,6 +17,7 @@ declare global {
 	}
 }
 
+// biome-ignore lint/style/noNonNullAssertion: conventional method
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
 		<BrowserRouter>

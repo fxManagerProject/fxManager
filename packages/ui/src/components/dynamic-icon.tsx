@@ -11,6 +11,7 @@ interface IconProps {
 
 /** Returns a lucide icon for a given string name */
 export const DynamicIcon = ({ name, color, size, className }: IconProps) => {
+	// biome-ignore lint/performance/noDynamicNamespaceImportAccess: required
 	const LucideIcon = Icons[name] as React.ElementType;
 	return LucideIcon ? (
 		<LucideIcon color={color} size={size} className={className} />

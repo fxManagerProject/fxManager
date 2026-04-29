@@ -3,7 +3,7 @@ import type {
 	Player,
 	PlayerIdentifiers,
 } from '@fxmanager/shared/types';
-import {
+import type {
 	adminUsers,
 	auditLog,
 	bans,

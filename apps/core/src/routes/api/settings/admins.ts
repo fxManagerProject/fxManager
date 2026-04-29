@@ -1,10 +1,5 @@
-import type {
-	AuthedRequest,
-	RouteModule,
-	SearchQueryRequest,
-} from '../../../types';
-import { sessionAuth } from '../../../middleware/session';
-import { PermissionManager } from '@fxmanager/shared/utils';
+import { repo } from '@fxmanager/database';
+import type { AdminProfile } from '@fxmanager/database/types';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type {
 	ApiResponse,
@@ -12,12 +7,16 @@ import type {
 	CreateAdminForm,
 	PaginatedResponse,
 } from '@fxmanager/shared/types';
-import { repo } from '@fxmanager/database';
+import { PermissionManager } from '@fxmanager/shared/utils';
 import { generatePassword } from '../../../common/utils';
-import type { AdminProfile } from '@fxmanager/database/types';
+import type {
+	AuthedRequest,
+	RouteModule,
+	SearchQueryRequest,
+} from '../../../types';
 
 const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
-	fastify.get('/', (request, reply): PaginatedResponse<BaseAdminUser> => {
+	fastify.get('/', (request): PaginatedResponse<BaseAdminUser> => {
 		const { admin } = request as AuthedRequest;
 
 		const allowed = PermissionManager.has(
@@ -27,15 +26,17 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 
 		if (!allowed) throw new Error('Unauthorized');
 
-		const { query } = request as SearchQueryRequest;
+		const { query } = request as SearchQueryRequest<
+			'createdAt' | 'lastLoginAt' | undefined
+		>;
 
 		const page = Number(query.page ?? 1);
 		const pageSize = Number(query.pageSize ?? 50);
 
 		return repo.settings.listAdmins(page, pageSize, {
 			search: query.search,
-			sortBy: query.sortBy as any,
-			sortOrder: query.sortOrder as any,
+			sortBy: query.sortBy,
+			sortOrder: query.sortOrder,
 		});
 	});
 
@@ -81,7 +82,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 		},
 	);
 
-	fastify.get('/:adminId', async (request, reply) => {
+	fastify.get('/:adminId', async (request) => {
 		const { admin } = request as AuthedRequest;
 
 		const allowed = PermissionManager.has(
@@ -92,7 +93,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 		if (!allowed) throw new Error('Unauthorized');
 
 		const { adminId: adminIdRaw } = request.params as { adminId: string };
-		const adminId = parseInt(adminIdRaw);
+		const adminId = parseInt(adminIdRaw, 10);
 
 		const profile = await repo.settings.getAdminProfile(adminId);
 
@@ -107,11 +108,11 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 
 	fastify.post(
 		'/:adminId/permissions',
-		async (request, reply): Promise<ApiResponse<number>> => {
+		async (request): Promise<ApiResponse<number>> => {
 			const { admin } = request as AuthedRequest;
 			const { adminId: adminIdRaw } = request.params as { adminId: string };
 			const { permissions } = request.body as { permissions: number };
-			const adminId = parseInt(adminIdRaw);
+			const adminId = parseInt(adminIdRaw, 10);
 
 			const allowed = PermissionManager.has(
 				admin.permissions,
@@ -149,14 +150,13 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 		'/:adminId/player',
 		async (
 			request,
-			reply,
 		): Promise<ApiResponse<{ newPlayerId: AdminProfile['playerId'] }>> => {
 			const { admin } = request as AuthedRequest;
 			const { adminId: adminIdRaw } = request.params as { adminId: string };
 			const { playerId } = request.body as {
 				playerId: AdminProfile['playerId'];
 			};
-			const adminId = parseInt(adminIdRaw);
+			const adminId = parseInt(adminIdRaw, 10);
 
 			const allowed = PermissionManager.has(
 				admin.permissions,
@@ -196,7 +196,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 		async (request): Promise<ApiResponse<undefined>> => {
 			const { admin } = request as AuthedRequest;
 			const { adminId: adminIdRaw } = request.params as { adminId: string };
-			const adminId = parseInt(adminIdRaw);
+			const adminId = parseInt(adminIdRaw, 10);
 
 			const allowed = PermissionManager.has(
 				admin.permissions,

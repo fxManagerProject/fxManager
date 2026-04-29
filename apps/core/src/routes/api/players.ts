@@ -17,23 +17,25 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 	fastify.get(
 		'/',
-		(request, reply): PaginatedResponse<Omit<Player, 'identifiers'>> => {
-			const { query } = request as SearchQueryRequest;
+		(request): PaginatedResponse<Omit<Player, 'identifiers'>> => {
+			const { query } = request as SearchQueryRequest<
+				'playtime' | 'firstSeen' | 'lastSeen' | undefined
+			>;
 
 			const page = Number(query.page ?? 1);
 			const pageSize = Number(query.pageSize ?? 50);
 
 			return repo.players.list(page, pageSize, {
 				search: query.search,
-				sortBy: query.sortBy as any,
-				sortOrder: query.sortOrder as any,
+				sortBy: query.sortBy,
+				sortOrder: query.sortOrder,
 			});
 		},
 	);
 
-	fastify.get('/:playerId', async (request, reply) => {
+	fastify.get('/:playerId', async (request) => {
 		const { playerId: playerIdRaw } = request.params as { playerId: string };
-		const playerId = parseInt(playerIdRaw);
+		const playerId = parseInt(playerIdRaw, 10);
 
 		const profile = await repo.players.findById(playerId);
 
@@ -51,7 +53,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		const { content } = request.body as { content: string };
 		const { admin } = request as AuthedRequest;
 
-		const playerId = parseInt(playerIdRaw);
+		const playerId = parseInt(playerIdRaw, 10);
 
 		try {
 			await repo.players.updatePlayerNotes(playerId, admin.id, content);
@@ -85,7 +87,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			expiresAt: string | null;
 		};
 		const { admin } = request as AuthedRequest;
-		const playerId = parseInt(playerIdRaw);
+		const playerId = parseInt(playerIdRaw, 10);
 
 		if (!PermissionManager.has(admin.permissions, UserPermissions.BAN)) {
 			return {
@@ -148,7 +150,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		const { playerId: playerIdRaw } = request.params as { playerId: string };
 		const { reason } = request.body as { reason: string };
 		const { admin } = request as AuthedRequest;
-		const playerId = parseInt(playerIdRaw);
+		const playerId = parseInt(playerIdRaw, 10);
 
 		if (!PermissionManager.has(admin.permissions, UserPermissions.KICK)) {
 			return {
@@ -195,7 +197,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		const { playerId: playerIdRaw } = request.params as { playerId: string };
 		const { reason } = request.body as { reason: string };
 		const { admin } = request as AuthedRequest;
-		const playerId = parseInt(playerIdRaw);
+		const playerId = parseInt(playerIdRaw, 10);
 
 		if (!PermissionManager.has(admin.permissions, UserPermissions.WARN)) {
 			return reply.code(403).send({

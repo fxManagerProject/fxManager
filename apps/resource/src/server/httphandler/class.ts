@@ -1,5 +1,5 @@
-import { z, ZodType } from 'zod';
-import {
+import type { z, ZodType } from 'zod';
+import type {
 	HttpRequest,
 	HttpResponse,
 	RawRequest,

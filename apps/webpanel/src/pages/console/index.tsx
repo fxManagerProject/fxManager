@@ -65,7 +65,7 @@ export default function Console() {
 		if (isNearBottom) {
 			el.scrollTop = el.scrollHeight;
 		}
-	}, [lines]);
+	}, []);
 
 	return (
 		<div className="flex h-[calc(100vh-2rem)] flex-col gap-4">
@@ -81,6 +81,7 @@ export default function Console() {
 						) : (
 							<div className="flex flex-col">
 								{lines.map((log, i) => (
+									// biome-ignore lint/suspicious/noArrayIndexKey: line indexes are immutable ?
 									<LogLine event={log} key={i} />
 								))}
 							</div>

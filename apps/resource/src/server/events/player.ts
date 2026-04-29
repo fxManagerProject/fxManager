@@ -1,5 +1,5 @@
-import { DeferralsDeferObj, DeferralsKickFunc } from '@common/types';
-import {
+import type { DeferralsDeferObj, DeferralsKickFunc } from '@common/types';
+import type {
 	DeferralCheckResponse,
 	PlayerIdentifiers,
 } from '@fxmanager/shared/types';
@@ -24,7 +24,7 @@ on(
 	'playerConnecting',
 	async (
 		playerName: string,
-		setKickReason: DeferralsKickFunc,
+		_setKickReason: DeferralsKickFunc,
 		deferrals: DeferralsDeferObj,
 	) => {
 		deferrals.defer();
@@ -57,7 +57,7 @@ on(
 				if (apiChecks.access) return deferrals.done();
 
 				switch (apiChecks.type) {
-					case 'ban':
+					case 'ban': {
 						const ban = apiChecks.ban;
 						const createdStr = new Date(ban.createdAt).toLocaleDateString();
 
@@ -83,6 +83,7 @@ on(
             </div>`.trim(),
 						);
 						break;
+					}
 					case 'error':
 						deferrals.done(apiChecks.reason);
 						break;

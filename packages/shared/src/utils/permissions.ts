@@ -4,45 +4,41 @@ import {
 	UserPermissions,
 } from '@fxmanager/shared/constants';
 
-export class PermissionManager {
-	private static groups: AdminGroup[] = PERMISSION_GROUPS;
-	constructor() {}
+export const PermissionManager = {
+	groups: PERMISSION_GROUPS,
 
-	static has(userBitfield: number, required: UserPermissionsType): boolean {
+	has(userBitfield: number, required: UserPermissionsType): boolean {
 		if (userBitfield & UserPermissions.MASTER) return true;
 
 		return (userBitfield & required) === required;
-	}
+	},
 
-	static hasAll(
-		userBitfield: number,
-		required: UserPermissionsType[],
-	): boolean {
+	hasAll(userBitfield: number, required: UserPermissionsType[]): boolean {
 		if (userBitfield & UserPermissions.MASTER) return true;
 
 		const combined = required.reduce((acc, p) => acc | p, 0);
 
 		return (userBitfield & combined) === combined;
-	}
+	},
 
-	static grant(userBitfield: number, toAdd: UserPermissionsType): number {
+	grant(userBitfield: number, toAdd: UserPermissionsType): number {
 		return userBitfield | toAdd;
-	}
+	},
 
-	static revoke(userBitfield: number, toRemove: UserPermissionsType): number {
+	revoke(userBitfield: number, toRemove: UserPermissionsType): number {
 		return userBitfield & ~toRemove;
-	}
+	},
 
-	static loadGroups(groups: AdminGroup[]) {
-		this.groups = groups;
-	}
+	loadGroups(groups: AdminGroup[]) {
+		PermissionManager.groups = groups;
+	},
 
-	static getGroup(permission: number): AdminGroup | null {
+	getGroup(permission: number): AdminGroup | null {
 		const group =
-			this.groups.find(
+			PermissionManager.groups.find(
 				(group) => (permission & group.permissions) === group.permissions,
 			) ?? null;
 
 		return group;
-	}
-}
+	},
+};

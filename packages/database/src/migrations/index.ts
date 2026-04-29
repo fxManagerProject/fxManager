@@ -63,8 +63,8 @@ export function runMigrations(sqlite: Database, migrations: Migration[]) {
 		}
 	}
 
-	const latest = pending.at(-1)!;
+	const latest = pending.at(-1);
 	console.log(
-		`[database] Migrated to v${latest.version} (${pending.length} applied)`,
+		`[database] Migrated to v${latest?.version ?? 'UNK'} (${pending.length} applied)`,
 	);
 }
