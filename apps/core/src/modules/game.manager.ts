@@ -10,6 +10,7 @@ import type {
 } from '@fxmanager/shared/types';
 import { loadConfig } from '../common/config';
 import { wsManager } from './ws.manager';
+import { discordManager } from './discord.manager';
 
 export class GameManager {
 	private playerlist: OnlinePlayer[] = [];
@@ -32,7 +33,9 @@ export class GameManager {
 
 	// region receiving actions
 
-	async playerDeferralChecks(identifiers: PlayerIdentifiers): Promise<DeferralCheckResponse> {
+	async playerDeferralChecks(
+		identifiers: PlayerIdentifiers,
+	): Promise<DeferralCheckResponse> {
 		const ban = repo.players.checkBanned(identifiers);
 
 		if (ban) {
@@ -59,49 +62,74 @@ export class GameManager {
 			};
 		}
 
-		/* ToDo: Add whitelist checks */
 		const setting = repo.settings.get<WhitelistMode>('whitelist.mode');
+		const player = repo.players.findByLicense(identifiers.license);
+		const isAdmin = player ? repo.players.isStaff(player.id) : false;
 
-		if (!setting || setting === 'none') return { access: true };
+		if (!setting || setting === 'none' || isAdmin) return { access: true };
 
 		if (setting === 'admin-only') {
-			const player = repo.players.findByLicense(identifiers.license);
-
-			if (!player) {
-				return {
-					access: false,
-					type: 'error',
-					reason:
-						'Server is in Administer Mode, you can not connect at this time.',
-				};
-			}
-
-			const isAdmin = repo.players.isStaff(player.id);
-			if (isAdmin) {
-				return { access: true };
-			} else {
-				return {
-					access: false,
-					type: 'error',
-					reason:
-						'Server is in Administer Mode, you can not connect at this time.',
-				};
-			}
+			return {
+				access: false,
+				type: 'error',
+				reason:
+					'Server is in Administer Mode, you can not connect at this time.',
+			};
 		} else if (setting === 'identifier') {
-      const isWhitelisted = await repo.players.isAnyIdentifierWhitelisted(identifiers);
+			const isWhitelisted =
+				await repo.players.isAnyIdentifierWhitelisted(identifiers);
 
-      if (isWhitelisted) {
+			if (isWhitelisted) {
 				return { access: true };
 			} else {
 				return {
 					access: false,
 					type: 'error',
-					reason:
-						'You are not whitelisted.',
+					reason: 'You are not whitelisted.',
 				};
 			}
 		} else if (setting === 'discord') {
-      // ToDo
+			if (!discordManager.isConnected()) {
+				try {
+					await discordManager.connect();
+				} catch (err) {
+					const msg = (err as Error).message;
+					console.error(
+						"Game manager can't check discord whitelist as the discord manager couldn't connect:",
+						msg,
+					);
+
+					return {
+						access: false,
+						type: 'error',
+						reason:
+							'Unable to check whitelist status, please contact server administrators',
+					};
+				}
+			}
+
+			if (!identifiers.discord) {
+				return {
+					access: false,
+					type: 'error',
+					reason: 'No discord identifier found.',
+				};
+			}
+
+			const whitelisted = await discordManager.checkWhitelist(
+				identifiers.discord,
+			);
+
+			if (whitelisted) {
+				return { access: true };
+			} else {
+				return {
+					access: false,
+					type: 'error',
+					reason:
+						'You are not whitelisted, please address yourself to server staff.',
+				};
+			}
 		}
 
 		console.warn(
