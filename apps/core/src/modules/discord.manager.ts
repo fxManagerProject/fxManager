@@ -1,70 +1,94 @@
-import { Client, GatewayIntentBits, type Guild } from "discord.js";
-import type { DiscordManagerConfig } from "@fxmanager/shared/types";
+import { Client, Events, GatewayIntentBits, type Guild } from 'discord.js';
+import type { DiscordManagerConfig } from '@fxmanager/shared/types';
 
 export class DiscordManager {
-  private client = new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMembers,
-    ],
-  });
-  private connectionState: boolean = false;
+	private client = new Client({
+		intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+	});
+	private connectionState: boolean = false;
 
-  private botToken: string;
-  private config: Omit<DiscordManagerConfig, 'token'>;
+	private botToken: string;
+	private config: Omit<DiscordManagerConfig, 'token'>;
 
-  private guild: Guild | null = null;
-  
-  constructor ({ token, ...config }: DiscordManagerConfig) {
-    this.botToken = token;
-    this.config = config;
-  }
+	private guild: Guild | null = null;
 
-  async connect() {
-    try {
-      await this.client.login(this.botToken);
-      this.connectionState = true;
+	constructor({ token, ...config }: DiscordManagerConfig) {
+		this.botToken = token;
+		this.config = config;
+	}
 
-      this.client.on('ready', async (client) => {
-        this.guild = await client.guilds.fetch(this.config.guildId);
-      });
-    } catch (err) {
-      console.error('[discord.manager] failed to login to discord API.', (err as Error).message)
-    }
-  }
+	async connect() {
+		try {
+			const readyPromise = new Promise<void>((resolve, reject) => {
+				this.client.once(Events.ClientReady, async (readyClient) => {
+					try {
+						console.log('Discord client authenticated.');
 
-  async disconnect() {
-    try {
-      await this.client.destroy();
-      this.connectionState = false;
-    } catch (err) {
-      console.error('[discord.manager] failed to destroy discord client API.', (err as Error).message)
-    }
-  }
+						this.guild = await readyClient.guilds.fetch(this.config.guildId);
 
-  isConnected() {
-    return this.connectionState;
-  }
+						console.log(
+							'Guild loaded:',
+							this.guild
+								? { name: this.guild.name, id: this.guild.id }
+								: 'Not Found',
+						);
 
-  async checkWhitelist(discordId: string): Promise<boolean> {
-    if (!this.guild) {
-      throw new Error(`No guild was found for id: ${this.config.guildId}`);
-    }
+						this.connectionState = true;
+						resolve();
+					} catch (fetchError) {
+						reject(fetchError);
+					}
+				});
+			});
 
-    if (/discord:[0-9]+/.test(discordId)) {
-      discordId = discordId.slice(8);
-    }
+			await this.client.login(this.botToken);
 
-    try {
-      const member = await this.guild.members.fetch(discordId);
+			await readyPromise;
+		} catch (err) {
+			this.connectionState = false;
+			console.error(
+				'[discord.manager] failed to connect:',
+				(err as Error).message,
+			);
+			throw err;
+		}
+	}
 
-      if (!member) return false;
+	async disconnect() {
+		try {
+			await this.client.destroy();
+			this.connectionState = false;
+		} catch (err) {
+			console.error(
+				'[discord.manager] failed to destroy discord client API.',
+				(err as Error).message,
+			);
+		}
+	}
 
-      const { roles } = member;
+	isConnected() {
+		return this.connectionState;
+	}
 
-      return roles.cache.hasAny(...this.config.whitelistedRoles);
-    } catch {
-      return false;
-    }
-  }
+	async checkWhitelist(discordId: string): Promise<boolean> {
+		if (!this.guild) {
+			throw new Error(`No guild was found for id: ${this.config.guildId}`);
+		}
+
+		if (/discord:[0-9]+/.test(discordId)) {
+			discordId = discordId.slice(8);
+		}
+
+		try {
+			const member = await this.guild.members.fetch(discordId);
+
+			if (!member) return false;
+
+			const { roles } = member;
+
+			return roles.cache.hasAny(...this.config.whitelistedRoles);
+		} catch {
+			return false;
+		}
+	}
 }
