@@ -116,7 +116,8 @@ dist/
   resource/                ← Drop into your server's resources/ folder
 ```
 
-> ⚠️ The `public/` folder must remain in the same directory as the binary when deploying. The server resolves it relative to its own location at runtime.
+> [!IMPORTANT]
+> The `public/` folder must remain in the same directory as the binary when deploying. The server resolves it relative to its own location at runtime.
 
 ---
 
