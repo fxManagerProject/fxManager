@@ -32,7 +32,7 @@
 "type: migration":
   - changed-files:
     - any-glob-to-any-file:
-      - "packages/database/**"
+      - "packages/database/migrations/**"
       - "packages/database/src/migrations/**"
 
 "area: shared":
