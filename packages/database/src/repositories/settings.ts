@@ -1,6 +1,6 @@
 import { asc, desc, eq, like, sql } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { settings, adminUsers, auditLog } from '../schema';
+import { players, settings, adminUsers, auditLog } from '../schema';
 import type * as schema from '../schema';
 import type { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
 import { UserPermissions } from '@fxmanager/shared/constants';
@@ -117,8 +117,16 @@ export function createSettingsRepository(db: DB) {
 
 			if (!profile) return null;
 
+			const response = profile.playerId
+				? await db.query.players.findFirst({
+						where: eq(players.id, profile.playerId),
+						columns: { name: true },
+					})
+				: null;
+
 			return {
 				...profile,
+				playerName: response?.name ?? null,
 				group: PermissionManager.getGroup(profile.permissions),
 			};
 		},

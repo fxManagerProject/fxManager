@@ -12,6 +12,7 @@ import {
 	FileText,
 	Flag,
 	Hammer,
+	Loader2,
 	StickyNote,
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -23,6 +24,13 @@ import {
 	CardTitle,
 } from '@fxmanager/ui/components/card';
 import type { PlayerProfile } from '@fxmanager/database/types';
+import { useAuth } from '@/hooks/use-auth';
+import { PermissionManager } from '@fxmanager/shared/utils';
+import { UserPermissions } from '@fxmanager/shared/constants';
+import { Button } from '@fxmanager/ui/components/button';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { Separator } from '@fxmanager/ui/components/separator';
 
 export function BansTab({
 	bans,
@@ -239,7 +247,19 @@ export function AdminProfile({
 }: {
 	adminProfile: PlayerProfile['adminProfile'];
 }) {
+	const navigate = useNavigate();
+	const { user } = useAuth();
+
 	if (!adminProfile) return null;
+
+	const handleClick = () => {
+		toast.info(`Navigating to "${adminProfile.username}" profile view`, {
+			icon: <Loader2 className="animate-spin" />,
+			duration: 1_500,
+		});
+
+		setTimeout(() => navigate(`/settings/admins/${adminProfile.id}`), 1_000);
+	};
 
 	return (
 		<Card>
@@ -249,29 +269,56 @@ export function AdminProfile({
 					Admin Profile
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="px-4 pb-4 space-y-1">
-				<div className="flex gap-6 flex-wrap text-sm">
-					<div>
-						<p className="text-muted-foreground text-xs">Username</p>
-						<p className="font-medium">{adminProfile.username}</p>
+			<CardContent className="px-4 pb-4 pt-2">
+				<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+					<div className="space-y-1">
+						<p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+							Username
+						</p>
+						<p className="text-sm font-medium leading-none">
+							{adminProfile.username}
+						</p>
 					</div>
+
 					{adminProfile.createdAt && (
-						<div>
-							<p className="text-muted-foreground text-xs">Admin since</p>
-							<p className="font-medium">
+						<div className="space-y-1">
+							<p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+								Admin since
+							</p>
+							<p className="text-sm font-medium leading-none">
 								{formatDate(adminProfile.createdAt)}
 							</p>
 						</div>
 					)}
+
 					{adminProfile.lastLoginAt && (
-						<div>
-							<p className="text-muted-foreground text-xs">Last login</p>
-							<p className="font-medium">
+						<div className="space-y-1">
+							<p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+								Last login
+							</p>
+							<p className="text-sm font-medium leading-none">
 								{formatDate(adminProfile.lastLoginAt)}
 							</p>
 						</div>
 					)}
 				</div>
+
+				{PermissionManager.has(
+					user?.permissions ?? 0,
+					UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+				) && (
+					<>
+						<Separator className="my-4" />
+						<Button
+							onClick={handleClick}
+							variant="outline"
+							size="sm"
+							className="w-full sm:w-auto"
+						>
+							View Profile
+						</Button>
+					</>
+				)}
 			</CardContent>
 		</Card>
 	);

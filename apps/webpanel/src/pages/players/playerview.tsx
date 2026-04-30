@@ -242,6 +242,8 @@ export default function PlayerView() {
 						</CardContent>
 					</Card>
 
+					<AdminProfile adminProfile={playerData.adminProfile} />
+
 					<Tabs defaultValue="ban" onValueChange={handleTabChange}>
 						<TabsList className="w-full justify-start flex-wrap h-auto">
 							<TabsTrigger value="ban" className="gap-1.5">
@@ -346,8 +348,6 @@ export default function PlayerView() {
 							</Card>
 						</TabsContent>
 					</Tabs>
-
-					<AdminProfile adminProfile={playerData.adminProfile} />
 				</div>
 
 				<PlayerActionDialog
