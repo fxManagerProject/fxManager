@@ -10,6 +10,7 @@ import { createAuditRepository } from './repositories/audit';
 import { createSettingsRepository } from './repositories/settings';
 import { createApiTokensRepository } from './repositories/api-tokens';
 import { createAuthRepository } from './repositories/auth';
+import { createAdminsRepository } from './repositories/admins';
 
 export type { Migration } from './migrations/types';
 
@@ -66,10 +67,11 @@ export function applyMigrations() {
 // ─── Repositories ─────────────────────────────────────────────────────────────
 
 export const repo = {
-	players: createPlayersRepository(db),
+  players: createPlayersRepository(db),
 	bans: createBansRepository(db),
 	audit: createAuditRepository(db),
 	settings: createSettingsRepository(db),
 	apiTokens: createApiTokensRepository(db),
 	auth: createAuthRepository(db),
+  admins: createAdminsRepository(db)
 };
