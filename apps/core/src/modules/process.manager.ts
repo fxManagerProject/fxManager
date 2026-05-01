@@ -11,11 +11,12 @@ export class ProcessManager {
 	private state: ServerState = { status: 'stopped', startedAt: null };
 	private proc: ReturnType<typeof Bun.spawn> | null = null;
 	private buffer = new LogBuffer<ProcessOutputLine>();
+  private config = ConfigManager.getInstance();
 
 	// region process methods
 	async start() {
-		ConfigManager.regenerateApiToken();
-		const config = await ConfigManager.load();
+		this.config.regenerateApiToken();
+		const config = await this.config.load();
 
 		this.setState('starting');
 

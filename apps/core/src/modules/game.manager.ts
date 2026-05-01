@@ -12,11 +12,12 @@ import { ConfigManager } from './config.manager';
 
 export class GameManager {
 	private playerlist: OnlinePlayer[] = [];
+  private config = ConfigManager.getInstance();
 
 	constructor() {}
 
 	private async getApiToken() {
-		const { resourceApiToken } = await ConfigManager.load(true);
+		const { resourceApiToken } = await this.config.load(true);
 		return resourceApiToken;
 	}
 

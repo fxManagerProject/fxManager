@@ -11,6 +11,7 @@ interface CoreSettings extends CoreConfig {
 }
 
 export class ConfigManager {
+  private static instance: ConfigManager | null = null;
 	private systemValues: CoreConfig = {
 		platform: (process.platform === 'win32'
 			? 'windows'
@@ -21,6 +22,16 @@ export class ConfigManager {
 		resourceApiToken: crypto.randomUUID(),
 		cookieSecret: process.env.COOKIE_SECRET ?? crypto.randomUUID(),
 	};
+
+  private constructor() {}
+
+  static getInstance() {
+    if (!ConfigManager.instance) {
+      ConfigManager.instance = new ConfigManager();
+    }
+
+    return ConfigManager.instance;
+  }
 
 	regenerateApiToken() {
 		this.systemValues.resourceApiToken = crypto.randomUUID();
