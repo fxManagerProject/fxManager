@@ -25,6 +25,8 @@ export const UserPermissions = {
 	SETTINGS_ACCESS: 1 << 14, // 8192 - access & edit settings
 	SETTINGS_ADMIN_MANAGEMENT: 1 << 15, // 32768 - access & edit admins
 
+  RESOURCE_LIST: 1 << 16, // 65536 - view & (re)start/stop resources
+
 	MASTER: 1 << 30, // 1073741824
 } as const;
 
@@ -106,6 +108,11 @@ export const PERMISSION_LABELS: Record<
 		category: 'System',
 	},
 
+	[UserPermissions.RESOURCE_LIST]: {
+		label: 'Resource list',
+		desc: 'Start, stop and restart resources.',
+		category: 'Administration',
+	},
 	[UserPermissions.SETTINGS_ACCESS]: {
 		label: 'System Settings',
 		desc: 'Modify global server configuration.',
