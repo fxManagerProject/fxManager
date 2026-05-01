@@ -46,3 +46,8 @@ export interface ResourceData {
 	path: string;
 	status: 'started' | 'stopped';
 }
+
+export interface ResourceInitialData {
+  status: boolean | 'errored';
+  resourcelist: ResourceData[];
+}
