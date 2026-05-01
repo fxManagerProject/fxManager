@@ -7,7 +7,7 @@ const internalRoutes: RouteModule['handler'] = async (fastify, options) => {
 		...options,
 		prefix: PlayerModule.prefix,
 	});
-  
+
 	fastify.register(ResourceModule.handler, {
 		...options,
 		prefix: ResourceModule.prefix,
