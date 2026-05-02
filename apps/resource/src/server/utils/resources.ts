@@ -1,11 +1,14 @@
 import type { ResourceData } from '@fxmanager/shared/types';
 
+const EXCLUDED_RESOURCES = ['fxManager', 'monitor', 'chat', 'webpack', 'yarn'];
+
 export function getResourcesData(
 	resourceName?: string,
 ): (ResourceData | null) | ResourceData[] {
 	if (resourceName) {
-		const state = GetResourceState(resourceName);
+		if (EXCLUDED_RESOURCES.includes(resourceName)) return null;
 
+		const state = GetResourceState(resourceName);
 		if (state === 'missing' || state === 'unknown') return null;
 
 		return {
@@ -23,8 +26,10 @@ export function getResourcesData(
 
 		for (let i = 0; i < resourceCount; i++) {
 			const name = GetResourceByFindIndex(i);
-			const state = GetResourceState(name);
 
+			if (EXCLUDED_RESOURCES.includes(name)) continue;
+
+			const state = GetResourceState(name);
 			if (state === 'missing' || state === 'unknown') continue;
 
 			resources.push({
