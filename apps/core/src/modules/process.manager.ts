@@ -11,7 +11,7 @@ export class ProcessManager {
 	private state: ServerState = { status: 'stopped', startedAt: null };
 	private proc: ReturnType<typeof Bun.spawn> | null = null;
 	private buffer = new LogBuffer<ProcessOutputLine>();
-  private config = ConfigManager.getInstance();
+	private config = ConfigManager.getInstance();
 
 	// region process methods
 	async start() {

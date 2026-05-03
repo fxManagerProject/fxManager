@@ -185,7 +185,8 @@ class PlayersRepository {
 	updatePlaytime(playerId: number, playtime: number) {
 		const now = new Date();
 
-		this.db.update(players)
+		this.db
+			.update(players)
 			.set({ lastSeen: now, playtime })
 			.where(eq(players.id, playerId))
 			.run();
@@ -320,7 +321,8 @@ class PlayersRepository {
 
 		if (playerNote) {
 			if (content.trim()) {
-				this.db.update(playerNotes)
+				this.db
+					.update(playerNotes)
 					.set({ content, issuedAt: now })
 					.where(
 						and(

@@ -12,7 +12,7 @@ import { ConfigManager } from './config.manager';
 
 export class GameManager {
 	private playerlist: OnlinePlayer[] = [];
-  private config = ConfigManager.getInstance();
+	private config = ConfigManager.getInstance();
 
 	constructor() {}
 

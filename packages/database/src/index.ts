@@ -67,11 +67,11 @@ export function applyMigrations() {
 // ─── Repositories ─────────────────────────────────────────────────────────────
 
 export const repo = {
-  players: createPlayersRepository(db),
+	players: createPlayersRepository(db),
 	bans: createBansRepository(db),
 	audit: createAuditRepository(db),
 	settings: createSettingsRepository(db),
 	apiTokens: createApiTokensRepository(db),
 	auth: createAuthRepository(db),
-  admins: createAdminsRepository(db)
+	admins: createAdminsRepository(db),
 };
