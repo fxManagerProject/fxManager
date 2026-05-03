@@ -60,7 +60,9 @@ export class ConfigManager {
 		return { ...this.fxServerValues, ...dbValues };
 	}
 
-	getAllValues(): CoreSettings {
+	getAllValues(useDb: boolean = false): CoreSettings {
+		if (!useDb) return { ...this.fxServerValues, ...this.systemValues };
+
 		const dbEntries = repo.settings.all();
 
 		const persistent = dbEntries.reduce((acc, curr) => {
