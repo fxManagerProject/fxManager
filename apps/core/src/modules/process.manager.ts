@@ -16,7 +16,9 @@ export class ProcessManager {
 	// region process methods
 	async start() {
 		this.config.regenerateApiToken();
-		const config = this.config.getAllValues();
+    const systemValues = this.config.getSystemValues();
+    const fxServerValues = this.config.getFxServerValues(true);
+		const config = { ...systemValues, ...fxServerValues };
 
 		this.setState('starting');
 
