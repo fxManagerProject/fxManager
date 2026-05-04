@@ -57,7 +57,14 @@ export class ConfigManager {
 			Object.keys(this.fxServerValues),
 		);
 
-		return { ...this.fxServerValues, ...dbValues };
+    const persistent = Object.entries(dbValues).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, string>);
+
+		return { ...this.fxServerValues, ...persistent };
 	}
 
 	getAllValues(useDb: boolean = false): CoreSettings {
