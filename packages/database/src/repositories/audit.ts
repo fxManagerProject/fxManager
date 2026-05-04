@@ -11,7 +11,7 @@ class AuditRepository {
 	private constructor(private readonly db: DB) {}
 
 	static getInstance(db: DB): AuditRepository {
-		if (AuditRepository.instance) {
+		if (!AuditRepository.instance) {
 			AuditRepository.instance = new AuditRepository(db);
 		}
 

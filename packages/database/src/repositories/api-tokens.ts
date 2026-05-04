@@ -11,7 +11,7 @@ class APITokensRepository {
 	private constructor(private readonly db: DB) {}
 
 	static getInstance(db: DB): APITokensRepository {
-		if (APITokensRepository.instance) {
+		if (!APITokensRepository.instance) {
 			APITokensRepository.instance = new APITokensRepository(db);
 		}
 
