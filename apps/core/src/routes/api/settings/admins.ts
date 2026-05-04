@@ -33,7 +33,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 		const page = Number(query.page ?? 1);
 		const pageSize = Number(query.pageSize ?? 50);
 
-		return repo.settings.listAdmins(page, pageSize, {
+		return repo.admins.list(page, pageSize, {
 			search: query.search,
 			sortBy: query.sortBy,
 			sortOrder: query.sortOrder,
@@ -95,7 +95,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 		const { adminId: adminIdRaw } = request.params as { adminId: string };
 		const adminId = parseInt(adminIdRaw, 10);
 
-		const profile = await repo.settings.getAdminProfile(adminId);
+		const profile = await repo.admins.getProfile(adminId);
 
 		if (!profile)
 			return {
@@ -122,7 +122,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 			if (!allowed) throw new Error('Unauthorized');
 
 			try {
-				const { newPerms } = await repo.settings.updateAdminPermissions(
+				const { newPerms } = await repo.admins.updatePermissions(
 					adminId,
 					permissions,
 				);
@@ -166,7 +166,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 			if (!allowed) throw new Error('Unauthorized');
 
 			try {
-				const { newPlayerId } = await repo.settings.updateAdminLinkedPlayer(
+				const { newPlayerId } = await repo.admins.updateLinkedPlayer(
 					adminId,
 					playerId,
 					PermissionManager.has(admin.permissions, UserPermissions.MASTER),

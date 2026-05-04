@@ -191,7 +191,7 @@ export const auditLog = sqliteTable(
 
 export const settings = sqliteTable('settings', {
 	key: text('key').primaryKey(),
-	value: text('value', { mode: 'json' }).notNull().$type<unknown>(),
+	value: text('value').notNull().$type<unknown>(),
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 

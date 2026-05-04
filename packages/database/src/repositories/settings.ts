@@ -1,187 +1,82 @@
-import { asc, desc, eq, like, sql } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { players, settings, adminUsers, auditLog } from '../schema';
+import { settings } from '../schema';
 import type * as schema from '../schema';
-import type { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
-import { UserPermissions } from '@fxmanager/shared/constants';
-import { PermissionManager } from '@fxmanager/shared/utils';
-import type { AdminProfile } from '../types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
-export function createSettingsRepository(db: DB) {
-	return {
-		get<T = unknown>(key: string): T | undefined {
-			const row = db.select().from(settings).where(eq(settings.key, key)).get();
-			return row?.value as T | undefined;
-		},
+export const EDITABLE_SETTINGS_KEYS = [
+	'executable',
+	'serverDataPath',
+	'serverConfigFile',
+	'onesync',
+] as const;
 
-		set(key: string, value: unknown) {
-			return db
-				.insert(settings)
-				.values({ key, value, updatedAt: new Date() })
-				.onConflictDoUpdate({
-					target: settings.key,
-					set: { value, updatedAt: new Date() },
-				})
-				.returning()
-				.get();
-		},
+class SettingsRepository {
+	private static instance: SettingsRepository;
 
-		all() {
-			return db.select().from(settings).all();
-		},
+	private constructor(private readonly db: DB) {}
 
-		listAdmins(
-			page = 1,
-			pageSize = 20,
-			options?: {
-				search?: string;
-				sortBy?: 'createdAt' | 'lastLoginAt';
-				sortOrder?: 'asc' | 'desc';
+	static getInstance(db: DB): SettingsRepository {
+		if (!SettingsRepository.instance) {
+			SettingsRepository.instance = new SettingsRepository(db);
+		}
+
+		return SettingsRepository.instance;
+	}
+
+	get<T = string>(key: string): T | undefined {
+		const row = this.db
+			.select()
+			.from(settings)
+			.where(eq(settings.key, key))
+			.get();
+		return row?.value as T | undefined;
+	}
+
+	getMultiple<T = string, K extends string = string>(
+		keys: readonly K[],
+	): Record<K, T | undefined> {
+		if (keys.length === 0) {
+			return {} as Record<K, T | undefined>;
+		}
+
+		const rows = this.db
+			.select()
+			.from(settings)
+			.where(inArray(settings.key, keys))
+			.all();
+
+		return keys.reduce<Record<K, T | undefined>>(
+			(acc, key) => {
+				acc[key] = rows.find((row) => row.key === key)?.value as T | undefined;
+				return acc;
 			},
-		): PaginatedResponse<BaseAdminUser> {
-			const {
-				search,
-				sortBy = 'createdAt',
-				sortOrder = 'desc',
-			} = options ?? {};
+			{} as Record<K, T | undefined>,
+		);
+	}
 
-			const sortCol = {
-				createdAt: adminUsers.createdAt,
-				lastLoginAt: adminUsers.lastLoginAt,
-			}[sortBy];
+	set(key: (typeof EDITABLE_SETTINGS_KEYS)[number], value: unknown) {
+		if (!EDITABLE_SETTINGS_KEYS.includes(key)) {
+			throw new Error(`The setting "${key}" is not listed as editable.`);
+		}
 
-			const orderFn = sortOrder === 'asc' ? asc : desc;
+		return this.db
+			.insert(settings)
+			.values({ key, value, updatedAt: new Date() })
+			.onConflictDoUpdate({
+				target: settings.key,
+				set: { value, updatedAt: new Date() },
+			})
+			.returning()
+			.get();
+	}
 
-			const filters = search
-				? like(adminUsers.username, `%${search}%`)
-				: undefined;
+	all() {
+		return this.db.select().from(settings).all();
+	}
+}
 
-			const countQuery = db
-				.select({ count: sql<number>`count(distinct ${adminUsers.id})` })
-				.from(adminUsers)
-				.where(filters);
-
-			const totalResult = countQuery.get();
-			const total = totalResult?.count ?? 0;
-
-			const query = db
-				.select({
-					id: adminUsers.id,
-					username: adminUsers.username,
-					permissions: adminUsers.permissions,
-					playerId: adminUsers.playerId,
-					createdAt: adminUsers.createdAt,
-					lastLoginAt: adminUsers.lastLoginAt,
-				})
-				.from(adminUsers)
-				.where(filters)
-				.$dynamic();
-
-			const response = query
-				.orderBy(orderFn(sortCol))
-				.limit(pageSize)
-				.offset((page - 1) * pageSize)
-				.all();
-
-			return {
-				items: response.map((admin) => ({
-					...admin,
-					group: PermissionManager.getGroup(admin.permissions),
-				})),
-				total,
-				page,
-				pageSize,
-			};
-		},
-
-		async getAdminProfile(adminId: number): Promise<AdminProfile | null> {
-			const profile = await db.query.adminUsers.findFirst({
-				where: eq(adminUsers.id, adminId),
-				columns: {
-					id: true,
-					username: true,
-					permissions: true,
-					playerId: true,
-					createdAt: true,
-					lastLoginAt: true,
-				},
-				with: {
-					auditLogs: {
-						limit: 10,
-						orderBy: [desc(auditLog.createdAt)],
-					},
-				},
-			});
-
-			if (!profile) return null;
-
-			const response = profile.playerId
-				? await db.query.players.findFirst({
-						where: eq(players.id, profile.playerId),
-						columns: { name: true },
-					})
-				: null;
-
-			return {
-				...profile,
-				playerName: response?.name ?? null,
-				group: PermissionManager.getGroup(profile.permissions),
-			};
-		},
-
-		async updateAdminPermissions(adminId: number, newPerms: number) {
-			const admin = await db.query.adminUsers.findFirst({
-				where: eq(adminUsers.id, adminId),
-				columns: { permissions: true },
-			});
-
-			if (!admin) throw new Error('not_found');
-			if (admin.permissions & UserPermissions.MASTER)
-				throw new Error('admin_is_master');
-
-			// failsafe final check, don't set master permission
-			const sanitizedPerms = newPerms & ~UserPermissions.MASTER;
-
-			const result = await db
-				.update(adminUsers)
-				.set({
-					permissions: sanitizedPerms,
-				})
-				.where(eq(adminUsers.id, adminId))
-				.returning({ newPerms: adminUsers.permissions });
-
-			if (!result[0]) throw new Error('not_found');
-
-			return result[0];
-		},
-
-		async updateAdminLinkedPlayer(
-			adminId: number,
-			playerId: AdminProfile['playerId'],
-			isMaster: boolean,
-		) {
-			const admin = await db.query.adminUsers.findFirst({
-				where: eq(adminUsers.id, adminId),
-				columns: { permissions: true },
-			});
-
-			if (!admin) throw new Error('not_found');
-			if (admin.permissions & UserPermissions.MASTER && !isMaster)
-				throw new Error('admin_is_master');
-
-			const result = await db
-				.update(adminUsers)
-				.set({
-					playerId,
-				})
-				.where(eq(adminUsers.id, adminId))
-				.returning({ newPlayerId: adminUsers.playerId });
-
-			if (!result[0]) throw new Error('not_found');
-
-			return result[0];
-		},
-	};
+export function createSettingsRepository(db: DB) {
+	return SettingsRepository.getInstance(db);
 }

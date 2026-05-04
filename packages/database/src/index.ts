@@ -10,6 +10,7 @@ import { createAuditRepository } from './repositories/audit';
 import { createSettingsRepository } from './repositories/settings';
 import { createApiTokensRepository } from './repositories/api-tokens';
 import { createAuthRepository } from './repositories/auth';
+import { createAdminsRepository } from './repositories/admins';
 
 export type { Migration } from './migrations/types';
 
@@ -72,4 +73,5 @@ export const repo = {
 	settings: createSettingsRepository(db),
 	apiTokens: createApiTokensRepository(db),
 	auth: createAuthRepository(db),
+	admins: createAdminsRepository(db),
 };
