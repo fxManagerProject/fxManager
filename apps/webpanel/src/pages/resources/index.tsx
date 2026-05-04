@@ -2,12 +2,18 @@ import { PageHeader } from '@/components/page-header';
 import { useServerStateSocket } from '@/hooks/ws-channels';
 import { useResourcelistSocket } from '@/hooks/ws-channels/use-resourcelist';
 import { QueryService } from '@/lib/query';
-import type { ResourceData, ServerState } from '@fxmanager/shared/types';
+import type { ResourceData } from '@fxmanager/shared/types';
 import { Badge } from '@fxmanager/ui/components/badge';
 import { Button } from '@fxmanager/ui/components/button';
 import { Input } from '@fxmanager/ui/components/input';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@fxmanager/ui/components/select';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@fxmanager/ui/components/select';
 import { Skeleton } from '@fxmanager/ui/components/skeleton';
 import { cn } from '@fxmanager/ui/lib/utils';
 import {
@@ -122,18 +128,19 @@ export function ResourceList() {
 		loading,
 		status: resourceListStatus,
 	} = useResourcelistSocket();
-	const [displayedResources, setDisplayedResources] = useState<ResourceData[]>(resources);
+	const [displayedResources, setDisplayedResources] =
+		useState<ResourceData[]>(resources);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<FilterValue>('all');
+	const [refreshing, setRefresh] = useState<boolean>(false);
 
 	useEffect(() => {
-		const filtered = resources.filter(res => {
+		const filtered = resources.filter((res) => {
 			const matchesSearch =
 				searchValue.trim() === '' ||
 				res.name.toLowerCase().includes(searchValue.toLowerCase());
 
-			const matchesStatus =
-				filterValue === 'all' || res.status === filterValue;
+			const matchesStatus = filterValue === 'all' || res.status === filterValue;
 
 			return matchesSearch && matchesStatus;
 		});
@@ -141,34 +148,53 @@ export function ResourceList() {
 		setDisplayedResources(filtered);
 	}, [resources, searchValue, filterValue]);
 
-	function handleSearch({ target }: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
+	function handleSearch({
+		target,
+	}: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
 		const { value } = target;
 
 		setSearchValue(value);
 	}
 
-	function formatVersion(version: string | null) {
-		if (!version) return 'unknown';
-		else if (version.startsWith('v')) return version;
-		else return `v${version}`;
+	function formatVersion(version: string) {
+		if (version.startsWith('v')) return version;
+		return `v${version}`;
 	}
 
-	async function handleAction(resource: string, action: 'start' | 'stop') {
+	async function handleAction(
+		action: 'start' | 'stop' | 'refresh',
+		resource?: string,
+	) {
+		if (action === 'refresh') {
+			if (refreshing) {
+				toast.warning('Refresh already ongoing');
+				return;
+			}
+
+			setRefresh(true);
+		}
+
 		try {
 			await QueryService({
 				endpoint: `/server/resource/action/${action}`,
 				method: 'POST',
-				body: { resource },
+				...(resource && { body: { resource } }),
 			});
+
+			console.log('Finished with', action, resource);
 		} catch (err) {
 			console.error(
 				`Unable to execute action ${action}`,
 				(err as Error).message,
 			);
-			toast.error(`Unable to ${action} for resource ${resource}`, {
-				richColors: true,
-				position: 'top-center',
-			});
+
+			toast.error(
+				action === 'refresh'
+					? 'Unable to refresh resource list'
+					: `Unable to ${action} resource ${resource}`,
+			);
+		} finally {
+			setRefresh(false);
 		}
 	}
 
@@ -212,28 +238,42 @@ export function ResourceList() {
 					</div>
 
 					<div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
-						{state.status === 'running' && <div className="flex items-center gap-6 text-sm">
-							<div className="flex flex-col items-center">
-								<span className="text-zinc-400">Total</span>
-								<span className="font-semibold text-zinc-100">
-									{resources.length}
-								</span>
-							</div>
+						{state.status === 'running' && (
+							<div className="flex items-center gap-6 text-sm">
+								<div className="flex flex-col items-center">
+									<span className="text-zinc-400">Total</span>
+									<span className="font-semibold text-zinc-100">
+										{resources.length}
+									</span>
+								</div>
 
-							<div className="flex flex-col items-center">
-								<span className="text-green-400">Started</span>
-								<span className="font-semibold text-zinc-100">
-									{resources.filter(res => res.status === 'started').length}
-								</span>
-							</div>
+								<div className="flex flex-col items-center">
+									<span className="text-green-400">Started</span>
+									<span className="font-semibold text-zinc-100">
+										{resources.filter((res) => res.status === 'started').length}
+									</span>
+								</div>
 
-							<div className="flex flex-col items-center">
-								<span className="text-red-400">Stopped</span>
-								<span className="font-semibold text-zinc-100">
-									{resources.filter(res => res.status === 'stopped').length}
-								</span>
+								<div className="flex flex-col items-center">
+									<span className="text-red-400">Stopped</span>
+									<span className="font-semibold text-zinc-100">
+										{resources.filter((res) => res.status === 'stopped').length}
+									</span>
+								</div>
 							</div>
-						</div>}
+						)}
+
+						<Button
+							variant="ghost"
+							size="icon"
+							className="h-9 w-9 bg-zinc-800/60 hover:bg-zinc-700"
+							onClick={() => handleAction('refresh')}
+							title="Refresh resources"
+						>
+							<RefreshCcwIcon
+								className={cn('h-4 w-4', refreshing && 'animate-spin')}
+							/>
+						</Button>
 					</div>
 				</div>
 			</div>
@@ -244,7 +284,7 @@ export function ResourceList() {
 					(loading || state.status !== 'running') && 'overflow-hidden',
 				)}
 			>
-				{loading ? (
+				{loading || state.status === 'starting' ? (
 					<LoadingSkeleton />
 				) : state.status === 'running' ? (
 					<ScrollArea className="h-[calc(100vh-15rem)] pr-3">
@@ -259,9 +299,11 @@ export function ResourceList() {
 											<div className="flex items-center gap-2">
 												<Package size={18} className="text-blue-400" />
 												<h3 className="font-bold text-zinc-100">{res.name}</h3>
-												<span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-400">
-													{formatVersion(res.version)}
-												</span>
+												{res.version && (
+													<span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-400">
+														{formatVersion(res.version)}
+													</span>
+												)}
 											</div>
 
 											<p className="text-sm text-zinc-400 leading-relaxed">
@@ -303,7 +345,7 @@ export function ResourceList() {
 														size="icon"
 														className="h-8 w-8 bg-green-500/20 disabled:bg-transparent hover:text-green-500"
 														title="Start Resource"
-														onClick={() => handleAction(res.name, 'start')}
+														onClick={() => handleAction('start', res.name)}
 													>
 														<Play size={16} />
 													</Button>
@@ -313,7 +355,7 @@ export function ResourceList() {
 														size="icon"
 														className="h-8 w-8 bg-blue-500/20 disabled:bg-transparent hover:text-blue-500"
 														title="Restart Resource"
-														onClick={() => handleAction(res.name, 'start')}
+														onClick={() => handleAction('start', res.name)}
 													>
 														<RefreshCcwIcon size={16} />
 													</Button>
@@ -325,7 +367,7 @@ export function ResourceList() {
 													className="h-8 w-8 bg-red-500/20 disabled:bg-transparent hover:text-red-500"
 													disabled={res.status === 'stopped'}
 													title="Stop Resource"
-													onClick={() => handleAction(res.name, 'stop')}
+													onClick={() => handleAction('stop', res.name)}
 												>
 													<Square size={16} />
 												</Button>
