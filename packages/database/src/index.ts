@@ -10,10 +10,11 @@ import { createAuditRepository } from './repositories/audit';
 import { createSettingsRepository } from './repositories/settings';
 import { createApiTokensRepository } from './repositories/api-tokens';
 import { createAuthRepository } from './repositories/auth';
+import { createAdminsRepository } from './repositories/admins';
 
 export type { Migration } from './migrations/types';
 
-// ─── Initialise ───────────────────────────────────────────────────────────────
+// region initialise
 
 const dbPath =
 	process.env.NODE_ENV === 'production'
@@ -55,7 +56,7 @@ else console.info(`[database] connection established.`);
 
 export const db = drizzle(sqlite, { schema });
 
-// ─── Migrations ───────────────────────────────────────────────────────────────
+// region migrations
 // Version-based, TS-native — no migration files, no drizzle-kit at runtime.
 // To add a migration: edit packages/database/src/migrations/index.ts
 
@@ -63,7 +64,7 @@ export function applyMigrations() {
 	runMigrations(sqlite, migrations);
 }
 
-// ─── Repositories ─────────────────────────────────────────────────────────────
+// region repositories
 
 export const repo = {
 	players: createPlayersRepository(db),
@@ -72,4 +73,5 @@ export const repo = {
 	settings: createSettingsRepository(db),
 	apiTokens: createApiTokensRepository(db),
 	auth: createAuthRepository(db),
+	admins: createAdminsRepository(db),
 };

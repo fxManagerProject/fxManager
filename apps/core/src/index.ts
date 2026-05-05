@@ -6,25 +6,26 @@ import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import fastifyCookie from '@fastify/cookie';
-import { applyMigrations } from '@fxmanager/database';
 import { isFxManagerSetup, isProduction } from './common/utils';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
-import { loadConfig } from './common/config';
 import { ProcessManager } from './modules/process.manager';
 import { GameManager } from './modules/game.manager';
+import { ConfigManager } from './modules/config.manager';
+import { applyMigrations } from '@fxmanager/database';
 
 applyMigrations();
 // hardcode for the time being
 // checkVersion(isProduction ? process.env.VERSION as string : 'dev-build');
 checkVersion('dev-build');
 
-const config = loadConfig();
+const cm = ConfigManager.getInstance();
+const { cookieSecret, webServerPort } = cm.getSystemValues();
 const fastify = Fastify({ logger: !isProduction });
 
 fastify.register(fastifyCookie, {
-	secret: config.cookieSecret,
+	secret: cookieSecret,
 });
 fastify.register(fastifyWebsocket);
 
@@ -137,15 +138,17 @@ if (!isProduction) {
 	});
 
 	fastify.ready(() => {
-		console.log(`[dev] API available at: http://localhost:${3000}`);
-		console.log(`[dev] Route map: http://localhost:${3000}/routemap`);
+		console.log(`[dev] API available at: http://localhost:${webServerPort}`);
+		console.log(`[dev] Route map: http://localhost:${webServerPort}/routemap`);
 	});
 }
 
 const start = async () => {
 	try {
-		await fastify.listen({ port: 3000, host: '0.0.0.0' });
-		console.log(`[core] Fastify server listening on http://localhost:${3000}`);
+		await fastify.listen({ port: webServerPort, host: '0.0.0.0' });
+		console.log(
+			`[core] Fastify server listening on http://localhost:${webServerPort}`,
+		);
 	} catch (err) {
 		fastify.log.error(err);
 		process.exit(1);

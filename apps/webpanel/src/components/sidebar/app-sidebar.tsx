@@ -15,7 +15,7 @@ import { NavUser } from './nav-user';
 import { ServerStatusCard } from './server-status';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-	const { toggleSidebar, open } = useSidebar();
+	const { toggleSidebar, open, openMobile } = useSidebar();
 
 	return (
 		<Sidebar collapsible="icon" {...props}>
@@ -32,7 +32,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         group-hover/logo:scale-110 group-hover/logo:shadow-lg group-hover/logo:shadow-primary/40"
 					>
 						<Server className="transition-all duration-200 group-hover/logo:opacity-0 group-hover/logo:scale-50 absolute" />
-						{open ? (
+						{open || openMobile ? (
 							<PanelLeftClose className="opacity-0 scale-50 transition-all duration-200 group-hover/logo:opacity-100 group-hover/logo:scale-100" />
 						) : (
 							<PanelLeftOpen className="opacity-0 scale-50 transition-all duration-200 group-hover/logo:opacity-100 group-hover/logo:scale-100" />

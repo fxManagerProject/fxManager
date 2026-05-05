@@ -8,17 +8,19 @@ import type {
 	PlayerIdentifiers,
 	PlayerUpdatePackage,
 } from '@fxmanager/shared/types';
-import { loadConfig } from '../common/config';
 import { wsManager } from './ws.manager';
 import { discordManager } from './discord.manager';
+import { ConfigManager } from './config.manager';
 
 export class GameManager {
 	private playerlist: OnlinePlayer[] = [];
-	private apiToken: string;
+	private config = ConfigManager.getInstance();
 
-	constructor() {
-		const { resourceApiToken } = loadConfig();
-		this.apiToken = resourceApiToken;
+	constructor() {}
+
+	private async getApiToken() {
+		const { resourceApiToken } = this.config.getSystemValues();
+		return resourceApiToken;
 	}
 
 	// region player handling
@@ -220,6 +222,7 @@ export class GameManager {
 
 	async dropPlayer(serverId: number, reason: string): Promise<ApiResponse> {
 		try {
+			const resourceToken = await this.getApiToken();
 			const response = await fetch('http://localhost:30120/fxManager/drop', {
 				method: 'POST',
 				body: JSON.stringify({
@@ -228,7 +231,7 @@ export class GameManager {
 				}),
 				headers: {
 					Application: 'json/application',
-					'x-resource-token': this.apiToken,
+					'x-resource-token': resourceToken,
 				},
 			});
 

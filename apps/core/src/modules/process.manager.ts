@@ -3,41 +3,35 @@ import type {
 	ProcessState,
 	ServerState,
 } from '@fxmanager/shared/types';
-import { loadConfig } from '../common/config';
 import { LogBuffer } from './buffer.manager';
+import { ConfigManager } from './config.manager';
 import { wsManager } from './ws.manager';
 
 export class ProcessManager {
 	private state: ServerState = { status: 'stopped', startedAt: null };
 	private proc: ReturnType<typeof Bun.spawn> | null = null;
 	private buffer = new LogBuffer<ProcessOutputLine>();
+	private config = ConfigManager.getInstance();
 
 	// region process methods
 	async start() {
-		const config = loadConfig();
+		this.config.regenerateApiToken();
+		const systemValues = this.config.getSystemValues();
+		const fxServerValues = this.config.getFxServerValues(true);
+		const config = { ...systemValues, ...fxServerValues };
+
 		this.setState('starting');
 
+		// biome-ignore format: the array should not be formatted
 		const args: string[] = [
-			'+exec',
-			config.configFile,
-			'+set',
-			'onesync',
-			'on',
-			'+set',
-			'resource-api-token',
-			config.resourceApiToken,
-			'+set',
-			'api-port',
-			`${config.webServerPort}`,
+			'+exec',                      config.serverConfigFile,
+			'+set', 'onesync',            config.onesync,
+			'+set', 'resource-api-token', config.resourceApiToken,
+			'+set', 'api-port',           `${config.webServerPort}`,
+
 			// Check if this actually works, would be neat to be able to hide it in console or have it read only
-			'+add_convar_permission',
-			'fxManager',
-			'read',
-			'resource-api-token',
-			'+add_convar_permission',
-			'fxManager',
-			'read',
-			'api-port',
+			'+add_convar_permission', 'fxManager', 'read', 'resource-api-token',
+			'+add_convar_permission', 'fxManager', 'read', 'api-port',
 		];
 
 		console.log(`[core] Starting fxServer`);
@@ -61,8 +55,6 @@ export class ProcessManager {
 				stderr: 'pipe',
 				env: { ...process.env },
 			});
-
-			this.setState('running');
 
 			this.pipeOutput(
 				this.proc.stdout as ReadableStream<Uint8Array<ArrayBuffer>>,
@@ -237,6 +229,7 @@ export class ProcessManager {
 
 		// ToDo: check for better approach, ts error on TextDecoderStream()
 		const lineStream = stream
+			// @ts-ignore
 			.pipeThrough(new TextDecoderStream())
 			.pipeThrough(this.createLineBreakTransformer());
 
@@ -255,6 +248,13 @@ export class ProcessManager {
 					source,
 					ts: Date.now(),
 				} satisfies ProcessOutputLine;
+
+				if (
+					this.state.status === 'starting' &&
+					value.includes('Authenticated with cfx.re Nucleus')
+				) {
+					this.setState('running');
+				}
 
 				console.log(value);
 

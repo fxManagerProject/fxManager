@@ -36,4 +36,5 @@ export type AuditLog = typeof auditLog.$inferSelect;
 
 export interface AdminProfile extends BaseAdminUser {
 	auditLogs: AuditLog[];
+	playerName: string | null;
 }
