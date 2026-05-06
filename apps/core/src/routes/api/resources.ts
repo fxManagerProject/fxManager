@@ -22,6 +22,10 @@ const ResourceEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			return reply.code(403).send({ error: 'Not authorized' });
 		}
 
+		if (pm.getState().status !== 'running') {
+			return reply.code(500).send({ error: 'Server is not running' });
+		}
+
 		const body = request.body as { action: 'start' | 'stop'; resource: string };
 
 		pm.injectConsoleLine({
@@ -30,7 +34,7 @@ const ResourceEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		});
 		pm.sendCommand(`ensure ${body.resource}`);
 
-		return reply.code(200).send({ success: true });;
+		return reply.code(200).send({ success: true });
 	});
 
 	fastify.post('/action/stop', async (request, reply) => {
@@ -45,6 +49,10 @@ const ResourceEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			return reply.code(403).send({ error: 'Not authorized' });
 		}
 
+		if (pm.getState().status !== 'running') {
+			return reply.code(500).send({ error: 'Server is not running' });
+		}
+
 		const body = request.body as { resource: string };
 
 		pm.injectConsoleLine({
@@ -54,7 +62,7 @@ const ResourceEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		pm.sendCommand(`stop ${body.resource}`);
 
-		return reply.code(200).send({ success: true });;
+		return reply.code(200).send({ success: true });
 	});
 
 	fastify.post('/action/refresh', async (request, reply) => {
@@ -67,6 +75,10 @@ const ResourceEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		if (!allowed) {
 			return reply.code(403).send({ error: 'Not authorized' });
+		}
+
+		if (pm.getState().status !== 'running') {
+			return reply.code(500).send({ error: 'Server is not running' });
 		}
 
 		pm.injectConsoleLine({
