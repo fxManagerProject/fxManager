@@ -3,17 +3,26 @@ import { UserPermissions } from '@fxmanager/shared/constants';
 import type {
 	OnlinePlayer,
 	ProcessOutputLine,
+	ResourceInitialData,
 	ServerState,
 } from '@fxmanager/shared/types';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { sessionAuth } from '../../middleware/session';
 import { wsManager } from '../../modules/ws.manager';
 import type { AuthedRequest, RouteModule } from '../../types';
+import { resourceManager } from '../../modules/resource.manager';
 
 wsManager.addCheck('console', (admin) => {
 	return PermissionManager.has(
 		admin.permissions,
 		UserPermissions.CONSOLE_ACCESS,
+	);
+});
+
+wsManager.addCheck('resourcelist', (admin) => {
+	return PermissionManager.has(
+		admin.permissions,
+		UserPermissions.RESOURCE_LIST,
 	);
 });
 
@@ -63,9 +72,17 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 					value: `  Protected Convar - \x1b[1maction denied\x1b[0m`,
 					color: '\x1b[31m',
 				});
-				return;
+			} else if (
+				/{start|stop|ensure|restart|start}\s+fxManager/.test(command)
+			) {
+				pm.injectConsoleLine({
+					process: `fxManager`,
+					value: `  Cannot perform action on protected resource \x1b[1mfxManager\x1b[0m`,
+					color: '\x1b[31m',
+				});
+			} else {
+				pm.sendCommand(command);
 			}
-			pm.sendCommand(command);
 		},
 	);
 
@@ -75,6 +92,10 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 
 	wsManager.setInitialData<OnlinePlayer[]>('playerlist', () => {
 		return gm.getPlayerList();
+	});
+
+	wsManager.setInitialData<ResourceInitialData>('resourcelist', () => {
+		return resourceManager.getResourceList();
 	});
 };
 

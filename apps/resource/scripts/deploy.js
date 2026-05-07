@@ -1,6 +1,6 @@
 //@ts-check
 
-import fs from 'node:fs-extra';
+import fs from 'fs-extra';
 import path from 'node:path';
 import dotenv from 'dotenv';
 dotenv.config({

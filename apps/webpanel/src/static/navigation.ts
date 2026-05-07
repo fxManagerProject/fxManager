@@ -1,4 +1,10 @@
-import { LayoutDashboard, Terminal, Users, Settings } from 'lucide-react';
+import {
+	LayoutDashboard,
+	Terminal,
+	Users,
+	Settings,
+	LayoutList,
+} from 'lucide-react';
 import type { NavItem } from '@/types/sidebar';
 import { UserPermissions } from '@fxmanager/shared/constants';
 
@@ -16,6 +22,12 @@ export const NAV: NavItem[] = [
 		url: '/console',
 		icon: Terminal,
 		title: 'Console',
+		permission: UserPermissions.CONSOLE_ACCESS,
+	},
+	{
+		url: '/resources',
+		icon: LayoutList,
+		title: 'Resource List',
 		permission: UserPermissions.CONSOLE_ACCESS,
 	},
 	{ url: '/players', icon: Users, title: 'Players' },

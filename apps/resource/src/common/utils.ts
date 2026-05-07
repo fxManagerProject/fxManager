@@ -1,5 +1,12 @@
 import { ResourceName, IsBrowser } from './resource';
 
+// credit ox_lib
+// licensed under LGPL-V3
+// https://github.com/overextended/ox_lib/blob/main/package/shared/index.ts#L12-L14
+export function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms, null));
+}
+
 export function LoadFile(path: string) {
 	return LoadResourceFile(ResourceName, path);
 }

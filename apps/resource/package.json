@@ -8,7 +8,7 @@
 		"web:dev": "cd web && vite dev",
 		"build": "bun scripts/build.js",
 		"deploy": "bun scripts/deploy.js",
-		"watch": "bun scripts/build.js --watch",
+		"dev": "bun scripts/build.js --watch",
 		"format": "biome format --write",
 		"lint": "biome lint --write"
 	},
