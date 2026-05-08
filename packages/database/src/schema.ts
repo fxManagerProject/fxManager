@@ -41,6 +41,10 @@ export const whitelistedIdentifers = sqliteTable('whitelisted_identifiers', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	type: text('type').notNull(), // license, discord, steam, etc.
 	value: text('value').notNull(),
+	adminId: integer('admin_id').references(() => adminUsers.id, {
+		onDelete: 'cascade',
+	}),
+	system: integer('system').default(0).notNull(),
 	added: integer('added', { mode: 'timestamp' })
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
@@ -244,6 +248,7 @@ export const adminUsersRelations = relations(adminUsers, ({ many, one }) => ({
 	sessions: many(sessions),
 	auditLogs: many(auditLog),
 	reportMessages: many(reportMessages),
+	whitelists: many(whitelistedIdentifers),
 }));
 
 export const auditLogRelations = relations(auditLog, ({ one }) => ({
