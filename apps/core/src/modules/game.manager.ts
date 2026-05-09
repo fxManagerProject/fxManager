@@ -79,7 +79,7 @@ export class GameManager {
 			};
 		} else if (setting === 'identifier') {
 			const isWhitelisted =
-				await repo.players.isAnyIdentifierWhitelisted(identifiers);
+				await repo.whitelist.isAnyIdentifierWhitelisted(identifiers);
 
 			if (isWhitelisted) {
 				return { access: true };
