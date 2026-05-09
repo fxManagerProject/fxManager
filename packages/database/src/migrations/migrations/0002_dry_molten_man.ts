@@ -18,5 +18,7 @@ export const m0002_dry_molten_man: Migration = {
 		`DROP TABLE \`whitelisted_identifiers\``,
 		`ALTER TABLE \`__new_whitelisted_identifiers\` RENAME TO \`whitelisted_identifiers\``,
 		`PRAGMA foreign_keys=ON`,
+		`CREATE INDEX \`idx_identifier_value\` ON \`whitelisted_identifiers\` (\`value\`)`,
+		`CREATE UNIQUE INDEX \`whitelisted_identifiers_type_value_unique\` ON \`whitelisted_identifiers\` (\`type\`,\`value\`)`,
 	],
 };

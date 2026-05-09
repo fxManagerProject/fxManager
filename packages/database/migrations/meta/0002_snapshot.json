@@ -910,7 +910,18 @@
 					"default": "CURRENT_TIMESTAMP"
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_identifier_value": {
+					"name": "idx_identifier_value",
+					"columns": ["value"],
+					"isUnique": false
+				},
+				"whitelisted_identifiers_type_value_unique": {
+					"name": "whitelisted_identifiers_type_value_unique",
+					"columns": ["type", "value"],
+					"isUnique": true
+				}
+			},
 			"foreignKeys": {
 				"whitelisted_identifiers_admin_id_admin_users_id_fk": {
 					"name": "whitelisted_identifiers_admin_id_admin_users_id_fk",
