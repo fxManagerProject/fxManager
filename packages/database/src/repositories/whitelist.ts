@@ -131,6 +131,39 @@ class WhitelistRepository {
 			pageSize,
 		};
 	}
+
+	add(data: {
+		type: string;
+		value: string;
+		adminId?: number;
+		system?: boolean;
+	}): true {
+		const result = this.db
+			.insert(whitelistedIdentifers)
+			.values({
+				type: data.type,
+				value: data.value,
+				adminId: data.adminId,
+				system: data.system ? 1 : 0,
+			})
+			.onConflictDoNothing()
+			.returning()
+			.get();
+
+		if (result) {
+			return true;
+		} else {
+			throw new Error('already_whitelisted');
+		}
+	}
+
+	revoke(id: number) {
+		return this.db
+			.delete(whitelistedIdentifers)
+			.where(eq(whitelistedIdentifers.id, id))
+			.returning()
+			.get();
+	}
 }
 
 export function createWhitelistRepository(db: DB) {
