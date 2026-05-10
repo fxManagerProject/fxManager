@@ -3,6 +3,7 @@ import {
 	Terminal,
 	Users,
 	Settings,
+	LayoutList,
 	ScanEye,
 } from 'lucide-react';
 import type { NavItem } from '@/types/sidebar';
@@ -22,6 +23,12 @@ export const NAV: NavItem[] = [
 		url: '/console',
 		icon: Terminal,
 		title: 'Console',
+		permission: UserPermissions.CONSOLE_ACCESS,
+	},
+	{
+		url: '/resources',
+		icon: LayoutList,
+		title: 'Resource List',
 		permission: UserPermissions.CONSOLE_ACCESS,
 	},
 	{ url: '/whitelist', icon: ScanEye, title: 'Whitelist' },

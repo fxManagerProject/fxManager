@@ -6,6 +6,7 @@ import type {
 import { LogBuffer } from './buffer.manager';
 import { ConfigManager } from './config.manager';
 import { wsManager } from './ws.manager';
+import { resourceManager } from './resource.manager';
 
 export class ProcessManager {
 	private state: ServerState = { status: 'stopped', startedAt: null };
@@ -16,8 +17,8 @@ export class ProcessManager {
 	// region process methods
 	async start() {
 		this.config.regenerateApiToken();
-    const systemValues = this.config.getSystemValues();
-    const fxServerValues = this.config.getFxServerValues(true);
+		const systemValues = this.config.getSystemValues();
+		const fxServerValues = this.config.getFxServerValues(true);
 		const config = { ...systemValues, ...fxServerValues };
 
 		this.setState('starting');
@@ -203,6 +204,12 @@ export class ProcessManager {
 			event: 'status_changed',
 			data: newState,
 		});
+
+		if (status === 'running') {
+			resourceManager.loadResources();
+		} else if (status === 'crashed' || status === 'stopping') {
+			resourceManager.stoppingServer();
+		}
 	}
 
 	private createLineBreakTransformer() {

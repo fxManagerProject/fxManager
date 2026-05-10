@@ -4,64 +4,13 @@ import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import { resourceManager } from '../../modules/resource.manager';
 
-const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
+const ResourceEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { pm } = options;
 
 	// enforces that admin key exists in request otherwise returns 401
 	fastify.addHook('preHandler', sessionAuth);
 
-	fastify.post('/start', async (request, reply) => {
-		const { admin } = request as AuthedRequest;
-
-		const allowed = PermissionManager.has(
-			admin.permissions,
-			UserPermissions.SERVER_ACTIONS,
-		);
-
-		if (!allowed) {
-			return reply.code(403).send({ error: 'Not authorized' });
-		}
-
-		const result = await pm.start();
-
-		return reply.code(result ? 200 : 500).send({ success: result });
-	});
-
-	fastify.post('/stop', async (request, reply) => {
-		const { admin } = request as AuthedRequest;
-
-		const allowed = PermissionManager.has(
-			admin.permissions,
-			UserPermissions.SERVER_ACTIONS,
-		);
-
-		if (!allowed) {
-			return reply.code(403).send({ error: 'Not authorized' });
-		}
-
-		const result = await pm.stop();
-
-		return reply.code(result ? 200 : 500).send({ success: result });
-	});
-
-	fastify.post('/restart', async (request, reply) => {
-		const { admin } = request as AuthedRequest;
-
-		const allowed = PermissionManager.has(
-			admin.permissions,
-			UserPermissions.SERVER_ACTIONS,
-		);
-
-		if (!allowed) {
-			return reply.code(403).send({ error: 'Not authorized' });
-		}
-
-		const result = await pm.restart();
-
-		return reply.code(result ? 200 : 500).send({ success: result });
-	});
-
-	fastify.post('/resource/action/start', async (request, reply) => {
+	fastify.post('/action/start', async (request, reply) => {
 		const { admin } = request as AuthedRequest;
 
 		const allowed = PermissionManager.has(
@@ -71,6 +20,10 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		if (!allowed) {
 			return reply.code(403).send({ error: 'Not authorized' });
+		}
+
+		if (pm.getState().status !== 'running') {
+			return reply.code(500).send({ error: 'Server is not running' });
 		}
 
 		const body = request.body as { action: 'start' | 'stop'; resource: string };
@@ -81,10 +34,10 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		});
 		pm.sendCommand(`ensure ${body.resource}`);
 
-		return reply.code(200);
+		return reply.code(200).send({ success: true });
 	});
 
-	fastify.post('/resource/action/stop', async (request, reply) => {
+	fastify.post('/action/stop', async (request, reply) => {
 		const { admin } = request as AuthedRequest;
 
 		const allowed = PermissionManager.has(
@@ -94,6 +47,10 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		if (!allowed) {
 			return reply.code(403).send({ error: 'Not authorized' });
+		}
+
+		if (pm.getState().status !== 'running') {
+			return reply.code(500).send({ error: 'Server is not running' });
 		}
 
 		const body = request.body as { resource: string };
@@ -105,10 +62,10 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		pm.sendCommand(`stop ${body.resource}`);
 
-		return reply.code(200);
+		return reply.code(200).send({ success: true });
 	});
 
-	fastify.post('/resource/action/refresh', async (request, reply) => {
+	fastify.post('/action/refresh', async (request, reply) => {
 		const { admin } = request as AuthedRequest;
 
 		const allowed = PermissionManager.has(
@@ -120,12 +77,19 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			return reply.code(403).send({ error: 'Not authorized' });
 		}
 
+		if (pm.getState().status !== 'running') {
+			return reply.code(500).send({ error: 'Server is not running' });
+		}
+
 		pm.injectConsoleLine({
 			process: `cmd:${admin.username}`,
 			value: `\x1b[37m> refresh\x1b[0m`,
 		});
 
 		pm.sendCommand(`refresh`);
+
+		// wait 500ms to guarantee list has updated
+		await new Promise((resolve) => setTimeout(resolve, 500, null));
 
 		await resourceManager.loadResources();
 
@@ -134,6 +98,6 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 };
 
 export default {
-	prefix: '/server',
-	handler: ServerEndpoints,
+	prefix: '/resources',
+	handler: ResourceEndpoints,
 } satisfies RouteModule;

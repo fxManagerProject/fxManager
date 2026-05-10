@@ -10,6 +10,7 @@ import PlayerView from './players/playerview';
 import AdminManagementList from './settings/adminmanagement';
 import AdminView from './settings/adminview';
 import AdminCreate from './settings/admincreate';
+import { ResourceList } from './resources';
 import WhitelistIndex from './whitelist';
 
 type RouteConfig = {
@@ -30,6 +31,11 @@ export const routes: RouteConfig[] = [
 		path: '/console',
 		element: ConsolePage,
 		permission: UserPermissions.CONSOLE_ACCESS,
+	},
+	{
+		path: '/resources',
+		element: ResourceList,
+		permission: UserPermissions.RESOURCE_LIST,
 	},
 	{
 		path: '/whitelist',

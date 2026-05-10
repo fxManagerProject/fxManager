@@ -212,15 +212,26 @@ export class HttpServer {
 	private readBody(rawReq: RawRequest): Promise<string | null> {
 		return new Promise((resolve) => {
 			let body = '';
+			const contentLength = parseInt(
+				rawReq.headers['content-length'] || '0',
+				10,
+			);
+
+			if (contentLength === 0) {
+				return resolve(null);
+			}
 
 			rawReq.setCancelHandler(() => resolve(null));
 
 			rawReq.setDataHandler((data: string) => {
 				body += data;
 
-				// setDataHandler is called once per chunk; resolve when it's done
-				resolve(body || null);
+				if (body.length >= contentLength) {
+					resolve(body);
+				}
 			});
+
+			setTimeout(() => resolve(body || null), 5000);
 		});
 	}
 
