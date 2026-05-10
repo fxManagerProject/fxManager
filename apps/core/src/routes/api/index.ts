@@ -2,6 +2,7 @@ import type { RouteModule } from '../../types';
 import AuthModule from './auth';
 import ServerModule from './server';
 import PlayerModule from './players';
+import WhitelistModule from './whitelist';
 import WsModule from './sockets';
 import SettingsModule from './settings';
 
@@ -19,6 +20,11 @@ const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(PlayerModule.handler, {
 		...options,
 		prefix: PlayerModule.prefix,
+	});
+
+	fastify.register(WhitelistModule.handler, {
+		...options,
+		prefix: WhitelistModule.prefix,
 	});
 
 	fastify.register(SettingsModule.handler, {
