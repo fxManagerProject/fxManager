@@ -138,9 +138,9 @@ export default function WhitelistIndex() {
 		setIsDeleting(id);
 		try {
 			await QueryService({
-				endpoint: `/whitelist/delete`,
+				endpoint: `/whitelist/revoke`,
 				method: 'POST',
-				body: JSON.stringify({ id }),
+				body: { id },
 			});
 			toast.success('Entry removed from whitelist');
 			// refresh page
@@ -157,7 +157,7 @@ export default function WhitelistIndex() {
 			await QueryService({
 				endpoint: `/whitelist/add`,
 				method: 'POST',
-				body: JSON.stringify(addForm),
+				body: addForm,
 			});
 			toast.success('Entry added to whitelist');
 			setAddForm((prev) => ({ ...prev, value: '' }));
