@@ -175,6 +175,7 @@ export class HttpServer {
 				const details = result.error.issues
 					.map((issue) => `   - [${issue.path.join('.')}] ${issue.message}`)
 					.join('\n');
+
 				return this.sendResponse(rawRes, {
 					status: 422,
 					body: {
@@ -190,6 +191,7 @@ export class HttpServer {
 
 		try {
 			const response = await route.handler(req);
+			console.log('resposne to request:', response);
 			this.sendResponse(rawRes, response);
 		} catch (err) {
 			console.error(
@@ -211,27 +213,13 @@ export class HttpServer {
 
 	private readBody(rawReq: RawRequest): Promise<string | null> {
 		return new Promise((resolve) => {
-			let body = '';
-			const contentLength = parseInt(
-				rawReq.headers['content-length'] || '0',
-				10,
-			);
-
-			if (contentLength === 0) {
-				return resolve(null);
-			}
-
 			rawReq.setCancelHandler(() => resolve(null));
 
 			rawReq.setDataHandler((data: string) => {
-				body += data;
-
-				if (body.length >= contentLength) {
-					resolve(body);
-				}
+				resolve(data);
 			});
 
-			setTimeout(() => resolve(body || null), 5000);
+			setTimeout(() => resolve(null), 5000);
 		});
 	}
 
