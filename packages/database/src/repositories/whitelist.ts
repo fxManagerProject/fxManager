@@ -123,7 +123,7 @@ class WhitelistRepository {
 				value: row.value,
 				addedAt: row.addedAt,
 				addedByAdmin:
-					row.system === 1 ? 'System' : (row.addedByAdmin ?? 'Unknown'),
+					row.system === 1 ? 'system' : (row.addedByAdmin ?? 'deleted_admin'),
 				playerName: row.playerName ?? 'N/A',
 			})),
 			total,
