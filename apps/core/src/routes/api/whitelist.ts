@@ -45,7 +45,7 @@ const WhitelistEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		},
 	);
 
-	fastify.get('/add', (request): ApiResponse => {
+	fastify.post('/add', (request): ApiResponse => {
 		const { admin } = request as AuthedRequest;
 
 		if (!PermissionManager.has(admin.permissions, UserPermissions.WHITELIST)) {
@@ -87,7 +87,7 @@ const WhitelistEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		}
 	});
 
-	fastify.get('/remove', (request): ApiResponse => {
+	fastify.post('/revoke', (request): ApiResponse => {
 		const { admin } = request as AuthedRequest;
 
 		if (
