@@ -3,16 +3,17 @@ import type {
 	ResourceData,
 	ResourceInitialData,
 } from '@fxmanager/shared/types';
-import { loadConfig } from '../common/config';
 import { wsManager } from './ws.manager';
+import { ConfigManager } from './config.manager';
 
 class ResourceManager {
 	private available: boolean | 'errored' = false;
 	private resourcelist: ResourceData[] = [];
+	private config = ConfigManager.getInstance();
 	private apiToken: string;
 
 	constructor() {
-		const { resourceApiToken } = loadConfig();
+		const { resourceApiToken } = this.config.getSystemValues();
 		this.apiToken = resourceApiToken;
 	}
 
