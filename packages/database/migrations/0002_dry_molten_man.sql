@@ -13,5 +13,5 @@ INSERT INTO `__new_whitelisted_identifiers`("id", "type", "value", "admin_id", "
 DROP TABLE `whitelisted_identifiers`;--> statement-breakpoint
 ALTER TABLE `__new_whitelisted_identifiers` RENAME TO `whitelisted_identifiers`;--> statement-breakpoint
 PRAGMA foreign_keys=ON;--> statement-breakpoint
-CREATE INDEX `idx_identifier_value` ON `whitelisted_identifiers` (`value`);--> statement-breakpoint
+CREATE INDEX `idx_whitelist_identifier_value` ON `whitelisted_identifiers` (`value`);--> statement-breakpoint
 CREATE UNIQUE INDEX `whitelisted_identifiers_type_value_unique` ON `whitelisted_identifiers` (`type`,`value`);

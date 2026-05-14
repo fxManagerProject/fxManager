@@ -52,7 +52,7 @@ export const whitelistedIdentifers = sqliteTable(
 			.notNull(),
 	},
 	(t) => [
-		index('idx_identifier_value').on(t.value),
+		index('idx_whitelist_identifier_value').on(t.value),
 		unique().on(t.type, t.value),
 	],
 );

@@ -911,8 +911,8 @@
 				}
 			},
 			"indexes": {
-				"idx_identifier_value": {
-					"name": "idx_identifier_value",
+				"idx_whitelist_identifier_value": {
+					"name": "idx_whitelist_identifier_value",
 					"columns": ["value"],
 					"isUnique": false
 				},
