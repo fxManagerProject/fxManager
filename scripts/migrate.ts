@@ -71,11 +71,27 @@ async function updateMigrationRegistry(varName: string, tag: string) {
 	}
 
 	const arrayRegex = /(export const migrations: Migration\[\] = \[)(.*)(\];)/s;
-	content = content.replace(arrayRegex, (_, start, middle, end) => {
-		const currentItems = middle.trim();
-		const newItems = currentItems ? `${currentItems}, ${varName}` : varName;
-		return `${start}${newItems}${end}`;
-	});
+
+	content = content.replace(
+		arrayRegex,
+		(_, start: string, middle: string, end: string) => {
+			const items = middle
+				.split(/[\s,]+/)
+				.map((item) => item.trim())
+				.filter(Boolean);
+
+			if (!items.includes(varName)) {
+				items.push(varName);
+			}
+
+			const formattedItems =
+				items.length > 0 ? `\n  ${items.join(',\n  ')},\n` : '';
+
+			return `${start}${formattedItems}${end}`;
+		},
+	);
+
+	console.log('new content', content);
 
 	await Bun.write(indexPath, content);
 }
