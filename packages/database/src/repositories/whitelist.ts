@@ -138,6 +138,24 @@ class WhitelistRepository {
 		adminId?: number;
 		system?: boolean;
 	}): true {
+		let regex: RegExp | null = null;
+
+		if (data.type === 'discord') {
+			regex = /^discord:[0-9]+$/;
+		} else if (data.type === 'license') {
+			regex = /^license:[a-f0-9]+$/i; 
+		} else if (data.type === 'fivem') {
+			regex = /^fivem:[0-9]+$/;
+		} else if (data.type === 'steam') {
+			regex = /^steam:[a-f0-9]+$/i; 
+		}
+
+		if (regex && !regex.test(data.value)) {
+			throw new Error(`invalid_format`);
+		} else if (!regex) {
+			throw new Error('unsupported_type');
+		}
+
 		const result = this.db
 			.insert(whitelistedIdentifers)
 			.values({
