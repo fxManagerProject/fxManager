@@ -35,6 +35,7 @@ import {
 import PageSizeSelector from '@/components/page-size-selector';
 import PageSelector from '@/components/page-selector';
 import type {
+	ApiResponse,
 	PaginatedResponse,
 	WhitelistEntry,
 } from '@fxmanager/shared/types';
@@ -165,14 +166,19 @@ export default function WhitelistIndex() {
 	const handleDelete = async (id: number) => {
 		setIsDeleting(id);
 		try {
-			await QueryService({
+			const response = await QueryService<ApiResponse>({
 				endpoint: `/whitelist/revoke`,
 				method: 'POST',
 				body: { id },
 			});
-			toast.success('Entry removed from whitelist');
 
-			fetchFromServer();
+			if (!response.success) {
+				toast.error(response.error);
+				
+			} else {
+				toast.success('Entry removed from whitelist');
+				fetchFromServer();
+			}
 		} catch (err) {
 			toast.error((err as Error).message);
 		} finally {
@@ -187,15 +193,21 @@ export default function WhitelistIndex() {
 		}
 
 		try {
-			await QueryService({
+			const response = await QueryService<ApiResponse>({
 				endpoint: `/whitelist/add`,
 				method: 'POST',
 				body: addForm,
 			});
-			toast.success('Entry added to whitelist');
-			setAddForm((prev) => ({ ...prev, value: '' }));
 
-			fetchFromServer();
+			if (!response.success) {
+				toast.error(response.error);
+				
+			} else {
+				toast.success('Entry added to whitelist');
+				setAddForm((prev) => ({ ...prev, value: '' }));
+
+				fetchFromServer();
+			}
 		} catch (err) {
 			toast.error((err as Error).message);
 		}
