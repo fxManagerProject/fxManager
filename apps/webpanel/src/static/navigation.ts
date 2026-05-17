@@ -4,6 +4,7 @@ import {
 	Users,
 	Settings,
 	LayoutList,
+	ScanEye,
 } from 'lucide-react';
 import type { NavItem } from '@/types/sidebar';
 import { UserPermissions } from '@fxmanager/shared/constants';
@@ -30,6 +31,7 @@ export const NAV: NavItem[] = [
 		title: 'Resource List',
 		permission: UserPermissions.CONSOLE_ACCESS,
 	},
+	{ url: '/whitelist', icon: ScanEye, title: 'Whitelist' },
 	{ url: '/players', icon: Users, title: 'Players' },
 	{
 		url: '/settings',

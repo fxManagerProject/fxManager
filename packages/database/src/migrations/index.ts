@@ -3,7 +3,8 @@ import type { Migration } from './types';
 
 export * from './migrations';
 
-// ─── Bootstrap the version tracking table ────────────────────────────────────
+// region version tables
+// bootstrap the version tracking table
 // This is the only table created outside the migration system itself.
 
 function ensureVersionTable(sqlite: Database) {
@@ -25,7 +26,7 @@ function getCurrentVersion(sqlite: Database): number {
 	return row?.version ?? -1;
 }
 
-// ─── Runner ───────────────────────────────────────────────────────────────────
+// region runner
 
 export function runMigrations(sqlite: Database, migrations: Migration[]) {
 	ensureVersionTable(sqlite);

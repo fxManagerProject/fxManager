@@ -11,6 +11,7 @@ import AdminManagementList from './settings/adminmanagement';
 import AdminView from './settings/adminview';
 import AdminCreate from './settings/admincreate';
 import { ResourceList } from './resources';
+import WhitelistIndex from './whitelist';
 
 type RouteConfig = {
 	path: string;
@@ -35,6 +36,11 @@ export const routes: RouteConfig[] = [
 		path: '/resources',
 		element: ResourceList,
 		permission: UserPermissions.RESOURCE_LIST,
+	},
+	{
+		path: '/whitelist',
+		element: WhitelistIndex,
+		permission: UserPermissions.WHITELIST,
 	},
 	{
 		path: '/settings',

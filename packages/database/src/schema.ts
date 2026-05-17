@@ -37,6 +37,26 @@ export const playerIdentifiers = sqliteTable(
 	],
 );
 
+export const whitelistedIdentifers = sqliteTable(
+	'whitelisted_identifiers',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		type: text('type').notNull(), // license, discord, steam, etc.
+		value: text('value').notNull(),
+		adminId: integer('admin_id').references(() => adminUsers.id, {
+			onDelete: 'cascade',
+		}),
+		system: integer('system').default(0).notNull(),
+		addedAt: integer('added_at', { mode: 'timestamp' })
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+	},
+	(t) => [
+		index('idx_whitelist_identifier_value').on(t.value),
+		unique().on(t.type, t.value),
+	],
+);
+
 // region Admins & Sessions
 
 export const adminUsers = sqliteTable(
@@ -235,6 +255,7 @@ export const adminUsersRelations = relations(adminUsers, ({ many, one }) => ({
 	sessions: many(sessions),
 	auditLogs: many(auditLog),
 	reportMessages: many(reportMessages),
+	whitelists: many(whitelistedIdentifers),
 }));
 
 export const auditLogRelations = relations(auditLog, ({ one }) => ({

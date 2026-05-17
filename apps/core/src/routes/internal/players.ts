@@ -10,10 +10,10 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 	fastify.addHook('preHandler', resourceAuth);
 
-	fastify.post('/deferrals', (request) => {
+	fastify.post('/deferrals', async (request) => {
 		const { body } = request;
 
-		return gm.playerDeferralChecks(
+		return await gm.playerDeferralChecks(
 			(body as { identifiers: PlayerIdentifiers }).identifiers,
 		);
 	});

@@ -48,10 +48,18 @@ on(
 						body: { identifiers },
 					});
 				} catch (err) {
+					const msg = (err as Error).message;
+
 					console.error(
 						`[API Error] Failed to connection join for ${playerName} (${src}):`,
-						(err as Error).message,
+						msg,
 					);
+
+					apiChecks = {
+						access: false,
+						type: 'error',
+						reason: `Internal Error:\n${msg}`,
+					};
 				}
 
 				if (apiChecks.access) return deferrals.done();

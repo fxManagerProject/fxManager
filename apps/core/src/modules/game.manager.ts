@@ -1,5 +1,6 @@
 import { repo } from '@fxmanager/database';
 import type {
+	WhitelistMode,
 	ApiResponse,
 	BanDataCard,
 	DeferralCheckResponse,
@@ -8,6 +9,7 @@ import type {
 	PlayerUpdatePackage,
 } from '@fxmanager/shared/types';
 import { wsManager } from './ws.manager';
+import { discordManager } from './discord.manager';
 import { ConfigManager } from './config.manager';
 
 export class GameManager {
@@ -33,7 +35,9 @@ export class GameManager {
 
 	// region receiving actions
 
-	playerDeferralChecks(identifiers: PlayerIdentifiers): DeferralCheckResponse {
+	async playerDeferralChecks(
+		identifiers: PlayerIdentifiers,
+	): Promise<DeferralCheckResponse> {
 		const ban = repo.players.checkBanned(identifiers);
 
 		if (ban) {
@@ -60,9 +64,84 @@ export class GameManager {
 			};
 		}
 
-		/* ToDo: Add whitelist checks */
+		const setting = repo.settings.get<WhitelistMode>('whitelist.mode');
+		const player = repo.players.findByLicense(identifiers.license);
+		const isAdmin = player ? repo.players.isStaff(player.id) : false;
 
-		return { access: true };
+		if (!setting || setting === 'none' || isAdmin) return { access: true };
+
+		if (setting === 'admin-only') {
+			return {
+				access: false,
+				type: 'error',
+				reason:
+					'Server is in Administer Mode, you can not connect at this time.',
+			};
+		} else if (setting === 'identifier') {
+			const isWhitelisted =
+				await repo.whitelist.isAnyIdentifierWhitelisted(identifiers);
+
+			if (isWhitelisted) {
+				return { access: true };
+			} else {
+				return {
+					access: false,
+					type: 'error',
+					reason: 'You are not whitelisted.',
+				};
+			}
+		} else if (setting === 'discord') {
+			if (!discordManager.isConnected()) {
+				try {
+					await discordManager.connect();
+				} catch (err) {
+					const msg = (err as Error).message;
+					console.error(
+						"Game manager can't check discord whitelist as the discord manager couldn't connect:",
+						msg,
+					);
+
+					return {
+						access: false,
+						type: 'error',
+						reason:
+							'Unable to check whitelist status, please contact server administrators',
+					};
+				}
+			}
+
+			if (!identifiers.discord) {
+				return {
+					access: false,
+					type: 'error',
+					reason: 'No discord identifier found.',
+				};
+			}
+
+			const whitelisted = await discordManager.checkWhitelist(
+				identifiers.discord,
+			);
+
+			if (whitelisted) {
+				return { access: true };
+			} else {
+				return {
+					access: false,
+					type: 'error',
+					reason:
+						'You are not whitelisted, please address yourself to server staff.',
+				};
+			}
+		}
+
+		console.warn(
+			'[game.manager] an invalid whitelist.mode was set, connections will be refused.',
+		);
+		return {
+			access: false,
+			type: 'error',
+			reason: 'Server whitelist mode is not set, please inform server owner.',
+		};
 	}
 
 	async playerJoin({

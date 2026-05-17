@@ -7,9 +7,9 @@ import { wsManager } from './ws.manager';
 import { ConfigManager } from './config.manager';
 
 class ResourceManager {
+	private config = ConfigManager.getInstance();
 	private available: boolean | 'errored' = false;
 	private resourcelist: ResourceData[] = [];
-	private config = ConfigManager.getInstance();
 
 	constructor() {}
 
