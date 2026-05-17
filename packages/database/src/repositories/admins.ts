@@ -136,11 +136,15 @@ class AdminsRepository {
 				permissions: sanitizedPerms,
 			})
 			.where(eq(adminUsers.id, adminId))
-			.returning({ newPerms: adminUsers.permissions });
+			.returning();
 
 		if (!result[0]) throw new Error('not_found');
 
-		return result[0];
+		return {
+			...result[0],
+			oldPermissions: admin.permissions,
+			newPermissions: sanitizedPerms,
+		};
 	}
 
 	async updateLinkedPlayer(
