@@ -1,7 +1,8 @@
-import type { AuthedRequest, RouteModule } from '../../types';
-import { sessionAuth } from '../../middleware/session';
+import { repo } from '@fxmanager/database';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
+import type { AuthedRequest, RouteModule } from '../../types';
+import { sessionAuth } from '../../middleware/session';
 import { resourceManager } from '../../modules/resource.manager';
 
 const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
@@ -24,6 +25,12 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		const result = await pm.start();
 
+		repo.audit.log({
+			adminId: admin.id,
+			action: 'server.start',
+			metadata: { success: result },
+		});
+
 		return reply.code(result ? 200 : 500).send({ success: result });
 	});
 
@@ -41,6 +48,12 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		const result = await pm.stop();
 
+		repo.audit.log({
+			adminId: admin.id,
+			action: 'server.stop',
+			metadata: { success: result },
+		});
+
 		return reply.code(result ? 200 : 500).send({ success: result });
 	});
 
@@ -57,6 +70,12 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		}
 
 		const result = await pm.restart();
+
+		repo.audit.log({
+			adminId: admin.id,
+			action: 'server.restart',
+			metadata: { success: result },
+		});
 
 		return reply.code(result ? 200 : 500).send({ success: result });
 	});
