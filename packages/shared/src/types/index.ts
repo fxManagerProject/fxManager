@@ -1,4 +1,5 @@
 export * from './api';
+export * from './audit';
 export * from './core';
 export * from './game';
 export * from './process-manager';
