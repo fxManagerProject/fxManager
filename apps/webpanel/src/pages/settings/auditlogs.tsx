@@ -66,7 +66,6 @@ export default function AuditLogPage() {
 	const [target, setTarget] = useState('');
 	const [page, setPage] = useState(1);
 
-	// 1. Add state to hold the Date Range selection object
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
 	const debouncedTarget = useDebounce(target, 400);
@@ -86,7 +85,6 @@ export default function AuditLogPage() {
 			});
 		}
 
-		// 2. Format and pass your ISO Date strings to your backend query builder
 		if (dateRange?.from) {
 			params.append('dateFrom', dateRange.from.toISOString());
 		}
@@ -103,7 +101,7 @@ export default function AuditLogPage() {
 			})
 			.catch((err) => console.error(err))
 			.finally(() => setIsLoading(false));
-	}, [page, debouncedTarget, selectedActions, dateRange]); // 3. Re-fetch when dateRange parameters drop or change
+	}, [page, debouncedTarget, selectedActions, dateRange]);
 
 	const toggleAction = (action: string) => {
 		setPage(1);
@@ -122,146 +120,149 @@ export default function AuditLogPage() {
 				description="Audit log view for fxManager actions."
 			/>
 
-			<div className="flex flex-wrap items-end gap-4 border-b border-border/60 pb-4">
-				<div className="flex flex-col gap-1.5">
-					<Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-						Search Target
-					</Label>
-					<Input
-						type="text"
-						placeholder="Username or ID..."
-						value={target}
-						onChange={(e) => {
-							setTarget(e.target.value);
-							setPage(1);
-						}}
-						className="h-9 w-60 bg-background"
-					/>
-				</div>
+			<div className="flex flex-wrap justify-between items-end border-b border-border/60 pb-4">
+				<div className="flex flex-wrap items-end gap-4 ">
+					<div className="flex flex-col gap-1.5">
+						<Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+							Search Target
+						</Label>
+						<Input
+							type="text"
+							placeholder="Username or ID..."
+							value={target}
+							onChange={(e) => {
+								setTarget(e.target.value);
+								setPage(1);
+							}}
+							className="h-9 w-60 bg-background"
+						/>
+					</div>
 
-				<div className="flex flex-col gap-1.5">
-					<Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-						Action Type
-					</Label>
-					<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-						<PopoverTrigger asChild>
-							<Button
-								variant="outline"
-								role="combobox"
-								className="h-9 min-w-[220px] max-w-[400px] justify-between text-left font-normal bg-background"
-							>
-								{selectedActions.length === 0 ? (
-									<span className="text-muted-foreground">All Actions</span>
-								) : (
-									<div className="flex flex-wrap gap-1 max-w-[340px] truncate">
-										{selectedActions.map((act) => (
-											<Badge
-												key={act}
-												variant="secondary"
-												className="text-[10px] px-1.5 py-0"
-											>
-												{act.split('.')[1]}
-												<X
-													className="ml-1 h-3 w-3 cursor-pointer text-muted-foreground/80 hover:text-foreground"
-													onClick={(e) => {
-														e.stopPropagation();
-														toggleAction(act);
-													}}
-												/>
-											</Badge>
-										))}
-									</div>
-								)}
-								<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent className="w-[260px] p-0" align="start">
-							<Command className="space-y-2">
-								<CommandInput placeholder="Search actions..." />
-								<CommandList>
-									<CommandEmpty>No matching actions found.</CommandEmpty>
-									{Object.entries(AUDIT_LOG_ACTIONS).map(
-										([category, actions]) => (
-											<CommandGroup key={category} heading={category}>
-												{actions.map((act) => {
-													const isChecked = selectedActions.includes(act);
-													return (
-														<CommandItem
-															key={act}
-															value={act}
-															onSelect={() => toggleAction(act)}
-															className="flex items-center gap-2 cursor-pointer"
-														>
-															<Checkbox
-																checked={isChecked}
-																onCheckedChange={() => {}}
-															/>
-															<span className="capitalize">
-																{act.split('.')[1].replace('_', ' ')}
-															</span>
-														</CommandItem>
-													);
-												})}
-											</CommandGroup>
-										),
-									)}
-								</CommandList>
-							</Command>
-						</PopoverContent>
-					</Popover>
-				</div>
-
-				{/* 4. Shadcn/ui Date Range Picker Segment */}
-				<div className="flex flex-col gap-1.5">
-					<Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-						Date Range Filter
-					</Label>
-					<Popover>
-						<PopoverTrigger asChild>
-							<Button
-								id="date"
-								variant="outline"
-								className="h-9 w-[260px] justify-start text-left font-normal bg-background"
-							>
-								<CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground/80" />
-								{dateRange?.from ? (
-									dateRange.to ? (
-										<>
-											{format(dateRange.from, 'LLL dd, yyyy')} -{' '}
-											{format(dateRange.to, 'LLL dd, yyyy')}
-										</>
+					<div className="flex flex-col gap-1.5">
+						<Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+							Action Type
+						</Label>
+						<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+							<PopoverTrigger asChild>
+								<Button
+									variant="outline"
+									role="combobox"
+									className="h-9 min-w-[220px] max-w-[400px] justify-between text-left font-normal bg-background"
+								>
+									{selectedActions.length === 0 ? (
+										<span className="text-muted-foreground">All Actions</span>
 									) : (
-										format(dateRange.from, 'LLL dd, yyyy')
-									)
-								) : (
-									<span className="text-muted-foreground">Pick a date range</span>
-								)}
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent className="w-auto p-0" align="start">
-							<Calendar
-								mode="range"
-								defaultMonth={dateRange?.from}
-								selected={dateRange}
-								onSelect={(range) => {
-									setPage(1);
-									setDateRange(range);
-								}}
-								numberOfMonths={2}
-							/>
-						</PopoverContent>
-					</Popover>
+										<div className="flex flex-wrap gap-1 max-w-[340px] truncate">
+											{selectedActions.map((act) => (
+												<Badge
+													key={act}
+													variant="secondary"
+													className="text-[10px] px-1.5 py-0"
+												>
+													{act.split('.')[1]}
+													<X
+														className="ml-1 h-3 w-3 cursor-pointer text-muted-foreground/80 hover:text-foreground"
+														onClick={(e) => {
+															e.stopPropagation();
+															toggleAction(act);
+														}}
+													/>
+												</Badge>
+											))}
+										</div>
+									)}
+									<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+								</Button>
+							</PopoverTrigger>
+							<PopoverContent className="w-[260px] p-0" align="start">
+								<Command className="space-y-2">
+									<CommandInput placeholder="Search actions..." />
+									<CommandList>
+										<CommandEmpty>No matching actions found.</CommandEmpty>
+										{Object.entries(AUDIT_LOG_ACTIONS).map(
+											([category, actions]) => (
+												<CommandGroup key={category} heading={category}>
+													{actions.map((act) => {
+														const isChecked = selectedActions.includes(act);
+														return (
+															<CommandItem
+																key={act}
+																value={act}
+																onSelect={() => toggleAction(act)}
+																className="flex items-center gap-2 cursor-pointer"
+															>
+																<Checkbox
+																	checked={isChecked}
+																	onCheckedChange={() => {}}
+																/>
+																<span className="capitalize">
+																	{act.split('.')[1].replace('_', ' ')}
+																</span>
+															</CommandItem>
+														);
+													})}
+												</CommandGroup>
+											),
+										)}
+									</CommandList>
+								</Command>
+							</PopoverContent>
+						</Popover>
+					</div>
+
+					<div className="flex flex-col gap-1.5">
+						<Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+							Date Range Filter
+						</Label>
+						<Popover>
+							<PopoverTrigger asChild>
+								<Button
+									id="date"
+									variant="outline"
+									className="h-9 w-[260px] justify-start text-left font-normal bg-background"
+								>
+									<CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground/80" />
+									{dateRange?.from ? (
+										dateRange.to ? (
+											<>
+												{format(dateRange.from, 'LLL dd, yyyy')} -{' '}
+												{format(dateRange.to, 'LLL dd, yyyy')}
+											</>
+										) : (
+											format(dateRange.from, 'LLL dd, yyyy')
+										)
+									) : (
+										<span className="text-muted-foreground">
+											Pick a date range
+										</span>
+									)}
+								</Button>
+							</PopoverTrigger>
+							<PopoverContent className="w-auto p-0" align="start">
+								<Calendar
+									mode="range"
+									defaultMonth={dateRange?.from}
+									selected={dateRange}
+									onSelect={(range) => {
+										setPage(1);
+										setDateRange(range);
+									}}
+									numberOfMonths={2}
+								/>
+							</PopoverContent>
+						</Popover>
+					</div>
 				</div>
 
 				<Button
 					onClick={() => {
 						setTarget('');
 						setSelectedActions([]);
-						setDateRange(undefined); // Clear date states cleanly
+						setDateRange(undefined);
 						setPage(1);
 					}}
-					className="h-9 px-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-					variant="ghost"
+					className="h-9 px-3 text-xs font-medium"
+					variant="outline"
 				>
 					Clear Filters
 				</Button>
@@ -316,7 +317,7 @@ export default function AuditLogPage() {
 										{log.adminId ? (
 											<Link
 												to={`/settings/admins/${log.adminId}`}
-												className="inline-flex items-center text-xs font-medium text-sky-500 dark:text-sky-400 hover:underline bg-sky-500/10 px-2.5 py-1 rounded-md border border-sky-500/20"
+												className="inline-flex items-center text-xs font-medium text-primary-foreground hover:underline bg-primary/40 px-2.5 py-1 rounded-md border"
 											>
 												{log.admin ?? `Admin #${log.adminId}`}
 											</Link>
