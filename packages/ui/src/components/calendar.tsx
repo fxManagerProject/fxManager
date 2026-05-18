@@ -89,7 +89,20 @@ function Calendar({
 						: 'flex items-center gap-1 rounded-(--cell-radius) text-sm [&>svg]:size-3.5 [&>svg]:text-muted-foreground',
 					defaultClassNames.caption_label,
 				),
-				table: 'w-full border-collapse',
+				// doens't seem to affect much when removing it ?
+				// ts error:
+				/* 
+					../../packages/ui/src/components/calendar.tsx:92:5 - error TS2353: Object literal may only specify known properties,
+								and 'table' does not exist in type 'Partial<ClassNames>'.
+					92     table: 'w-full border-collapse',
+								~~~~~
+
+						../../node_modules/.bun/react-day-picker@10.0.1+26a211c426f3f87c/node_modules/react-day-picker/dist/esm/types/props.d.ts:44:5
+							44     classNames?: Partial<ClassNames>;
+										~~~~~~~~~~
+							The expected type comes from property 'classNames' which is declared here on type 'IntrinsicAttributes & DayPickerProps'
+				*/
+				// table: 'w-full border-collapse',
 				weekdays: cn('flex', defaultClassNames.weekdays),
 				weekday: cn(
 					'flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none',
