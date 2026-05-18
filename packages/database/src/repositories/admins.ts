@@ -82,7 +82,10 @@ class AdminsRepository {
 		};
 	}
 
-	async getProfile(adminId: number): Promise<AdminProfile | null> {
+	async getProfile(
+		adminId: number,
+		showAudit: boolean = false,
+	): Promise<AdminProfile | null> {
 		const profile = await this.db.query.adminUsers.findFirst({
 			where: eq(adminUsers.id, adminId),
 			columns: {
@@ -93,12 +96,14 @@ class AdminsRepository {
 				createdAt: true,
 				lastLoginAt: true,
 			},
-			with: {
-				auditLogs: {
-					limit: 10,
-					orderBy: [desc(auditLog.createdAt)],
-				},
-			},
+			with: showAudit
+				? {
+						auditLogs: {
+							limit: 10,
+							orderBy: [desc(auditLog.createdAt)],
+						},
+					}
+				: {},
 		});
 
 		if (!profile) return null;
@@ -110,8 +115,14 @@ class AdminsRepository {
 				})
 			: null;
 
+		const auditLogs =
+			'auditLogs' in profile && Array.isArray(profile.auditLogs)
+				? profile.auditLogs
+				: [];
+
 		return {
 			...profile,
+			auditLogs,
 			playerName: response?.name ?? null,
 			group: PermissionManager.getGroup(profile.permissions),
 		};
