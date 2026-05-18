@@ -143,11 +143,11 @@ class WhitelistRepository {
 		if (data.type === 'discord') {
 			regex = /^discord:[0-9]+$/;
 		} else if (data.type === 'license') {
-			regex = /^license:[a-f0-9]+$/i; 
+			regex = /^license:[a-f0-9]+$/i;
 		} else if (data.type === 'fivem') {
 			regex = /^fivem:[0-9]+$/;
 		} else if (data.type === 'steam') {
-			regex = /^steam:[a-f0-9]+$/i; 
+			regex = /^steam:[a-f0-9]+$/i;
 		}
 
 		if (regex && !regex.test(data.value)) {

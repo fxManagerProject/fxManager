@@ -136,7 +136,10 @@ const WhitelistEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		repo.audit.log({
 			adminId: admin.id,
 			action: 'whitelist.revoke',
-			target: players.length === 0 ? undefined : players.map(p => p.name).join(', '),
+			target:
+				players.length === 0
+					? undefined
+					: players.map((p) => p.name).join(', '),
 			metadata: {
 				type: whitelistData.type,
 				identifier: whitelistData.value,

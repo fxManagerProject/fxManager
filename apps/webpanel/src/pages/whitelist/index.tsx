@@ -174,7 +174,6 @@ export default function WhitelistIndex() {
 
 			if (!response.success) {
 				toast.error(response.error);
-				
 			} else {
 				toast.success('Entry removed from whitelist');
 				fetchFromServer();
@@ -201,7 +200,6 @@ export default function WhitelistIndex() {
 
 			if (!response.success) {
 				toast.error(response.error);
-				
 			} else {
 				toast.success('Entry added to whitelist');
 				setAddForm((prev) => ({ ...prev, value: '' }));
