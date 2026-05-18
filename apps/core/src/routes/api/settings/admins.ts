@@ -101,7 +101,10 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 		const { adminId: adminIdRaw } = request.params as { adminId: string };
 		const adminId = parseInt(adminIdRaw, 10);
 
-		const profile = await repo.admins.getProfile(adminId);
+		const profile = await repo.admins.getProfile(
+			adminId,
+			PermissionManager.has(admin.permissions, UserPermissions.AUDIT_LOG),
+		);
 
 		if (!profile)
 			return {
