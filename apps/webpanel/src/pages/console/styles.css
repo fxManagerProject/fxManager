@@ -1,0 +1,4 @@
+/* quick fix to be more explicit that the user is hovering an anchor  */
+code.ansi-item > span > a:hover {
+	text-decoration: underline;
+}

@@ -8,6 +8,7 @@ import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
 import Ansi from 'ansi-to-react';
 import { ArrowRight, SendHorizonal, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import './styles.css';
 
 function LogLine({ event }: { event: ProcessOutputLine }) {
 	return (
