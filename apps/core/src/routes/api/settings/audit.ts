@@ -19,8 +19,15 @@ const AuditLogEndpoint: RouteModule['handler'] = async (fastify) => {
 
 		if (!allowed) throw new Error('Unauthorized');
 
-		// biome-ignore lint/suspicious/noExplicitAny: can't be arsed to cast atm
-		const rawQuery = request.query as any;
+		const rawQuery = request.query as {
+			page: string;
+			pageSize: string;
+			target?: string;
+			action?: AuditLogAction | AuditLogAction[];
+			dateFrom?: string;
+			dateTo?: string;
+			adminId?: string | 'system';
+		};
 		const page = rawQuery.page ? parseInt(rawQuery.page, 10) : 1;
 		const pageSize = rawQuery.pageSize ? parseInt(rawQuery.pageSize, 10) : 50;
 
@@ -39,7 +46,6 @@ const AuditLogEndpoint: RouteModule['handler'] = async (fastify) => {
 					: parseInt(rawQuery.adminId, 10);
 		}
 
-		// 5. Build your clean query objects
 		const targetFilter = rawQuery.target?.trim() || undefined;
 		const dateFromFilter = rawQuery.dateFrom
 			? new Date(rawQuery.dateFrom)
@@ -48,7 +54,6 @@ const AuditLogEndpoint: RouteModule['handler'] = async (fastify) => {
 			? new Date(rawQuery.dateTo)
 			: undefined;
 
-		// Pass the safely formatted data structures down to Drizzle
 		const list = await repo.audit.list(
 			Number.isNaN(page) ? 1 : page,
 			Number.isNaN(pageSize) ? 50 : pageSize,
