@@ -15,11 +15,11 @@ export interface PaginatedResponse<T> {
 	pageSize: number;
 }
 
-export class ApiError extends Error {
+export class ApiError<T = unknown> extends Error {
 	status: number;
-	data: unknown;
+	data?: T;
 
-	constructor(message: string, status: number, data: unknown = null) {
+	constructor(message: string, status: number, data?: T) {
 		super(message);
 		this.name = 'ApiError';
 		this.status = status;
