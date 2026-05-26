@@ -36,7 +36,7 @@ export function LoginForm({
 
 			if (err.status === 401) {
 				setError('Invalid Credentials');
-			} else if (err.name === 'ApiError') {
+			} else {
 				setError(err.data?.error ?? err.message);
 			}
 		});
