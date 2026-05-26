@@ -17,7 +17,7 @@ export function PageHeader({
 			<div className="flex items-center gap-3">
 				<button
 					type="button"
-					className="group/logo md:hidden flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground 
+					className="group/logo xl:hidden flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground 
                     transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-primary/40"
 					onClick={toggleSidebar}
 				>
