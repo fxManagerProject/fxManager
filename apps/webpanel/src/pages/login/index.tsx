@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/use-auth';
+import type { ApiError } from '@fxmanager/shared/types';
 import { Button } from '@fxmanager/ui/components/button';
 import {
 	Field,
@@ -30,9 +31,15 @@ export function LoginForm({
 
 	function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
-		login(formData.username, formData.password).catch((err) =>
-			setError((err as Error).message),
-		);
+		login(formData.username, formData.password).catch((error) => {
+			const err = error as ApiError<{ error?: string }>;
+
+			if (err.status === 401) {
+				setError('Invalid Credentials');
+			} else {
+				setError(err.data?.error ?? err.message);
+			}
+		});
 	}
 
 	return (
