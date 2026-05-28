@@ -22,7 +22,7 @@ import { QueryService } from '@/lib/query';
 import { Link } from 'react-router-dom';
 import { Label } from '@fxmanager/ui/components/label';
 import { Input } from '@fxmanager/ui/components/input';
-import type { PaginatedResponse } from '@fxmanager/shared/types';
+import type { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
 import { Button } from '@fxmanager/ui/components/button';
 import { AUDIT_LOG_ACTIONS } from '@fxmanager/shared/constants';
 import {
@@ -43,6 +43,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Calendar } from '@fxmanager/ui/components/calendar';
 import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
+import { toast } from 'sonner';
 
 const ACTION_ICON_MAP: Record<
 	string,
@@ -56,19 +57,26 @@ const ACTION_ICON_MAP: Record<
 	settings: Cog,
 };
 
+type AdminItem = { id: number; username: string };
+
 export default function AuditLogPage() {
 	const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
 	const [selectedActions, setSelectedActions] = useState<string[]>([]);
-	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+	const [availableAdmins, setAvailableAdmins] = useState<AdminItem[]>([]);
+	const [selectedAdmins, setSelectedAdmins] = useState<AdminItem[]>([]);
+	const [isActionPopoverOpen, setIsActionPopoverOpen] = useState(false);
+	const [isAdminPopoverOpen, setIsAdminPopoverOpen] = useState(false);
 
 	const [target, setTarget] = useState('');
+	const [admin, setAdmin] = useState('');
 	const [page, setPage] = useState(1);
 
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
 	const debouncedTarget = useDebounce(target, 400);
+	const debouncedadmin = useDebounce(target, 400);
 
 	useEffect(() => {
 		setIsLoading(true);
@@ -82,6 +90,12 @@ export default function AuditLogPage() {
 		if (selectedActions.length > 0) {
 			selectedActions.forEach((act) => {
 				params.append('action', act);
+			});
+		}
+
+		if (selectedAdmins.length > 0) {
+			selectedAdmins.forEach(({ id }) => {
+				params.append('admin', id.toString());
 			});
 		}
 
@@ -101,7 +115,40 @@ export default function AuditLogPage() {
 			})
 			.catch((err) => console.error(err))
 			.finally(() => setIsLoading(false));
-	}, [page, debouncedTarget, selectedActions, dateRange]);
+	}, [page, debouncedTarget, selectedActions, selectedAdmins, dateRange]);
+
+	useEffect(() => {
+		let cancelled = false;
+
+		const params = new URLSearchParams({
+			pageSize: '10',
+		});
+
+		if (debouncedadmin) params.set('search', debouncedadmin);
+
+		QueryService<PaginatedResponse<BaseAdminUser>>({
+			endpoint: `/settings/admins?${params.toString()}`,
+			method: 'GET',
+		})
+			.then((response) => {
+				if (cancelled) return;
+
+				const { items } = response;
+
+				setAvailableAdmins(
+					items.map((i) => ({ id: i.id, username: i.username })),
+				);
+			})
+			.catch((err) => {
+				toast.error('Failed to search admins', {
+					description: err.message,
+				});
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [debouncedadmin]);
 
 	const toggleAction = (action: string) => {
 		setPage(1);
@@ -109,6 +156,13 @@ export default function AuditLogPage() {
 			prev.includes(action)
 				? prev.filter((a) => a !== action)
 				: [...prev, action],
+		);
+	};
+
+	const toggleAdmin = (admin: AdminItem) => {
+		setPage(1);
+		setSelectedAdmins((prev) =>
+			prev.includes(admin) ? prev.filter((a) => a !== admin) : [...prev, admin],
 		);
 	};
 
@@ -140,9 +194,82 @@ export default function AuditLogPage() {
 
 					<div className="flex flex-col gap-1.5">
 						<Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+							Admins
+						</Label>
+						<Popover
+							open={isAdminPopoverOpen}
+							onOpenChange={setIsAdminPopoverOpen}
+						>
+							<PopoverTrigger asChild>
+								<Button
+									variant="outline"
+									role="combobox"
+									className="h-9 min-w-[220px] max-w-[400px] justify-between text-left font-normal bg-background"
+								>
+									{selectedAdmins.length === 0 ? (
+										<span className="text-muted-foreground">Any Admin</span>
+									) : (
+										<div className="flex flex-wrap gap-1 max-w-[340px] truncate">
+											{selectedAdmins.map(({ id, username }) => (
+												<Badge
+													key={id}
+													variant="secondary"
+													className="text-[10px] px-1.5 py-0"
+												>
+													{username}
+													<X
+														className="ml-1 h-3 w-3 cursor-pointer text-muted-foreground/80 hover:text-foreground"
+														onClick={(e) => {
+															e.stopPropagation();
+															toggleAdmin({ id, username });
+														}}
+													/>
+												</Badge>
+											))}
+										</div>
+									)}
+									<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+								</Button>
+							</PopoverTrigger>
+							<PopoverContent className="w-[260px] p-0" align="start">
+								<Command className="space-y-2">
+									<CommandInput
+										placeholder="Search admins..."
+										value={admin}
+										onValueChange={setAdmin}
+									/>
+									<CommandList>
+										<CommandEmpty>No matching actions found.</CommandEmpty>
+										{availableAdmins.map((admin) => {
+											const isChecked = selectedAdmins.includes(admin);
+											return (
+												<CommandItem
+													key={admin.id}
+													onSelect={() => toggleAdmin(admin)}
+													className="flex items-center gap-2 cursor-pointer"
+												>
+													<Checkbox
+														checked={isChecked}
+														onCheckedChange={() => {}}
+													/>
+													<span className="capitalize">{admin.username}</span>
+												</CommandItem>
+											);
+										})}
+									</CommandList>
+								</Command>
+							</PopoverContent>
+						</Popover>
+					</div>
+
+					<div className="flex flex-col gap-1.5">
+						<Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
 							Action Type
 						</Label>
-						<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+						<Popover
+							open={isActionPopoverOpen}
+							onOpenChange={setIsActionPopoverOpen}
+						>
 							<PopoverTrigger asChild>
 								<Button
 									variant="outline"
