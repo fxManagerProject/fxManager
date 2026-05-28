@@ -385,13 +385,13 @@ export default function AdminView() {
 																<span className="text-sm font-semibold uppercase tracking-wide">
 																	{log.action.replace('_', ' ')}
 																</span>
-																{log.target && (
+																{log.player && (
 																	<>
 																		<span className="text-muted-foreground text-xs">
 																			→
 																		</span>
 																		<span className="text-xs font-mono bg-secondary px-1.5 py-0.5 rounded text-secondary-foreground">
-																			{log.target}
+																			{log.player}
 																		</span>
 																	</>
 																)}
