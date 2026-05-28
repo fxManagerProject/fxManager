@@ -11,7 +11,7 @@ import {
 	sql,
 } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { auditLog, adminUsers } from '../schema';
+import { auditLog, adminUsers, players } from '../schema';
 import type * as schema from '../schema';
 import type {
 	AuditLogAction,
@@ -37,9 +37,10 @@ class AuditRepository {
 	log(input: {
 		adminId?: number;
 		action: AuditLogAction;
-		target?: string;
+		playerId?: number;
 		metadata?: Record<string, unknown>;
 	}) {
+		console.log('adding audit log', input);
 		return this.db
 			.insert(auditLog)
 			.values({ ...input, createdAt: new Date() })
@@ -69,7 +70,7 @@ class AuditRepository {
 		}
 
 		if (target) {
-			conditions.push(like(auditLog.target, `%${target}%`));
+			conditions.push(like(players.name, `%${target}%`));
 		}
 
 		if (adminId !== undefined) {
@@ -95,12 +96,14 @@ class AuditRepository {
 				admin: adminUsers.username,
 				adminId: auditLog.adminId,
 				action: auditLog.action,
-				target: auditLog.target,
+				playerId: auditLog.playerId,
+				player: players.name,
 				metadata: auditLog.metadata,
 				createdAt: auditLog.createdAt,
 			})
 			.from(auditLog)
 			.leftJoin(adminUsers, eq(auditLog.adminId, adminUsers.id))
+			.leftJoin(players, eq(players.id, auditLog.playerId))
 			.where(whereClause)
 			.orderBy(desc(auditLog.createdAt))
 			.limit(pageSize)
