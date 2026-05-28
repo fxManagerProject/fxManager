@@ -5,7 +5,6 @@ import {
 	eq,
 	gte,
 	inArray,
-	isNull,
 	like,
 	lte,
 	sql,
@@ -53,7 +52,7 @@ class AuditRepository {
 		pageSize: number = 50,
 		action?: AuditLogAction | AuditLogAction[],
 		target?: string,
-		adminId?: number | 'system',
+		admins?: number[],
 		dateFrom?: Date,
 		dateTo?: Date,
 	): Promise<PaginatedResponse<AuditLog>> {
@@ -73,12 +72,8 @@ class AuditRepository {
 			conditions.push(like(players.name, `%${target}%`));
 		}
 
-		if (adminId !== undefined) {
-			if (adminId === 'system') {
-				conditions.push(isNull(auditLog.adminId));
-			} else {
-				conditions.push(eq(auditLog.adminId, adminId));
-			}
+		if (admins !== undefined) {
+			conditions.push(inArray(auditLog.adminId, admins));
 		}
 
 		if (dateFrom) {
