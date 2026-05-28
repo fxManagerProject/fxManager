@@ -39,6 +39,6 @@ export type AuditLog = BaseAuditLog & {
 };
 
 export interface AdminProfile extends BaseAdminUser {
-	auditLogs: BaseAuditLog[];
+	auditLogs: AuditLog[];
 	playerName: string | null;
 }
