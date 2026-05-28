@@ -65,7 +65,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			repo.audit.log({
 				adminId: admin.id,
 				action: 'player.note',
-				target: result.player?.name ?? `Player #${playerId}`,
+				playerId: result.player?.id,
 				metadata: {
 					note: result.content ?? 'Note deleted',
 				},
@@ -130,7 +130,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			repo.audit.log({
 				adminId: admin.id,
 				action: 'player.ban',
-				target: result.player?.name ?? `Player #${playerId}`,
+				playerId: result.player?.id,
 				metadata: {
 					banId: result.id,
 					expiresAt: expiresAt?.toISOString() ?? 'permanent',
@@ -204,7 +204,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			repo.audit.log({
 				adminId: admin.id,
 				action: 'player.kick',
-				target: result.player?.name ?? `Player #${playerId}`,
+				playerId: result.player?.id,
 				metadata: {
 					reason: result.reason,
 				},
@@ -252,7 +252,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			repo.audit.log({
 				adminId: admin.id,
 				action: 'player.warn',
-				target: result.player?.name ?? `Player #${playerId}`,
+				playerId: result.player?.id,
 				metadata: {
 					reason: result.reason,
 				},

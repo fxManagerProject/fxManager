@@ -133,18 +133,28 @@ const WhitelistEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			search: whitelistData.value,
 		});
 
-		repo.audit.log({
-			adminId: admin.id,
-			action: 'whitelist.revoke',
-			target:
-				players.length === 0
-					? undefined
-					: players.map((p) => p.name).join(', '),
-			metadata: {
-				type: whitelistData.type,
-				identifier: whitelistData.value,
-			},
-		});
+		if (players.length > 0) {
+			for (const player of players) {
+				repo.audit.log({
+					adminId: admin.id,
+					action: 'whitelist.revoke',
+					playerId: player.id,
+					metadata: {
+						type: whitelistData.type,
+						identifier: whitelistData.value,
+					},
+				});
+			}
+		} else {
+			repo.audit.log({
+				adminId: admin.id,
+				action: 'whitelist.revoke',
+				metadata: {
+					type: whitelistData.type,
+					identifier: whitelistData.value,
+				},
+			});
+		}
 
 		if (players.length === 0) {
 			return {
