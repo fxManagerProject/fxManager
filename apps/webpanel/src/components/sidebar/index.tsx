@@ -7,10 +7,10 @@ import { Outlet } from 'react-router-dom';
 
 export default function AppLayout() {
 	return (
-		<SidebarProvider>
+		<SidebarProvider className="h-screen overflow-hidden">
 			<AppSidebar />
-			<SidebarInset>
-				<div className="flex flex-1 flex-col gap-4 p-4">
+			<SidebarInset className="h-screen overflow-hidden">
+				<div className="flex flex-col h-full overflow-hidden p-4 gap-4">
 					<Outlet />
 				</div>
 			</SidebarInset>
