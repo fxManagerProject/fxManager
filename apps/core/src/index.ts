@@ -13,6 +13,7 @@ import internalRoutes from './routes/internal';
 import { ProcessManager } from './modules/process.manager';
 import { GameManager } from './modules/game.manager';
 import { ConfigManager } from './modules/config.manager';
+import { perfManager } from './modules/perf.manager';
 import { applyMigrations } from '@fxmanager/database';
 
 applyMigrations();
@@ -70,6 +71,8 @@ fastify.get('/api/health', async () => {
 
 const pm = new ProcessManager();
 const gm = new GameManager();
+
+perfManager.start();
 
 fastify.register(apiRoutes, { prefix: '/api', pm, gm });
 fastify.register(internalRoutes, { prefix: '/internal', pm, gm });

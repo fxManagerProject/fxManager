@@ -8,4 +8,5 @@ export * from './players';
 export * from './security';
 export * from './settings';
 export * from './websockets';
+export * from './perf';
 export * from './whitelist';

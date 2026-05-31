@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type {
 	OnlinePlayer,
+	PerfSnapshot,
 	ProcessOutputLine,
 	ResourceInitialData,
 	ServerState,
@@ -11,6 +12,7 @@ import { sessionAuth } from '../../middleware/session';
 import { wsManager } from '../../modules/ws.manager';
 import type { AuthedRequest, RouteModule } from '../../types';
 import { resourceManager } from '../../modules/resource.manager';
+import { perfManager } from '../../modules/perf.manager';
 
 wsManager.addCheck('console', (admin) => {
 	return PermissionManager.has(
@@ -96,6 +98,11 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 
 	wsManager.setInitialData<ResourceInitialData>('resourcelist', () => {
 		return resourceManager.getResourceList();
+	});
+
+	// backfill new clients with the last 30 min of samples
+	wsManager.setInitialData<PerfSnapshot[]>('perf', () => {
+		return perfManager.getRecent();
 	});
 };
 
