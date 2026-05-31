@@ -1,10 +1,10 @@
-import { asc, desc, eq, like, sql } from 'drizzle-orm';
+import { asc, desc, eq, inArray, like, sql } from 'drizzle-orm';
 import type { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
 import type * as schema from '../schema';
 import { adminUsers, auditLog, players } from '../schema';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { PermissionManager } from '@fxmanager/shared/utils';
-import type { AdminProfile } from '../types';
+import type { AdminProfile, AuditLog } from '../types';
 import { UserPermissions } from '@fxmanager/shared/constants';
 
 type DB = BunSQLiteDatabase<typeof schema>;
@@ -82,37 +82,77 @@ class AdminsRepository {
 		};
 	}
 
-	async getProfile(adminId: number): Promise<AdminProfile | null> {
+	async getProfile(
+		adminId: number,
+		showAudit: boolean = false,
+	): Promise<AdminProfile | null> {
 		const profile = await this.db.query.adminUsers.findFirst({
 			where: eq(adminUsers.id, adminId),
 			columns: {
 				id: true,
 				username: true,
+				passwordHash: false,
 				permissions: true,
 				playerId: true,
 				createdAt: true,
 				lastLoginAt: true,
 			},
-			with: {
-				auditLogs: {
-					limit: 10,
-					orderBy: [desc(auditLog.createdAt)],
-				},
-			},
 		});
 
 		if (!profile) return null;
 
-		const response = profile.playerId
-			? await this.db.query.players.findFirst({
-					where: eq(players.id, profile.playerId),
-					columns: { name: true },
-				})
-			: null;
+		let playerName: string | null = null;
+		if (profile.playerId) {
+			const adminPlayer = await this.db.query.players.findFirst({
+				where: eq(players.id, profile.playerId),
+				columns: { name: true },
+			});
+			playerName = adminPlayer?.name ?? null;
+		}
+
+		let auditLogs: AuditLog[] = [];
+
+		if (showAudit) {
+			const rawLogs = this.db
+				.select()
+				.from(auditLog)
+				.where(eq(auditLog.adminId, adminId))
+				.orderBy(desc(auditLog.createdAt))
+				.limit(10)
+				.all();
+
+			if (rawLogs.length > 0) {
+				const targetPlayerIds = [
+					...new Set(
+						rawLogs
+							.map((log) => log.playerId)
+							.filter((id): id is number => id !== null),
+					),
+				];
+
+				const playersData =
+					targetPlayerIds.length > 0
+						? this.db
+								.select({ id: players.id, name: players.name })
+								.from(players)
+								.where(inArray(players.id, targetPlayerIds))
+								.all()
+						: [];
+
+				const playerMap = new Map(playersData.map((p) => [p.id, p.name]));
+
+				auditLogs = rawLogs.map((log) => ({
+					...log,
+					admin: profile.username,
+					player: log.playerId ? (playerMap.get(log.playerId) ?? null) : null,
+				}));
+			}
+		}
 
 		return {
 			...profile,
-			playerName: response?.name ?? null,
+			auditLogs,
+			playerName,
 			group: PermissionManager.getGroup(profile.permissions),
 		};
 	}
@@ -136,11 +176,15 @@ class AdminsRepository {
 				permissions: sanitizedPerms,
 			})
 			.where(eq(adminUsers.id, adminId))
-			.returning({ newPerms: adminUsers.permissions });
+			.returning();
 
 		if (!result[0]) throw new Error('not_found');
 
-		return result[0];
+		return {
+			...result[0],
+			oldPermissions: admin.permissions,
+			newPermissions: sanitizedPerms,
+		};
 	}
 
 	async updateLinkedPlayer(
@@ -150,7 +194,7 @@ class AdminsRepository {
 	) {
 		const admin = await this.db.query.adminUsers.findFirst({
 			where: eq(adminUsers.id, adminId),
-			columns: { permissions: true },
+			columns: { permissions: true, playerId: true },
 		});
 
 		if (!admin) throw new Error('not_found');
@@ -163,11 +207,15 @@ class AdminsRepository {
 				playerId,
 			})
 			.where(eq(adminUsers.id, adminId))
-			.returning({ newPlayerId: adminUsers.playerId });
+			.returning();
 
 		if (!result[0]) throw new Error('not_found');
 
-		return result[0];
+		return {
+			...result[0],
+			previousPlayerId: admin.playerId,
+			newPlayerId: playerId,
+		};
 	}
 }
 

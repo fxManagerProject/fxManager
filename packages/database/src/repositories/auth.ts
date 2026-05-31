@@ -53,18 +53,25 @@ class AuthRepository {
 	async deleteUser(adminId: number) {
 		return await this.db.transaction(async (tx) => {
 			const admin = await tx.query.adminUsers.findFirst({
-				columns: {
-					id: true,
-					permissions: true,
-				},
+				columns: { permissions: true },
 				where: eq(adminUsers.id, adminId),
 			});
 
-			if (!admin) throw new Error('not_found');
-			if (admin.permissions & UserPermissions.MASTER)
-				throw new Error('admin_is_master');
+			if (!admin) {
+				throw new Error('not_found');
+			}
 
-			await tx.delete(adminUsers).where(eq(adminUsers.id, adminId));
+			const isMaster = (admin.permissions & UserPermissions.MASTER) !== 0;
+			if (isMaster) {
+				throw new Error('admin_is_master');
+			}
+
+			const [deletedUser] = await tx
+				.delete(adminUsers)
+				.where(eq(adminUsers.id, adminId))
+				.returning();
+
+			return deletedUser;
 		});
 	}
 

@@ -63,6 +63,12 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 					false,
 				);
 
+				repo.audit.log({
+					adminId: admin.id,
+					action: 'admin.create',
+					metadata: { username, permissions },
+				});
+
 				return {
 					success: true,
 					data: {
@@ -95,7 +101,10 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 		const { adminId: adminIdRaw } = request.params as { adminId: string };
 		const adminId = parseInt(adminIdRaw, 10);
 
-		const profile = await repo.admins.getProfile(adminId);
+		const profile = await repo.admins.getProfile(
+			adminId,
+			PermissionManager.has(admin.permissions, UserPermissions.AUDIT_LOG),
+		);
 
 		if (!profile)
 			return {
@@ -122,14 +131,22 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 			if (!allowed) throw new Error('Unauthorized');
 
 			try {
-				const { newPerms } = await repo.admins.updatePermissions(
-					adminId,
-					permissions,
-				);
+				const { newPermissions, oldPermissions, username } =
+					await repo.admins.updatePermissions(adminId, permissions);
+
+				repo.audit.log({
+					adminId: admin.id,
+					action: 'admin.update',
+					target: username,
+					metadata: {
+						previous_permissions: oldPermissions,
+						new_permissions: newPermissions,
+					},
+				});
 
 				return {
 					success: true,
-					data: newPerms,
+					data: newPermissions,
 				};
 			} catch (err) {
 				const msg = (err as Error).message;
@@ -166,11 +183,22 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 			if (!allowed) throw new Error('Unauthorized');
 
 			try {
-				const { newPlayerId } = await repo.admins.updateLinkedPlayer(
-					adminId,
-					playerId,
-					PermissionManager.has(admin.permissions, UserPermissions.MASTER),
-				);
+				const { username, newPlayerId, previousPlayerId } =
+					await repo.admins.updateLinkedPlayer(
+						adminId,
+						playerId,
+						PermissionManager.has(admin.permissions, UserPermissions.MASTER),
+					);
+
+				repo.audit.log({
+					adminId: admin.id,
+					action: 'admin.update',
+					target: username,
+					metadata: {
+						previous_playerId: newPlayerId,
+						new_playerId: previousPlayerId,
+					},
+				});
 
 				return {
 					success: true,
@@ -191,41 +219,47 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 		},
 	);
 
-	fastify.post(
-		'/:adminId/delete',
-		async (request): Promise<ApiResponse<undefined>> => {
-			const { admin } = request as AuthedRequest;
-			const { adminId: adminIdRaw } = request.params as { adminId: string };
-			const adminId = parseInt(adminIdRaw, 10);
+	fastify.post('/:adminId/delete', async (request): Promise<ApiResponse> => {
+		const { admin } = request as AuthedRequest;
+		const { adminId: adminIdRaw } = request.params as { adminId: string };
+		const adminId = parseInt(adminIdRaw, 10);
 
-			const allowed = PermissionManager.has(
-				admin.permissions,
-				UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
-			);
+		const allowed = PermissionManager.has(
+			admin.permissions,
+			UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+		);
 
-			if (!allowed) throw new Error('Unauthorized');
+		if (!allowed) throw new Error('Unauthorized');
 
-			try {
-				await repo.auth.deleteUser(adminId);
+		try {
+			const deletedUser = await repo.auth.deleteUser(adminId);
 
+			if (!deletedUser) throw new Error('not_found');
+
+			repo.audit.log({
+				adminId: admin.id,
+				action: 'admin.delete',
+				target: deletedUser.username,
+				metadata: { id: deletedUser.id },
+			});
+
+			return {
+				success: true,
+				data: undefined,
+			};
+		} catch (err) {
+			const msg = (err as Error).message;
+
+			if (msg === 'not_found')
+				return { success: false, error: 'Admin not found' };
+			else if (msg === 'admin_is_master')
 				return {
-					success: true,
-					data: undefined,
+					success: false,
+					error: 'Cannot delete master account',
 				};
-			} catch (err) {
-				const msg = (err as Error).message;
-
-				if (msg === 'not_found')
-					return { success: false, error: 'Admin not found' };
-				else if (msg === 'admin_is_master')
-					return {
-						success: false,
-						error: 'Cannot delete master account',
-					};
-				else throw err;
-			}
-		},
-	);
+			else throw err;
+		}
+	});
 };
 
 export default {

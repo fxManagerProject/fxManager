@@ -12,6 +12,7 @@ import AdminView from './settings/adminview';
 import AdminCreate from './settings/admincreate';
 import { ResourceList } from './resources';
 import WhitelistIndex from './whitelist';
+import AuditLogPage from './settings/auditlogs';
 
 type RouteConfig = {
 	path: string;
@@ -46,6 +47,11 @@ export const routes: RouteConfig[] = [
 		path: '/settings',
 		element: SettingsPage,
 		permission: UserPermissions.SETTINGS_ACCESS,
+	},
+	{
+		path: '/settings/audit',
+		element: AuditLogPage,
+		permission: UserPermissions.AUDIT_LOG,
 	},
 	{
 		path: '/settings/admins',

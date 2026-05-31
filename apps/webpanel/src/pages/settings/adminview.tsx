@@ -108,16 +108,17 @@ function PlayerCardContent({
 	if (!id || !name) return <p className="font-mono">Unlinked</p>;
 
 	return (
-		<p
+		<button
+			type="button"
 			onClick={handleClick}
 			className="font-mono cursor-pointer hover:underline"
-		>{`${name} (#${id})`}</p>
+		>{`${name} (#${id})`}</button>
 	);
 }
 
 export default function AdminView() {
 	const navigate = useNavigate();
-	const { user } = useAuth();
+	const { user, hasPermission } = useAuth();
 	const params = useParams<{ adminId: string }>();
 	const [adminData, setAdminData] = useState<AdminProfile | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -358,59 +359,74 @@ export default function AdminView() {
 							</CardHeader>
 							<CardContent>
 								<ScrollArea className="min-h-[40vh] h-[calc(100vh-27rem)]">
-									<div className="">
-										{adminData.auditLogs.length > 0 ? (
-											adminData.auditLogs.map((log) => (
-												<div
-													key={log.id}
-													className="flex justify-between items-start border-b py-3 last:border-0 hover:bg-muted/20 transition-colors mr-4"
-												>
-													<div className="space-y-1">
-														<div className="flex items-center gap-2">
-															<span className="text-sm font-semibold uppercase tracking-wide">
-																{log.action.replace('_', ' ')}
-															</span>
-															{log.target && (
-																<>
-																	<span className="text-muted-foreground text-xs">
-																		→
-																	</span>
-																	<span className="text-xs font-mono bg-secondary px-1.5 py-0.5 rounded text-secondary-foreground">
-																		{log.target}
-																	</span>
-																</>
-															)}
+									{!hasPermission(UserPermissions.AUDIT_LOG) ? (
+										<Alert
+											variant="destructive"
+											className="bg-destructive/5 border-destructive/20"
+										>
+											<AlertCircle className="h-4 w-4" />
+											<AlertTitle className="font-bold">
+												Access Restricted
+											</AlertTitle>
+											<AlertDescription>
+												You do not have permissions to view an admins audit log.
+											</AlertDescription>
+										</Alert>
+									) : (
+										<div className="">
+											{adminData.auditLogs.length > 0 ? (
+												adminData.auditLogs.map((log) => (
+													<div
+														key={log.id}
+														className="flex justify-between items-start border-b py-3 last:border-0 hover:bg-muted/20 transition-colors mr-4"
+													>
+														<div className="space-y-1">
+															<div className="flex items-center gap-2">
+																<span className="text-sm font-semibold uppercase tracking-wide">
+																	{log.action.replace('_', ' ')}
+																</span>
+																{log.player && (
+																	<>
+																		<span className="text-muted-foreground text-xs">
+																			→
+																		</span>
+																		<span className="text-xs font-mono bg-secondary px-1.5 py-0.5 rounded text-secondary-foreground">
+																			{log.player}
+																		</span>
+																	</>
+																)}
+															</div>
+
+															{log.metadata &&
+																Object.keys(log.metadata).length > 0 && (
+																	<p className="text-xs text-muted-foreground italic">
+																		{Object.entries(log.metadata)
+																			.map(([key, val]) => `${key}: ${val}`)
+																			.join(' | ')}
+																	</p>
+																)}
 														</div>
 
-														{log.metadata &&
-															Object.keys(log.metadata).length > 0 && (
-																<p className="text-xs text-muted-foreground italic">
-																	{Object.entries(log.metadata)
-																		.map(([key, val]) => `${key}: ${val}`)
-																		.join(' | ')}
-																</p>
-															)}
+														<div className="flex flex-col justify-center items-end gap-1 self-stretch">
+															<span className="text-xs text-muted-foreground">
+																{formatDate(log.createdAt)}
+															</span>
+														</div>
 													</div>
-
-													<div className="flex flex-col justify-center items-end gap-1 self-stretch">
-														<span className="text-xs text-muted-foreground">
-															{formatDate(log.createdAt)}
-														</span>
-													</div>
+												))
+											) : (
+												<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">
+													<Info className="h-8 w-8 text-muted-foreground/60 mb-2" />
+													<p className="text-sm font-medium text-muted-foreground">
+														No recent activity logs
+													</p>
+													<p className="text-xs text-muted-foreground/70">
+														Actions performed by this admin will appear here.
+													</p>
 												</div>
-											))
-										) : (
-											<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">
-												<Info className="h-8 w-8 text-muted-foreground/60 mb-2" />
-												<p className="text-sm font-medium text-muted-foreground">
-													No recent activity logs
-												</p>
-												<p className="text-xs text-muted-foreground/70">
-													Actions performed by this admin will appear here.
-												</p>
-											</div>
-										)}
-									</div>
+											)}
+										</div>
+									)}
 								</ScrollArea>
 							</CardContent>
 						</Card>

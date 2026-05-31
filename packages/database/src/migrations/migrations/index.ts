@@ -1,3 +1,4 @@
+import { m0003_jittery_mystique } from './0003_jittery_mystique';
 import { m0002_dry_molten_man } from './0002_dry_molten_man';
 import { m0001_dapper_landau } from './0001_dapper_landau';
 import { m0000_grey_mother_askani } from './0000_grey_mother_askani';
@@ -23,4 +24,5 @@ export const migrations: Migration[] = [
 	m0000_grey_mother_askani,
 	m0001_dapper_landau,
 	m0002_dry_molten_man,
+	m0003_jittery_mystique,
 ];

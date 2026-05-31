@@ -56,7 +56,21 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		const playerId = parseInt(playerIdRaw, 10);
 
 		try {
-			await repo.players.updatePlayerNotes(playerId, admin.id, content);
+			const result = await repo.players.updatePlayerNotes(
+				playerId,
+				admin.id,
+				content,
+			);
+
+			repo.audit.log({
+				adminId: admin.id,
+				action: 'player.note',
+				playerId: result.player?.id,
+				metadata: {
+					note: result.content ?? 'Note deleted',
+				},
+			});
+
 			return { success: true, data: null };
 		} catch (err) {
 			const error = err as Error;
@@ -82,7 +96,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 	fastify.post('/:playerId/ban', async (request, reply) => {
 		const { playerId: playerIdRaw } = request.params as { playerId: string };
-		const { reason, expiresAt } = request.body as {
+		const { reason, expiresAt: expiresAtRaw } = request.body as {
 			reason: string;
 			expiresAt: string | null;
 		};
@@ -96,6 +110,8 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			};
 		}
 
+		const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null;
+
 		try {
 			const result = await repo.players.addBan(
 				playerId,
@@ -103,6 +119,23 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 				reason,
 				admin.id,
 			);
+
+			if (result === false) {
+				return {
+					success: false,
+					error: 'Player is already under an active, longer ban',
+				};
+			}
+
+			repo.audit.log({
+				adminId: admin.id,
+				action: 'player.ban',
+				playerId: result.player?.id,
+				metadata: {
+					banId: result.id,
+					expiresAt: expiresAt?.toISOString() ?? 'permanent',
+				},
+			});
 
 			const onlinePlayer = gm.getPlayer(playerId);
 			if (onlinePlayer) {
@@ -116,32 +149,30 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 				await gm.dropPlayer(onlinePlayer.serverId, kickMessage);
 			}
 
-			if (result) {
-				return {
-					success: true,
-					data: null,
-				};
-			} else {
-				return {
-					success: false,
-					error: 'Player is already banned',
-				};
-			}
+			return {
+				success: true,
+				data: null,
+			};
 		} catch (err) {
 			const error = err as Error;
-			console.error(
-				'An error occurred when adding a ban to player',
-				error.message,
-				{
-					playerId,
-					admin: admin.username,
-					body: request.body,
-				},
-			);
+
+			if (error.message === 'player_not_found') {
+				return reply.code(404).send({
+					success: false,
+					error: 'The requested player could not be found',
+				});
+			}
+
+			console.error('An error occurred when adding a ban to player:', {
+				message: error.message,
+				playerId,
+				admin: admin.username,
+				body: request.body,
+			});
 
 			return reply.code(500).send({
 				success: false,
-				error: error.message,
+				error: 'An internal server error occurred while archiving the ban',
 			});
 		}
 	});
@@ -168,7 +199,16 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		}
 
 		try {
-			await repo.players.addKick(playerId, reason, admin.id);
+			const result = await repo.players.addKick(playerId, reason, admin.id);
+
+			repo.audit.log({
+				adminId: admin.id,
+				action: 'player.kick',
+				playerId: result.player?.id,
+				metadata: {
+					reason: result.reason,
+				},
+			});
 
 			const kickMessage = `You have been kicked from the server. Reason: ${reason}`;
 			await gm.dropPlayer(onlinePlayer.serverId, kickMessage);
@@ -207,7 +247,16 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		}
 
 		try {
-			await repo.players.addWarn(playerId, reason, admin.id);
+			const result = await repo.players.addWarn(playerId, reason, admin.id);
+
+			repo.audit.log({
+				adminId: admin.id,
+				action: 'player.warn',
+				playerId: result.player?.id,
+				metadata: {
+					reason: result.reason,
+				},
+			});
 
 			// ToDo: warn player in game
 			// - needs to be able to be done offline so on connection he receives it

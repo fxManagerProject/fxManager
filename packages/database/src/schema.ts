@@ -197,7 +197,9 @@ export const auditLog = sqliteTable(
 			onDelete: 'cascade',
 		}),
 		action: text('action').notNull(),
-		target: text('target'),
+		playerId: integer('player_id').references(() => players.id, {
+			onDelete: 'set null',
+		}),
 		metadata: text('metadata', { mode: 'json' }).$type<
 			Record<string, unknown>
 		>(),
@@ -262,6 +264,10 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 	admin: one(adminUsers, {
 		fields: [auditLog.adminId],
 		references: [adminUsers.id],
+	}),
+	player: one(players, {
+		fields: [auditLog.playerId],
+		references: [players.id],
 	}),
 }));
 

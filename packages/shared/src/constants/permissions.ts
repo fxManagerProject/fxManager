@@ -27,6 +27,8 @@ export const UserPermissions = {
 
 	RESOURCE_LIST: 1 << 16, // 65536 - view & (re)start/stop resources
 
+	AUDIT_LOG: 1 << 17, // 131072 - view audit logs
+
 	MASTER: 1 << 30, // 1073741824
 } as const;
 
@@ -108,6 +110,11 @@ export const PERMISSION_LABELS: Record<
 		category: 'System',
 	},
 
+	[UserPermissions.AUDIT_LOG]: {
+		label: 'Audit log',
+		desc: 'View the history of all staff actions and system events.',
+		category: 'Administration',
+	},
 	[UserPermissions.RESOURCE_LIST]: {
 		label: 'Resource list',
 		desc: 'Start, stop and restart resources.',
@@ -141,7 +148,7 @@ export const PERMISSION_GROUPS: AdminGroup[] = [
 	},
 	{
 		label: 'Management',
-		permissions: 36863,
+		permissions: 167935,
 		colour: '#0000FF',
 		icon: 'UserRoundKey',
 	},

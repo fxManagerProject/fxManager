@@ -45,6 +45,11 @@ export const NAV: NavItem[] = [
 				title: 'Admin List',
 				permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
 			},
+			{
+				url: '/settings/audit/',
+				title: 'Audit Log',
+				permission: UserPermissions.AUDIT_LOG,
+			},
 		],
 	},
 ];

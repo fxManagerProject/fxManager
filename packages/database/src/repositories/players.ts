@@ -307,49 +307,69 @@ class PlayersRepository {
 
 	async updatePlayerNotes(playerId: number, adminId: number, content: string) {
 		const now = new Date();
+		const trimmedContent = content.trim();
 
-		const playerNote = this.db
-			.select({ id: playerNotes.id })
-			.from(playerNotes)
-			.where(
-				and(
-					eq(playerNotes.playerId, playerId),
-					eq(playerNotes.issuer, adminId),
-				),
-			)
-			.get();
+		return await this.db.transaction(async (tx) => {
+			const player = tx
+				.select()
+				.from(players)
+				.where(eq(players.id, playerId))
+				.get();
 
-		if (playerNote) {
-			if (content.trim()) {
-				this.db
-					.update(playerNotes)
-					.set({ content, issuedAt: now })
-					.where(
-						and(
-							eq(playerNotes.playerId, playerId),
-							eq(playerNotes.issuer, adminId),
-						),
-					)
-					.run();
-			} else {
-				await this.db
-					.delete(playerNotes)
-					.where(
-						and(
-							eq(playerNotes.playerId, playerId),
-							eq(playerNotes.issuer, adminId),
-						),
-					);
+			if (!player) {
+				throw new Error('player_not_found');
 			}
-		} else if (content.length > 3) {
-			await this.db
-				.insert(playerNotes)
-				.values({ playerId, content, issuer: adminId, issuedAt: now });
-		} else {
-			throw new Error('content_too_short');
-		}
 
-		return true;
+			const existingNote = tx
+				.select({ id: playerNotes.id })
+				.from(playerNotes)
+				.where(
+					and(
+						eq(playerNotes.playerId, playerId),
+						eq(playerNotes.issuer, adminId),
+					),
+				)
+				.get();
+
+			let finalNote: typeof playerNotes.$inferSelect | null = null;
+
+			if (existingNote) {
+				if (trimmedContent) {
+					const [updated] = await tx
+						.update(playerNotes)
+						.set({ content: trimmedContent, issuedAt: now })
+						.where(eq(playerNotes.id, existingNote.id))
+						.returning();
+
+					finalNote = updated;
+				} else {
+					tx.delete(playerNotes)
+						.where(eq(playerNotes.id, existingNote.id))
+						.run();
+
+					finalNote = null;
+				}
+			} else if (trimmedContent.length > 3) {
+				const [inserted] = await tx
+					.insert(playerNotes)
+					.values({
+						playerId,
+						content: trimmedContent,
+						issuer: adminId,
+						issuedAt: now,
+					})
+					.returning();
+
+				finalNote = inserted;
+			} else {
+				throw new Error('content_too_short');
+			}
+
+			return {
+				...finalNote,
+				player,
+			};
+		});
 	}
 
 	async addBan(
@@ -360,59 +380,119 @@ class PlayersRepository {
 	) {
 		const now = new Date();
 
-		const activeBan = this.db
-			.select({ id: bans.id, expiresAt: bans.expiresAt })
-			.from(bans)
-			.where(
-				and(
-					eq(bans.playerId, playerId),
-					isNull(bans.revokedAt),
-					or(isNull(bans.expiresAt), gt(bans.expiresAt, now)),
-				),
-			)
-			.get();
+		return await this.db.transaction(async (tx) => {
+			const playerExists = tx
+				.select({ id: players.id })
+				.from(players)
+				.where(eq(players.id, playerId))
+				.get();
 
-		if (activeBan) {
-			// no adding new ban if perma-banned
-			if (activeBan.expiresAt === null) return false;
+			if (!playerExists) {
+				throw new Error('player_not_found');
+			}
 
-			// what's the point in adding a ban shorter then the active one
-			if (expiresAt !== null && activeBan.expiresAt >= expiresAt) return false;
+			const activeBan = tx
+				.select({ id: bans.id, expiresAt: bans.expiresAt })
+				.from(bans)
+				.where(
+					and(
+						eq(bans.playerId, playerId),
+						isNull(bans.revokedAt),
+						or(isNull(bans.expiresAt), gt(bans.expiresAt, now)),
+					),
+				)
+				.get();
 
-			// shorten the active one, only have 1 active ban at a time
-			await this.db
-				.update(bans)
-				.set({ expiresAt: now })
-				.where(eq(bans.id, activeBan.id))
-				.run();
-		}
+			if (activeBan) {
+				if (activeBan.expiresAt === null) return false;
+				if (expiresAt !== null && activeBan.expiresAt >= expiresAt)
+					return false;
 
-		await this.db.insert(bans).values({
-			playerId,
-			expiresAt,
-			issuer: adminId,
-			reason,
-			createdAt: now,
+				tx.update(bans)
+					.set({ expiresAt: now })
+					.where(eq(bans.id, activeBan.id))
+					.run();
+			}
+
+			const [newBan] = await tx
+				.insert(bans)
+				.values({
+					playerId,
+					expiresAt,
+					issuer: adminId,
+					reason,
+					createdAt: now,
+				})
+				.returning();
+
+			const player = tx
+				.select()
+				.from(players)
+				.where(eq(players.id, playerId))
+				.get();
+
+			return {
+				...newBan,
+				player,
+			};
 		});
-
-		return true;
 	}
 
 	async addKick(playerId: number, reason: string, adminId: number) {
-		await this.db.insert(kicks).values({
-			playerId,
-			reason,
-			issuer: adminId,
-			issuedAt: new Date(),
+		return await this.db.transaction(async (tx) => {
+			const player = tx
+				.select()
+				.from(players)
+				.where(eq(players.id, playerId))
+				.get();
+
+			if (!player) {
+				throw new Error('player_not_found');
+			}
+
+			const [newKick] = await tx
+				.insert(kicks)
+				.values({
+					playerId,
+					reason,
+					issuer: adminId,
+					issuedAt: new Date(),
+				})
+				.returning();
+
+			return {
+				...newKick,
+				player,
+			};
 		});
 	}
 
 	async addWarn(playerId: number, reason: string, adminId: number) {
-		await this.db.insert(warns).values({
-			playerId,
-			reason,
-			issuer: adminId,
-			issuedAt: new Date(),
+		return await this.db.transaction(async (tx) => {
+			const player = tx
+				.select()
+				.from(players)
+				.where(eq(players.id, playerId))
+				.get();
+
+			if (!player) {
+				throw new Error('player_not_found');
+			}
+
+			const [newWarn] = await tx
+				.insert(warns)
+				.values({
+					playerId,
+					reason,
+					issuer: adminId,
+					issuedAt: new Date(),
+				})
+				.returning();
+
+			return {
+				...newWarn,
+				player,
+			};
 		});
 	}
 }
