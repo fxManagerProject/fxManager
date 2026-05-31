@@ -2,54 +2,86 @@ import {
 	LayoutDashboard,
 	Terminal,
 	Users,
-	Settings,
 	LayoutList,
 	ScanEye,
+	Settings,
+	ShieldUser,
+	BookUser,
+	ScrollText,
 } from 'lucide-react';
-import type { NavItem } from '@/types/sidebar';
+import type { NavCategory } from '@/types/sidebar';
 import { UserPermissions } from '@fxmanager/shared/constants';
 
-export const NAV: NavItem[] = [
-	{
-		url: '/dashboard',
-		icon: LayoutDashboard,
-		title: 'Dashboard',
-		items: [
-			{ url: '/dashboard/', title: 'Server Controls' },
-			{ url: '/dashboard/players', title: 'Player List' },
-		],
-	},
-	{
-		url: '/console',
-		icon: Terminal,
-		title: 'Console',
-		permission: UserPermissions.CONSOLE_ACCESS,
-	},
-	{
-		url: '/resources',
-		icon: LayoutList,
-		title: 'Resource List',
-		permission: UserPermissions.CONSOLE_ACCESS,
-	},
-	{ url: '/whitelist', icon: ScanEye, title: 'Whitelist' },
-	{ url: '/players', icon: Users, title: 'Players' },
-	{
-		url: '/settings',
-		icon: Settings,
-		title: 'Settings',
-		permission: UserPermissions.SETTINGS_ACCESS,
-		items: [
-			{ url: '/settings/', title: 'Settings' },
-			{
-				url: '/settings/admins/',
-				title: 'Admin List',
-				permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
-			},
-			{
-				url: '/settings/audit/',
-				title: 'Audit Log',
-				permission: UserPermissions.AUDIT_LOG,
-			},
-		],
-	},
+const NAV_SERVER: NavCategory = {
+	title: 'Server Management',
+	items: [
+		{
+			title: 'Dashboard',
+			url: '/dashboard',
+			icon: LayoutDashboard,
+		},
+		{
+			title: 'Online Players',
+			url: '/dashboard/players',
+			icon: BookUser,
+		},
+		{
+			title: 'Console',
+			url: '/console',
+			icon: Terminal,
+			permission: UserPermissions.CONSOLE_ACCESS,
+		},
+		{
+			title: 'Resource List',
+			url: '/resources',
+			icon: LayoutList,
+			permission: UserPermissions.CONSOLE_ACCESS,
+		},
+	],
+};
+
+const NAV_PLAYERS: NavCategory = {
+	title: 'Player Management',
+	items: [
+		{
+			title: 'Players',
+			url: '/players',
+			icon: Users,
+		},
+		{
+			title: 'Whitelist',
+			url: '/whitelist',
+			icon: ScanEye,
+		},
+	],
+};
+
+const NAV_CONFIGURATION: NavCategory = {
+	title: 'Configuration',
+	items: [
+		{
+			title: 'Settings',
+			url: '/settings/',
+			icon: Settings,
+			permission: UserPermissions.SETTINGS_ACCESS,
+		},
+		{
+			url: '/settings/admins/',
+			title: 'Admins',
+			icon: ShieldUser,
+			permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+		},
+		{
+			url: '/settings/audit/',
+			title: 'Audit Logs',
+			icon: ScrollText,
+			permission: UserPermissions.AUDIT_LOG,
+		},
+	],
+};
+
+export const NAV_GROUPS: NavCategory[] = [
+	NAV_SERVER,
+	NAV_PLAYERS,
+	NAV_CONFIGURATION,
 ];

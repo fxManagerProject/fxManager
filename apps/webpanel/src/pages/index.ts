@@ -24,10 +24,10 @@ type RouteConfig = {
 
 export const routes: RouteConfig[] = [
 	{ path: '/login', element: LoginPage, auth: false },
+
+	// Server Management
 	{ path: '/dashboard', element: DashboardPage },
 	{ path: '/dashboard/players', element: OnlinePlayerListPage },
-	{ path: '/players', element: PlayersPage },
-	{ path: '/players/:playerId', element: PlayerView },
 	{
 		path: '/console',
 		element: ConsolePage,
@@ -38,11 +38,17 @@ export const routes: RouteConfig[] = [
 		element: ResourceList,
 		permission: UserPermissions.RESOURCE_LIST,
 	},
+
+	// Player Management
+	{ path: '/players', element: PlayersPage },
+	{ path: '/players/:playerId', element: PlayerView },
 	{
 		path: '/whitelist',
 		element: WhitelistIndex,
 		permission: UserPermissions.WHITELIST,
 	},
+
+	// Configuration
 	{
 		path: '/settings',
 		element: SettingsPage,

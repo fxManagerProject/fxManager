@@ -1,10 +1,4 @@
-import {
-	ArrowUpDown,
-	Plus,
-	Search,
-	Settings,
-	UserRoundCog,
-} from 'lucide-react';
+import { ArrowUpDown, Plus, Search, Settings, ShieldUser } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { useEffect, useState } from 'react';
 import { QueryService } from '@/lib/query';
@@ -145,7 +139,7 @@ export default function AdminManagementList() {
 	return (
 		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4">
 			<PageHeader
-				Icon={UserRoundCog}
+				Icon={ShieldUser}
 				title="Admin Management"
 				description="Manage admin accounts."
 			/>

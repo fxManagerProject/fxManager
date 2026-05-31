@@ -1,7 +1,7 @@
 import {
 	Activity,
 	Clock,
-	MonitorCog,
+	LayoutDashboard,
 	Play,
 	RefreshCw,
 	Square,
@@ -50,8 +50,8 @@ export default function DashboardPage() {
 	return (
 		<div className="space-y-6">
 			<PageHeader
-				Icon={MonitorCog}
-				title="Server Controls"
+				Icon={LayoutDashboard}
+				title="Dashboard"
 				description="Server overview and controls."
 			/>
 
