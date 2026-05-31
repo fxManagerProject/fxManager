@@ -1,12 +1,4 @@
-import {
-	Activity,
-	Clock,
-	LayoutDashboard,
-	Play,
-	RefreshCw,
-	Square,
-} from 'lucide-react';
-import { HandleServerAction } from '@/lib/query';
+import { Activity, Clock, LayoutDashboard } from 'lucide-react';
 import { formatUptime } from '@/lib/utils';
 import { STATUS_VARIANT } from '@/static/server-state';
 import { PageHeader } from '@/components/page-header';
@@ -18,7 +10,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@fxmanager/ui/components/card';
-import { Button } from '@fxmanager/ui/components/button';
 
 /* ToDo:
  * Consider adding wider details on process health
@@ -29,8 +20,6 @@ import { Button } from '@fxmanager/ui/components/button';
 export default function DashboardPage() {
 	const { state: serverState } = useServerStateSocket();
 	const status = serverState?.status ?? 'stopped';
-	const isRunning = status === 'running';
-	const canStart = status === 'stopped' || status === 'crashed';
 
 	const stats = [
 		{
@@ -52,7 +41,7 @@ export default function DashboardPage() {
 			<PageHeader
 				Icon={LayoutDashboard}
 				title="Dashboard"
-				description="Server overview and controls."
+				description="Server overview."
 			/>
 
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -70,41 +59,6 @@ export default function DashboardPage() {
 					</Card>
 				))}
 			</div>
-
-			<Card className="bg-card/50 right-0">
-				<CardHeader>
-					<CardTitle className="text-sm font-medium">Server Controls</CardTitle>
-				</CardHeader>
-				<CardContent className="flex flex-wrap gap-2">
-					<Button
-						size="sm"
-						variant="outline"
-						disabled={!canStart}
-						onClick={() => HandleServerAction('start')}
-						className="border-green-500/30 text-green-400 hover:bg-green-500/10 disabled:opacity-40"
-					>
-						<Play className="mr-1.5 h-3.5 w-3.5" /> Start
-					</Button>
-					<Button
-						size="sm"
-						variant="outline"
-						disabled={!isRunning}
-						onClick={() => HandleServerAction('stop')}
-						className="border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-40"
-					>
-						<Square className="mr-1.5 h-3.5 w-3.5" /> Stop
-					</Button>
-					<Button
-						size="sm"
-						variant="outline"
-						disabled={!isRunning}
-						onClick={() => HandleServerAction('restart')}
-						className="border-primary/30 text-primary hover:bg-primary/10 disabled:opacity-40"
-					>
-						<RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Restart
-					</Button>
-				</CardContent>
-			</Card>
 		</div>
 	);
 }
