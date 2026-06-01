@@ -73,7 +73,7 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 					color: '\x1b[31m',
 				});
 			} else if (
-				/{start|stop|ensure|restart|start}\s+fxManager/.test(command)
+				/^(start|stop|ensure|restart)\s+fxManager/.test(command)
 			) {
 				pm.injectConsoleLine({
 					process: `fxManager`,
