@@ -6,6 +6,7 @@ import {
 import { diffPerfs, didPerfReset, parseRawPerf } from './perf/perf.parser';
 import { wsManager } from './ws.manager';
 
+// TODO: replace this with a utility function for getting the actual server endpoint at a later date
 const PERF_PORT = 30120;
 const PERF_ENDPOINT = `http://localhost:${PERF_PORT}/perf.json`;
 
