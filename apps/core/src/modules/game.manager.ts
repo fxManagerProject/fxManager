@@ -9,7 +9,7 @@ import type {
 	PlayerUpdatePackage,
 } from '@fxmanager/shared/types';
 import { wsManager } from './ws.manager';
-import { discordManager } from './discord.manager';
+import { discordManager } from './discord/manager';
 import { ConfigManager } from './config/manager';
 
 export class GameManager {

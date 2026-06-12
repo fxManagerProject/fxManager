@@ -57,12 +57,13 @@ class DiscordManager {
 	async disconnect() {
 		try {
 			await this.client.destroy();
-			this.connectionState = false;
 		} catch (err) {
 			console.error(
 				'[discord.manager] failed to destroy discord client API.',
 				(err as Error).message,
 			);
+		} finally {
+			this.connectionState = false;
 		}
 	}
 
