@@ -12,7 +12,7 @@ import { sessionAuth } from '../../middleware/session';
 import { wsManager } from '../../modules/ws.manager';
 import type { AuthedRequest, RouteModule } from '../../types';
 import { resourceManager } from '../../modules/resource.manager';
-import { perfManager } from '../../modules/perf/perf.manager';
+import { perfManager } from '../../modules/perf/manager';
 
 wsManager.addCheck('console', (admin) => {
 	return PermissionManager.has(

@@ -12,7 +12,7 @@ mock.module('@fxmanager/database', () => ({
   },
 }));
 
-import { ConfigManager } from './config.manager';
+import { ConfigManager } from './manager';
 
 describe('ConfigManager', () => {
   const originalEnv = { ...process.env };
