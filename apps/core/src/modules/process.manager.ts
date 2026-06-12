@@ -3,7 +3,7 @@ import type {
 	ProcessState,
 	ServerState,
 } from '@fxmanager/shared/types';
-import { LogBuffer } from './buffer.manager';
+import { LogBuffer } from './buffer/manager';
 import { ConfigManager } from './config/manager';
 import { wsManager } from './ws.manager';
 import { resourceManager } from './resource.manager';
