@@ -4,7 +4,7 @@ import type {
 	ResourceInitialData,
 } from '@fxmanager/shared/types';
 import { wsManager } from './ws.manager';
-import { ConfigManager } from './config.manager';
+import { ConfigManager } from './config/manager';
 
 class ResourceManager {
 	private config = ConfigManager.getInstance();

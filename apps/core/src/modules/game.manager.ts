@@ -10,7 +10,7 @@ import type {
 } from '@fxmanager/shared/types';
 import { wsManager } from './ws.manager';
 import { discordManager } from './discord.manager';
-import { ConfigManager } from './config.manager';
+import { ConfigManager } from './config/manager';
 
 export class GameManager {
 	private playerlist: OnlinePlayer[] = [];
