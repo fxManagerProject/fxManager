@@ -42,7 +42,7 @@ mock.module('../ws.manager', () => ({
 
 const mockLoadResources = mock(() => {});
 const mockStoppingServer = mock(() => {});
-mock.module('../resource.manager', () => ({
+mock.module('../resource/manager', () => ({
   resourceManager: {
     loadResources: mockLoadResources,
     stoppingServer: mockStoppingServer,

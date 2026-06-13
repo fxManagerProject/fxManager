@@ -1,6 +1,6 @@
 import type { ResourceData } from '@fxmanager/shared/types';
 import { resourceAuth } from '../../middleware/resource';
-import { resourceManager } from '../../modules/resource.manager';
+import { resourceManager } from '../../modules/resource/manager';
 import type { RouteModule } from '../../types';
 
 const ResourceEndpoints: RouteModule['handler'] = async (fastify) => {
