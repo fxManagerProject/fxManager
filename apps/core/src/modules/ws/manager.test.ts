@@ -12,6 +12,7 @@ import { wsManager } from './manager'; // Adjust the import path as needed
 import type { Channel, WSClientMessage } from '@fxmanager/shared/types';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import { PermissionManager } from '@fxmanager/shared/utils';
+
 interface MockWebSocket {
 	readyState: number;
 	on: ReturnType<typeof mock>;
@@ -43,20 +44,39 @@ function createMockSocket(initialReadyState = 1): MockWebSocket {
 
 describe('WSManager Suite', () => {
 	let consoleErrorSpy: any;
+	let methodSpies: any[] = [];
 
 	beforeEach(() => {
 		// Intercept console.error to keep the test runner console clean on caught exceptions
 		consoleErrorSpy = spyOn(console, 'error').mockImplementation(() => {});
 
-		// Clean singleton internal Maps between tests to preserve isolation
-		(wsManager as any).clients.clear();
-		(wsManager as any).callbacks.clear();
-		(wsManager as any).initialProviders.clear();
-		(wsManager as any).connectionChecks.clear();
+		// 1. Instantiate a pristine fresh instance of the class from the singleton's constructor
+		const freshInstance = new (wsManager.constructor as any)();
+
+		// 2. Intercept and proxy all public methods to the fresh instance for absolute isolation
+		const prototype = Object.getPrototypeOf(wsManager);
+		Object.getOwnPropertyNames(prototype).forEach((key) => {
+			if (
+				typeof (wsManager as any)[key] === 'function' &&
+				key !== 'constructor'
+			) {
+				const spy = spyOn(wsManager, key as any).mockImplementation(
+					(...args: any[]) => {
+						return freshInstance[key](...args);
+					},
+				);
+				methodSpies.push(spy);
+			}
+		});
 	});
 
 	afterEach(() => {
 		consoleErrorSpy.mockRestore();
+		// Clean up all dynamically injected method spies to avoid contaminating other test suites
+		methodSpies.forEach((spy) => {
+			spy.mockRestore();
+		});
+		methodSpies = [];
 	});
 
 	describe('Client Lifecycle Management (add / remove)', () => {
@@ -72,14 +92,14 @@ describe('WSManager Suite', () => {
 			);
 			expect(mockSocket.on).toHaveBeenCalledWith('close', expect.any(Function));
 
-			const internalClientsMap = (wsManager as any).clients;
-			expect(internalClientsMap.has('client-uuid-1')).toBe(true);
-			expect(internalClientsMap.get('client-uuid-1')).toEqual({
-				id: 'client-uuid-1',
-				socket: mockSocket,
-				channels: new Set(),
-				admin: mockAdmin,
-			});
+			// Assert registration behavior: client receives targeted outbound messages correctly
+			const testMsg = {
+				channel: 'console' as Channel,
+				event: 'line',
+				data: 'Verified',
+			};
+			wsManager.send('client-uuid-1', testMsg);
+			expect(mockSocket.send).toHaveBeenCalledWith(JSON.stringify(testMsg));
 		});
 
 		it('should drop tracking references automatically when an upstream socket triggers close events', () => {
@@ -89,8 +109,14 @@ describe('WSManager Suite', () => {
 			// Fire a simulated termination event from the engine context
 			mockSocket.simulateClientEvent('close');
 
-			const internalClientsMap = (wsManager as any).clients;
-			expect(internalClientsMap.has('client-uuid-2')).toBe(false);
+			// Assert removal behavior: messages sent to this ID no longer transmit anywhere
+			mockSocket.send.mockClear();
+			wsManager.send('client-uuid-2', {
+				channel: 'console',
+				event: 'line',
+				data: 'Drop test',
+			});
+			expect(mockSocket.send).not.toHaveBeenCalled();
 		});
 
 		it('should ignore incoming payload strings that fail to match valid JSON formatting schemas', () => {
@@ -124,13 +150,20 @@ describe('WSManager Suite', () => {
 			// Yield event micro-tasks
 			await Promise.resolve();
 
-			const context = (wsManager as any).clients.get('client-id');
-			expect(context.channels.has('playerlist')).toBe(true);
+			// Assert subscription behavior: active broadcasts are successfully delivered to the subscriber
+			const broadcastMsg = {
+				channel: 'playerlist' as Channel,
+				event: 'player_joined',
+				data: {},
+			};
+			wsManager.broadcast(broadcastMsg);
+			expect(mockSocket.send).toHaveBeenCalledWith(
+				JSON.stringify(broadcastMsg),
+			);
 		});
 
 		it('should enforce connection check rules and reject subscriptions on verification failures', async () => {
 			const mockSocket = createMockSocket();
-			// Setup regular user lacking permissions
 			wsManager.add('user-id', mockSocket as any, { permissions: [] } as any);
 
 			// Register checking rule mimicking your actual deployment hooks
@@ -152,8 +185,14 @@ describe('WSManager Suite', () => {
 
 			await Promise.resolve();
 
-			const context = (wsManager as any).clients.get('user-id');
-			expect(context.channels.has('console')).toBe(false); // Disallowed
+			// Assert rejection behavior: broadcasts to this channel are blocked from reaching the client
+			const broadcastMsg = {
+				channel: 'console' as Channel,
+				event: 'line',
+				data: 'Secured',
+			};
+			wsManager.broadcast(broadcastMsg);
+			expect(mockSocket.send).not.toHaveBeenCalled();
 		});
 
 		it('should securely fall back onto structural wildcard routing definitions (*)', async () => {
@@ -174,17 +213,30 @@ describe('WSManager Suite', () => {
 
 			await Promise.resolve();
 
-			const context = (wsManager as any).clients.get('user-id');
-			expect(context.channels.has('report:123')).toBe(false); // Denied by structural wildcard fallthrough rule
+			// Assert wildcard rejection behavior via channel broadcast
+			const broadcastMsg = {
+				channel: 'report:123' as Channel,
+				event: 'new',
+				data: {},
+			};
+			wsManager.broadcast(broadcastMsg);
+			expect(mockSocket.send).not.toHaveBeenCalled();
 		});
 
 		it('should unsubscribe cleanly when receiving an unsubscribe event frame', async () => {
 			const mockSocket = createMockSocket();
 			wsManager.add('client-id', mockSocket as any, {} as any);
 
-			const clientContext = (wsManager as any).clients.get('client-id');
-			clientContext.channels.add('server_state');
+			// Establish a public subscription first
+			mockSocket.simulateClientEvent(
+				'message',
+				Buffer.from(
+					JSON.stringify({ type: 'subscribe', channel: 'server_state' }),
+				),
+			);
+			await Promise.resolve();
 
+			// Dispatch unsubscribe frame
 			const unsubscribeFrame: WSClientMessage = {
 				type: 'unsubscribe',
 				channel: 'server_state',
@@ -195,7 +247,15 @@ describe('WSManager Suite', () => {
 			);
 
 			await Promise.resolve();
-			expect(clientContext.channels.has('server_state')).toBe(false);
+
+			// Assert unsubscription behavior: the socket no longer reacts to channel activity
+			mockSocket.send.mockClear();
+			wsManager.broadcast({
+				channel: 'server_state' as Channel,
+				event: 'update',
+				data: {},
+			});
+			expect(mockSocket.send).not.toHaveBeenCalled();
 		});
 	});
 
@@ -315,19 +375,33 @@ describe('WSManager Suite', () => {
 			expect(mockSocket.send).not.toHaveBeenCalled();
 		});
 
-		it('should broadcast items solely to active matching channel connections', () => {
+		it('should broadcast items solely to active matching channel connections', async () => {
 			const socketA = createMockSocket(1);
 			const socketB = createMockSocket(1);
-			const socketC = createMockSocket(2); // CLOSING state
+			const socketC = createMockSocket(1); // Active initially, modified later
 
 			wsManager.add('id-a', socketA as any, {} as any);
 			wsManager.add('id-b', socketB as any, {} as any);
 			wsManager.add('id-c', socketC as any, {} as any);
 
-			// Establish target channels configuration map manually
-			(wsManager as any).clients.get('id-a').channels.add('perf');
-			(wsManager as any).clients.get('id-b').channels.add('console');
-			(wsManager as any).clients.get('id-c').channels.add('perf'); // Subscribed but dead socket state
+			// Configure targets behaviorally via formal inbound subscription requests
+			socketA.simulateClientEvent(
+				'message',
+				Buffer.from(JSON.stringify({ type: 'subscribe', channel: 'perf' })),
+			);
+			socketB.simulateClientEvent(
+				'message',
+				Buffer.from(JSON.stringify({ type: 'subscribe', channel: 'console' })),
+			);
+			socketC.simulateClientEvent(
+				'message',
+				Buffer.from(JSON.stringify({ type: 'subscribe', channel: 'perf' })),
+			);
+
+			await Promise.resolve();
+
+			// Mutate socketC into a closing state post-subscription
+			socketC.readyState = 2; // CLOSING
 
 			const broadcastMsg = {
 				channel: 'perf' as Channel,
@@ -367,14 +441,15 @@ describe('WSManager Suite', () => {
 
 			await Promise.resolve();
 
-			const expectedClientContext = (wsManager as any).clients.get('client-id');
-			expect(exactHandler).toHaveBeenCalledWith(
-				expectedClientContext,
-				'command',
-				{ command: 'ensure oxmysql' },
-			);
+			const expectedMatch = expect.objectContaining({
+				id: 'client-id',
+				socket: mockSocket,
+			});
+			expect(exactHandler).toHaveBeenCalledWith(expectedMatch, 'command', {
+				command: 'ensure oxmysql',
+			});
 			expect(channelWildcardHandler).toHaveBeenCalledWith(
-				expectedClientContext,
+				expectedMatch,
 				'command',
 				{ command: 'ensure oxmysql' },
 			);
@@ -391,7 +466,7 @@ describe('WSManager Suite', () => {
 				executionHandler,
 			);
 
-			// Sever connection immediately
+			// Sever event connection immediately
 			detachClosure();
 
 			const emitMessage: WSClientMessage = {

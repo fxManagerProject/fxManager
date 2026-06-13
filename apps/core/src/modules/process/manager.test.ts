@@ -1,5 +1,6 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny lint/complexity/noBannedTypes: explicit any allows testing hidden state properties & mocking frames */
 import {
+	afterAll,
 	afterEach,
 	beforeEach,
 	describe,
@@ -9,16 +10,13 @@ import {
 	spyOn,
 } from 'bun:test';
 
+// Import real modules to safely establish spies on their shared instances/classes
+import { ConfigManager } from '../config/manager';
+import { wsManager } from '../ws/manager';
+import { resourceManager } from '../resource/manager';
+
 const mockGetHistory = mock(() => []);
 const mockBufferPush = mock(() => {});
-
-// Mock the LogBuffer class definition explicitly
-mock.module('./buffer/manager', () => ({
-	LogBuffer: class MockLogBuffer {
-		getHistory = mockGetHistory;
-		push = mockBufferPush;
-	},
-}));
 
 const mockRegenerateApiToken = mock(() => {});
 const mockGetSystemValues = mock(() => ({
@@ -31,31 +29,23 @@ const mockGetFxServerValues = mock(() => ({
 	executable: 'FXServer.exe',
 	serverDataPath: '/home/fxserver/server-data',
 }));
-mock.module('../config/manager', () => ({
-	ConfigManager: {
-		getInstance: () => ({
-			regenerateApiToken: mockRegenerateApiToken,
-			getSystemValues: mockGetSystemValues,
-			getFxServerValues: mockGetFxServerValues,
-		}),
-	},
-}));
 
-const mockWsBroadcast = mock(() => {});
-mock.module('../ws/manager', () => ({
-	wsManager: {
-		broadcast: mockWsBroadcast,
-	},
-}));
+// Use spyOn to safely intercept instances without corrupting Bun's global module cache
+const getInstanceSpy = spyOn(ConfigManager, 'getInstance').mockReturnValue({
+	regenerateApiToken: mockRegenerateApiToken,
+	getSystemValues: mockGetSystemValues,
+	getFxServerValues: mockGetFxServerValues,
+} as any);
 
-const mockLoadResources = mock(() => {});
-const mockStoppingServer = mock(() => {});
-mock.module('../resource/manager', () => ({
-	resourceManager: {
-		loadResources: mockLoadResources,
-		stoppingServer: mockStoppingServer,
-	},
-}));
+const broadcastSpy = spyOn(wsManager, 'broadcast').mockImplementation(() => {});
+const loadResourcesSpy = spyOn(
+	resourceManager,
+	'loadResources',
+).mockImplementation(async () => {});
+const stoppingServerSpy = spyOn(
+	resourceManager,
+	'stoppingServer',
+).mockImplementation(() => {});
 
 const ProcessManagerModule = await import('./manager');
 type ProcessManagerInstance = InstanceType<
@@ -108,9 +98,11 @@ describe('ProcessManager', () => {
 		mockGetHistory.mockReset().mockReturnValue([]);
 		mockBufferPush.mockClear();
 		mockRegenerateApiToken.mockClear();
-		mockWsBroadcast.mockClear();
-		mockLoadResources.mockClear();
-		mockStoppingServer.mockClear();
+		mockGetSystemValues.mockClear();
+		mockGetFxServerValues.mockClear();
+		broadcastSpy.mockClear();
+		loadResourcesSpy.mockClear();
+		stoppingServerSpy.mockClear();
 
 		stdoutController = null;
 		stderrController = null;
@@ -131,6 +123,14 @@ describe('ProcessManager', () => {
 
 	afterEach(() => {
 		Bun.spawn = originalBunSpawn;
+	});
+
+	// CRITICAL FIX: Fully restore our spied targets back to their baseline code states
+	afterAll(() => {
+		getInstanceSpy.mockRestore();
+		broadcastSpy.mockRestore();
+		loadResourcesSpy.mockRestore();
+		stoppingServerSpy.mockRestore();
 	});
 
 	const pushToStream = (
@@ -219,7 +219,7 @@ describe('ProcessManager', () => {
 			await Bun.sleep(15); // Extended sleep value to let the text decoder transform stream cycles settle
 
 			expect(processManager.getState().status).toBe('running');
-			expect(mockLoadResources).toHaveBeenCalled();
+			expect(loadResourcesSpy).toHaveBeenCalled();
 			expect(mockBufferPush).toHaveBeenCalled();
 		});
 
@@ -249,7 +249,7 @@ describe('ProcessManager', () => {
 			const stopPromise = processManager.stop();
 
 			expect(processManager.getState().status).toBe('stopping');
-			expect(mockStoppingServer).toHaveBeenCalled();
+			expect(stoppingServerSpy).toHaveBeenCalled();
 
 			if (currentTriggerExit) currentTriggerExit(0);
 
@@ -318,7 +318,7 @@ describe('ProcessManager', () => {
 					source: 'stdout',
 				}),
 			);
-			expect(mockWsBroadcast).toHaveBeenCalledWith(
+			expect(broadcastSpy).toHaveBeenCalledWith(
 				expect.objectContaining({ channel: 'console', event: 'line' }),
 			);
 		});

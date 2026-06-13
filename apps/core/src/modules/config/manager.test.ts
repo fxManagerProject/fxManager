@@ -10,30 +10,31 @@ mock.module('@fxmanager/database', () => ({
 			getMultiple: mockGetMultiple,
 			all: mockAll,
 		},
+		players: {},
+		whitelist: {},
 	},
 }));
 
 import { ConfigManager } from './manager';
 
 describe('ConfigManager', () => {
-	const originalEnv = { ...process.env };
-	const originalPlatform = process.platform;
+	let originalEnv: typeof process.env;
 
 	beforeEach(() => {
-		// Reset process.env and platform modifications
-		process.env = { ...originalEnv };
-		Object.defineProperty(process, 'platform', { value: originalPlatform });
+		originalEnv = { ...process.env };
 
-		// Reset the Singleton instance manually using reflection/type casting
+		delete process.env.FXSERVER_EXECUTABLE;
+		delete process.env.FXSERVER_DATA_PATH;
+		delete process.env.FXSERVER_CFG;
+		delete process.env.PANEL_PORT;
+		delete process.env.COOKIE_SECRET;
+
 		(ConfigManager as any).instance = null;
-
-		mockGetMultiple.mockClear();
-		mockAll.mockClear();
 	});
 
 	afterEach(() => {
 		process.env = originalEnv;
-		Object.defineProperty(process, 'platform', { value: originalPlatform });
+		(ConfigManager as any).instance = null;
 	});
 
 	describe('getInstance', () => {

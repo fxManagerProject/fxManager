@@ -1,5 +1,16 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: explicit any allows testing hidden state properties & mocking frames */
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+	spyOn,
+} from 'bun:test';
+import { wsManager } from '../ws/manager';
+import { discordManager } from '../discord/manager';
+import { ConfigManager } from '../config/manager';
 
 const mockCheckBanned = mock(() => null as any);
 const mockGetSetting = mock(() => 'none');
@@ -18,39 +29,8 @@ mock.module('@fxmanager/database', () => ({
 			upsert: mockUpsertPlayer,
 			updatePlaytime: mockUpdatePlaytime,
 		},
-		settings: {
-			get: mockGetSetting,
-		},
-		whitelist: {
-			isAnyIdentifierWhitelisted: mockIsAnyIdentifierWhitelisted,
-		},
-	},
-}));
-
-const mockBroadcast = mock(() => {});
-mock.module('../ws/manager', () => ({
-	wsManager: {
-		broadcast: mockBroadcast,
-	},
-}));
-
-const mockDiscordIsConnected = mock(() => false);
-const mockDiscordConnect = mock(async () => {});
-const mockDiscordCheckWhitelist = mock(async () => false);
-mock.module('../discord/manager', () => ({
-	discordManager: {
-		isConnected: mockDiscordIsConnected,
-		connect: mockDiscordConnect,
-		checkWhitelist: mockDiscordCheckWhitelist,
-	},
-}));
-
-const mockGetSystemValues = mock(() => ({ resourceApiToken: 'mock-token' }));
-mock.module('../config/manager', () => ({
-	ConfigManager: {
-		getInstance: () => ({
-			getSystemValues: mockGetSystemValues,
-		}),
+		settings: { get: mockGetSetting },
+		whitelist: { isAnyIdentifierWhitelisted: mockIsAnyIdentifierWhitelisted },
 	},
 }));
 
@@ -58,10 +38,16 @@ const GameManagerModule = await import('./manager');
 import type { PlayerIdentifiers } from '@fxmanager/shared/types';
 
 type GameManagerInstance = InstanceType<typeof GameManagerModule.GameManager>;
-
 describe('GameManager', () => {
-	let gameManager: GameManagerInstance;
 	const originalFetch = global.fetch;
+	let gameManager: GameManagerInstance;
+
+	// Local Spy references for internal singletons
+	let wsSpy: any;
+	let discordIsConnectedSpy: any;
+	let discordConnectSpy: any;
+	let discordCheckWhitelistSpy: any;
+	let configSpy: any;
 
 	const sampleIdentifiers: PlayerIdentifiers = {
 		license: 'license:11112222',
@@ -69,7 +55,7 @@ describe('GameManager', () => {
 	};
 
 	beforeEach(() => {
-		// Reset all mock tracking chains
+		// Reset database mock chains
 		mockCheckBanned.mockReset().mockReturnValue(null);
 		mockGetSetting.mockReset().mockReturnValue('none');
 		mockFindByLicense.mockReset().mockReturnValue(null);
@@ -77,24 +63,39 @@ describe('GameManager', () => {
 		mockIsAnyIdentifierWhitelisted.mockReset().mockResolvedValue(false);
 		mockUpsertPlayer.mockReset();
 		mockUpdatePlaytime.mockReset();
-		mockBroadcast.mockClear();
-		mockDiscordIsConnected.mockReset().mockReturnValue(false);
-		mockDiscordConnect.mockReset().mockResolvedValue(undefined);
-		mockDiscordCheckWhitelist.mockReset().mockResolvedValue(false);
-		mockGetSystemValues
-			.mockReset()
-			.mockReturnValue({ resourceApiToken: 'mock-token' });
+
+		// Spying on core system managers cleanly isolates state mutations to this file execution context
+		wsSpy = spyOn(wsManager, 'broadcast').mockImplementation(() => {});
+
+		discordIsConnectedSpy = spyOn(
+			discordManager,
+			'isConnected',
+		).mockReturnValue(false);
+		discordConnectSpy = spyOn(discordManager, 'connect').mockResolvedValue(
+			undefined,
+		);
+		discordCheckWhitelistSpy = spyOn(
+			discordManager,
+			'checkWhitelist',
+		).mockResolvedValue(false);
+
+		configSpy = spyOn(ConfigManager, 'getInstance').mockReturnValue({
+			getSystemValues: () => ({ resourceApiToken: 'mock-token' }),
+		} as any);
 
 		gameManager = new GameManagerModule.GameManager();
 	});
 
 	afterEach(() => {
 		global.fetch = originalFetch;
-	});
 
-	// ==========================================
-	// 3. TEST SPECIFICATIONS
-	// ==========================================
+		// Completely restore manager prototypes between test executions
+		wsSpy.mockRestore();
+		discordIsConnectedSpy.mockRestore();
+		discordConnectSpy.mockRestore();
+		discordCheckWhitelistSpy.mockRestore();
+		configSpy.mockRestore();
+	});
 
 	describe('Player Handling Basics', () => {
 		it('should start with an empty internal tracking playerlist array', () => {
@@ -221,18 +222,18 @@ describe('GameManager', () => {
 			});
 
 			it('should trigger connection loop on discordManager if called while state tracking shows disconnected', async () => {
-				mockDiscordIsConnected.mockReturnValueOnce(false);
-				mockDiscordCheckWhitelist.mockResolvedValueOnce(true);
+				discordIsConnectedSpy.mockReturnValueOnce(false);
+				discordCheckWhitelistSpy.mockResolvedValueOnce(true);
 
 				const response =
 					await gameManager.playerDeferralChecks(sampleIdentifiers);
-				expect(mockDiscordConnect).toHaveBeenCalled();
+				expect(discordConnectSpy).toHaveBeenCalled();
 				expect(response).toEqual({ access: true });
 			});
 
 			it('should return error response safely if connection setup attempts on discord service fail', async () => {
-				mockDiscordIsConnected.mockReturnValueOnce(false);
-				mockDiscordConnect.mockRejectedValueOnce(
+				discordIsConnectedSpy.mockReturnValueOnce(false);
+				discordConnectSpy.mockRejectedValueOnce(
 					new Error('Discord Gateway unavailable'),
 				);
 
@@ -247,7 +248,7 @@ describe('GameManager', () => {
 			});
 
 			it('should instantly refuse access validation if player mapping metadata does not contain a discord footprint', async () => {
-				mockDiscordIsConnected.mockReturnValueOnce(true);
+				discordIsConnectedSpy.mockReturnValueOnce(true);
 				const missingDiscordPayload = { license: 'license:only_here' };
 
 				const response = await gameManager.playerDeferralChecks(
@@ -261,20 +262,20 @@ describe('GameManager', () => {
 			});
 
 			it('should grant authorization payload clearances if role matching verification yields true', async () => {
-				mockDiscordIsConnected.mockReturnValueOnce(true);
-				mockDiscordCheckWhitelist.mockResolvedValueOnce(true);
+				discordIsConnectedSpy.mockReturnValueOnce(true);
+				discordCheckWhitelistSpy.mockResolvedValueOnce(true);
 
 				const response =
 					await gameManager.playerDeferralChecks(sampleIdentifiers);
-				expect(mockDiscordCheckWhitelist).toHaveBeenCalledWith(
+				expect(discordCheckWhitelistSpy).toHaveBeenCalledWith(
 					sampleIdentifiers.discord,
 				);
 				expect(response).toEqual({ access: true });
 			});
 
 			it('should refuse access gracefully with dedicated reason if validation roles are missing', async () => {
-				mockDiscordIsConnected.mockReturnValueOnce(true);
-				mockDiscordCheckWhitelist.mockResolvedValueOnce(false);
+				discordIsConnectedSpy.mockReturnValueOnce(true);
+				discordCheckWhitelistSpy.mockResolvedValueOnce(false);
 
 				const response =
 					await gameManager.playerDeferralChecks(sampleIdentifiers);
@@ -331,7 +332,7 @@ describe('GameManager', () => {
 			expect(list[0]).toEqual(expectedPayload);
 			expect(gameManager.getPlayer(12)).toEqual(expectedPayload);
 
-			expect(mockBroadcast).toHaveBeenCalledWith({
+			expect(wsSpy).toHaveBeenCalledWith({
 				channel: 'playerlist',
 				event: 'player_joined',
 				data: expectedPayload,
@@ -362,7 +363,7 @@ describe('GameManager', () => {
 
 			expect(gameManager.getPlayerList()).toHaveLength(0);
 			expect(mockUpdatePlaytime).toHaveBeenCalledWith(12, expect.any(Number));
-			expect(mockBroadcast).toHaveBeenCalledWith({
+			expect(wsSpy).toHaveBeenCalledWith({
 				channel: 'playerlist',
 				event: 'player_left',
 				data: { serverId: 9 },
@@ -372,7 +373,7 @@ describe('GameManager', () => {
 		it('should log warning contexts and abandon execution trees safely if requested serverId track targets do not map up', async () => {
 			await gameManager.playerDrop(999);
 			expect(mockUpdatePlaytime).not.toHaveBeenCalled();
-			expect(mockBroadcast).not.toHaveBeenCalled();
+			expect(wsSpy).not.toHaveBeenCalled();
 		});
 	});
 
@@ -394,7 +395,7 @@ describe('GameManager', () => {
 			expect(player2.health).toBe(40);
 			expect(player2.ping).toBe(150);
 
-			expect(mockBroadcast).toHaveBeenCalledWith({
+			expect(wsSpy).toHaveBeenCalledWith({
 				channel: 'playerlist',
 				event: 'player_update',
 				data: updatePackage,

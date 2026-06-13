@@ -1,24 +1,30 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny lint/complexity/noBannedTypes: explicit any allows testing hidden state properties & mocking frames */
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import {
+	afterAll,
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+	spyOn,
+} from 'bun:test';
 
-const mockWsBroadcast = mock(() => {});
-mock.module('../ws/manager', () => ({
-	wsManager: {
-		broadcast: mockWsBroadcast,
-	},
-}));
+// Import the real modules so we can spy on their instances/classes
+import { wsManager } from '../ws/manager';
+import { ConfigManager } from '../config/manager';
 
 const mockGetSystemValues = mock(() => ({
 	resourceApiToken: 'mock-secure-api-token',
 }));
-mock.module('../config/manager', () => ({
-	ConfigManager: {
-		getInstance: () => ({
-			getSystemValues: mockGetSystemValues,
-		}),
-	},
-}));
 
+// Use spyOn to temporarily intercept methods without wiping out the entire module layout
+const broadcastSpy = spyOn(wsManager, 'broadcast').mockImplementation(() => {});
+const getInstanceSpy = spyOn(ConfigManager, 'getInstance').mockReturnValue({
+	getSystemValues: mockGetSystemValues,
+} as any);
+
+// Import the system under test (SUT) after establishing the spies
 import { resourceManager } from './manager';
 
 describe('ResourceManager', () => {
@@ -26,7 +32,7 @@ describe('ResourceManager', () => {
 
 	beforeEach(() => {
 		// Reset all mock tracking calls
-		mockWsBroadcast.mockClear();
+		broadcastSpy.mockClear();
 		mockGetSystemValues.mockClear();
 
 		// Preserve and isolate global fetch environment
@@ -45,6 +51,12 @@ describe('ResourceManager', () => {
 
 	afterEach(() => {
 		globalThis.fetch = originalFetch;
+	});
+
+	// CRITICAL FIX: Clean up the shared global process state after this suite completes
+	afterAll(() => {
+		broadcastSpy.mockRestore();
+		getInstanceSpy.mockRestore();
 	});
 
 	describe('Initial State & Getters', () => {
@@ -84,7 +96,7 @@ describe('ResourceManager', () => {
 				mockResources as any,
 			);
 
-			expect(mockWsBroadcast).toHaveBeenCalledWith({
+			expect(broadcastSpy).toHaveBeenCalledWith({
 				channel: 'resourcelist',
 				event: 'refresh',
 				data: {
@@ -103,7 +115,7 @@ describe('ResourceManager', () => {
 
 			expect(resourceManager.getResourceList().status).toBe('errored');
 			expect(resourceManager.getResourceList().resourcelist).toEqual([]);
-			expect(mockWsBroadcast).not.toHaveBeenCalled();
+			expect(broadcastSpy).not.toHaveBeenCalled();
 		});
 
 		it('should set status to errored if the API wrapper success flag returns false', async () => {
@@ -122,7 +134,7 @@ describe('ResourceManager', () => {
 			await resourceManager.loadResources();
 
 			expect(resourceManager.getResourceList().status).toBe('errored');
-			expect(mockWsBroadcast).not.toHaveBeenCalled();
+			expect(broadcastSpy).not.toHaveBeenCalled();
 		});
 
 		it('should handle unhandled network rejections gracefully and catch execution blocks safely', async () => {
@@ -133,13 +145,12 @@ describe('ResourceManager', () => {
 			await resourceManager.loadResources();
 
 			expect(resourceManager.getResourceList().status).toBe('errored');
-			expect(mockWsBroadcast).not.toHaveBeenCalled();
+			expect(broadcastSpy).not.toHaveBeenCalled();
 		});
 	});
 
 	describe('stoppingServer()', () => {
 		it('should mark all loaded internal resources as stopped and set availability flags off', () => {
-			// Seed the underlying list with active items matching your project naming conventions
 			(resourceManager as any).resourcelist = [
 				{ name: 'ox_lib', status: 'started' },
 				{ name: 'ox_core', status: 'started' },
@@ -152,14 +163,13 @@ describe('ResourceManager', () => {
 			const state = resourceManager.getResourceList();
 			expect(state.status).toBe(false);
 
-			// FIX: Expecting every single status configuration property to be gracefully stopped
 			expect(state.resourcelist).toEqual([
 				{ name: 'ox_lib', status: 'stopped' },
 				{ name: 'ox_core', status: 'stopped' },
 				{ name: 'ox_inventory', status: 'stopped' },
 			] as any);
 
-			expect(mockWsBroadcast).toHaveBeenCalledWith({
+			expect(broadcastSpy).toHaveBeenCalledWith({
 				channel: 'resourcelist',
 				event: 'refresh',
 				data: {
@@ -183,7 +193,7 @@ describe('ResourceManager', () => {
 			expect(resourceManager.getResourceList().resourcelist).toEqual(
 				refreshedData as any,
 			);
-			expect(mockWsBroadcast).toHaveBeenCalledWith({
+			expect(broadcastSpy).toHaveBeenCalledWith({
 				channel: 'resourcelist',
 				event: 'refresh',
 				data: {
@@ -209,7 +219,7 @@ describe('ResourceManager', () => {
 			expect(internalList.length).toBe(2);
 			expect(internalList[1]).toEqual(updatedItemB);
 
-			expect(mockWsBroadcast).toHaveBeenCalledWith({
+			expect(broadcastSpy).toHaveBeenCalledWith({
 				channel: 'resourcelist',
 				event: 'update',
 				data: updatedItemB as any,
