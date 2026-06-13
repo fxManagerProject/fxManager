@@ -1,284 +1,326 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: test file - skipping private checks to facilitate deep state verification */
-import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
+/** biome-ignore-all lint/suspicious/noExplicitAny lint/complexity/noBannedTypes: explicit any allows testing hidden state properties & mocking frames */
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+	spyOn,
+} from 'bun:test';
 
 const mockGetHistory = mock(() => []);
 const mockBufferPush = mock(() => {});
 
 // Mock the LogBuffer class definition explicitly
 mock.module('./buffer/manager', () => ({
-  LogBuffer: class MockLogBuffer {
-    getHistory = mockGetHistory;
-    push = mockBufferPush;
-  },
+	LogBuffer: class MockLogBuffer {
+		getHistory = mockGetHistory;
+		push = mockBufferPush;
+	},
 }));
 
 const mockRegenerateApiToken = mock(() => {});
 const mockGetSystemValues = mock(() => ({
-  serverConfigFile: 'server.cfg',
-  onesync: 'on',
-  resourceApiToken: 'mock-api-token',
-  webServerPort: 30120,
+	serverConfigFile: 'server.cfg',
+	onesync: 'on',
+	resourceApiToken: 'mock-api-token',
+	webServerPort: 30120,
 }));
 const mockGetFxServerValues = mock(() => ({
-  executable: 'FXServer.exe',
-  serverDataPath: '/home/fxserver/server-data',
+	executable: 'FXServer.exe',
+	serverDataPath: '/home/fxserver/server-data',
 }));
 mock.module('../config/manager', () => ({
-  ConfigManager: {
-    getInstance: () => ({
-      regenerateApiToken: mockRegenerateApiToken,
-      getSystemValues: mockGetSystemValues,
-      getFxServerValues: mockGetFxServerValues,
-    }),
-  },
+	ConfigManager: {
+		getInstance: () => ({
+			regenerateApiToken: mockRegenerateApiToken,
+			getSystemValues: mockGetSystemValues,
+			getFxServerValues: mockGetFxServerValues,
+		}),
+	},
 }));
 
 const mockWsBroadcast = mock(() => {});
 mock.module('../ws/manager', () => ({
-  wsManager: {
-    broadcast: mockWsBroadcast,
-  },
+	wsManager: {
+		broadcast: mockWsBroadcast,
+	},
 }));
 
 const mockLoadResources = mock(() => {});
 const mockStoppingServer = mock(() => {});
 mock.module('../resource/manager', () => ({
-  resourceManager: {
-    loadResources: mockLoadResources,
-    stoppingServer: mockStoppingServer,
-  },
+	resourceManager: {
+		loadResources: mockLoadResources,
+		stoppingServer: mockStoppingServer,
+	},
 }));
 
 const ProcessManagerModule = await import('./manager');
-type ProcessManagerInstance = InstanceType<typeof ProcessManagerModule.ProcessManager>;
+type ProcessManagerInstance = InstanceType<
+	typeof ProcessManagerModule.ProcessManager
+>;
 
 describe('ProcessManager', () => {
-  let processManager: ProcessManagerInstance;
-  
-  let originalBunSpawn: typeof Bun.spawn;
-  let stdoutController: ReadableStreamDefaultController<Uint8Array> | null = null;
-  let stderrController: ReadableStreamDefaultController<Uint8Array> | null = null;
-  let currentTriggerExit: ((code: number | null) => void) | null = null;
+	let processManager: ProcessManagerInstance;
 
-  // FACTORY FUNCTION: Yields a completely new process configuration context per call
-  const createMockProcess = () => {
-    let triggerExit: (code: number | null) => void = () => {};
-    const exitedPromise = new Promise<number | null>((resolve) => {
-      triggerExit = resolve;
-    });
+	let originalBunSpawn: typeof Bun.spawn;
+	let stdoutController: ReadableStreamDefaultController<Uint8Array> | null =
+		null;
+	let stderrController: ReadableStreamDefaultController<Uint8Array> | null =
+		null;
+	let currentTriggerExit: ((code: number | null) => void) | null = null;
 
-    currentTriggerExit = triggerExit;
+	// FACTORY FUNCTION: Yields a completely new process configuration context per call
+	const createMockProcess = () => {
+		let triggerExit: (code: number | null) => void = () => {};
+		const exitedPromise = new Promise<number | null>((resolve) => {
+			triggerExit = resolve;
+		});
 
-    return {
-      pid: Math.floor(Math.random() * 10000),
-      stdin: {
-        write: mock(() => {}),
-        flush: mock(() => {}),
-      },
-      stdout: new ReadableStream({
-        start(controller) {
-          stdoutController = controller;
-        },
-      }),
-      stderr: new ReadableStream({
-        start(controller) {
-          stderrController = controller;
-        },
-      }),
-      kill: mock(() => {
-        triggerExit(0);
-      }),
-      exited: exitedPromise,
-    };
-  };
+		currentTriggerExit = triggerExit;
 
-  beforeEach(() => {
-    mockGetHistory.mockReset().mockReturnValue([]);
-    mockBufferPush.mockClear();
-    mockRegenerateApiToken.mockClear();
-    mockWsBroadcast.mockClear();
-    mockLoadResources.mockClear();
-    mockStoppingServer.mockClear();
+		return {
+			pid: Math.floor(Math.random() * 10000),
+			stdin: {
+				write: mock(() => {}),
+				flush: mock(() => {}),
+			},
+			stdout: new ReadableStream({
+				start(controller) {
+					stdoutController = controller;
+				},
+			}),
+			stderr: new ReadableStream({
+				start(controller) {
+					stderrController = controller;
+				},
+			}),
+			kill: mock(() => {
+				triggerExit(0);
+			}),
+			exited: exitedPromise,
+		};
+	};
 
-    stdoutController = null;
-    stderrController = null;
-    currentTriggerExit = null;
+	beforeEach(() => {
+		mockGetHistory.mockReset().mockReturnValue([]);
+		mockBufferPush.mockClear();
+		mockRegenerateApiToken.mockClear();
+		mockWsBroadcast.mockClear();
+		mockLoadResources.mockClear();
+		mockStoppingServer.mockClear();
 
-    // Intercept Bun.spawn with our dynamic multi-instance factory
-    originalBunSpawn = Bun.spawn;
-    Bun.spawn = mock(() => createMockProcess()) as any;
+		stdoutController = null;
+		stderrController = null;
+		currentTriggerExit = null;
 
-    processManager = new ProcessManagerModule.ProcessManager();
+		// Intercept Bun.spawn with our dynamic multi-instance factory
+		originalBunSpawn = Bun.spawn;
+		Bun.spawn = mock(() => createMockProcess()) as any;
 
-    // FORCE BIND SPIES onto the instantiated internal buffer field directly
-    (processManager as any).buffer = {
-      push: mockBufferPush,
-      getHistory: mockGetHistory,
-    };
-  });
+		processManager = new ProcessManagerModule.ProcessManager();
 
-  afterEach(() => {
-    Bun.spawn = originalBunSpawn;
-  });
+		// FORCE BIND SPIES onto the instantiated internal buffer field directly
+		(processManager as any).buffer = {
+			push: mockBufferPush,
+			getHistory: mockGetHistory,
+		};
+	});
 
-  const pushToStream = (controller: ReadableStreamDefaultController<Uint8Array> | null, text: string) => {
-    if (controller) {
-      controller.enqueue(new TextEncoder().encode(text));
-    }
-  };
+	afterEach(() => {
+		Bun.spawn = originalBunSpawn;
+	});
 
-  // ==========================================
-  // 3. TEST SPECIFICATIONS
-  // ==========================================
+	const pushToStream = (
+		controller: ReadableStreamDefaultController<Uint8Array> | null,
+		text: string,
+	) => {
+		if (controller) {
+			controller.enqueue(new TextEncoder().encode(text));
+		}
+	};
 
-  describe('Initial Configurations', () => {
-    it('should initialize with a completely stopped server status configuration state', () => {
-      expect(processManager.getState()).toEqual({
-        status: 'stopped',
-        startedAt: null,
-      });
-    });
-  });
+	// ==========================================
+	// 3. TEST SPECIFICATIONS
+	// ==========================================
 
-  describe('start()', () => {
-    it('should generate a fresh resource API token, execute spawn, and parse operational process args cleanly', async () => {
-      const result = await processManager.start();
+	describe('Initial Configurations', () => {
+		it('should initialize with a completely stopped server status configuration state', () => {
+			expect(processManager.getState()).toEqual({
+				status: 'stopped',
+				startedAt: null,
+			});
+		});
+	});
 
-      expect(result).toBe(true);
-      expect(mockRegenerateApiToken).toHaveBeenCalled();
-      expect(processManager.getState().status).toBe('starting');
-      expect(processManager.getState().startedAt).toBeInstanceOf(Date);
+	describe('start()', () => {
+		it('should generate a fresh resource API token, execute spawn, and parse operational process args cleanly', async () => {
+			const result = await processManager.start();
 
-      expect(Bun.spawn).toHaveBeenCalledWith(
-        ['FXServer.exe', '+exec', 'server.cfg', '+set', 'onesync', 'on', '+set', 'resource-api-token', 'mock-api-token', '+set', 'api-port', '30120', '+ensure', 'fxManager', '+add_convar_permission', 'fxManager', 'read', 'resource-api-token', '+add_convar_permission', 'fxManager', 'read', 'api-port'],
-        {
-          cwd: '/home/fxserver/server-data',
-          stdin: 'pipe',
-          stdout: 'pipe',
-          stderr: 'pipe',
-          env: expect.any(Object),
-        }
-      );
-    });
+			expect(result).toBe(true);
+			expect(mockRegenerateApiToken).toHaveBeenCalled();
+			expect(processManager.getState().status).toBe('starting');
+			expect(processManager.getState().startedAt).toBeInstanceOf(Date);
 
-    it('should catch runtime deployment errors gracefully and report setup execution failure flags', async () => {
-      Bun.spawn = mock(() => {
-        throw new Error('Fatal Native Binary Execution Fault');
-      }) as any;
+			expect(Bun.spawn).toHaveBeenCalledWith(
+				[
+					'FXServer.exe',
+					'+exec',
+					'server.cfg',
+					'+set',
+					'onesync',
+					'on',
+					'+set',
+					'resource-api-token',
+					'mock-api-token',
+					'+set',
+					'api-port',
+					'30120',
+					'+ensure',
+					'fxManager',
+					'+add_convar_permission',
+					'fxManager',
+					'read',
+					'resource-api-token',
+					'+add_convar_permission',
+					'fxManager',
+					'read',
+					'api-port',
+				],
+				{
+					cwd: '/home/fxserver/server-data',
+					stdin: 'pipe',
+					stdout: 'pipe',
+					stderr: 'pipe',
+					env: expect.any(Object),
+				},
+			);
+		});
 
-      const result = await processManager.start();
-      expect(result).toBe(false);
-    });
-  });
+		it('should catch runtime deployment errors gracefully and report setup execution failure flags', async () => {
+			Bun.spawn = mock(() => {
+				throw new Error('Fatal Native Binary Execution Fault');
+			}) as any;
 
-  describe('Piped Output Streams & Line Parsing', () => {
-    it('should promote tracking context to running and load system resources when authentication patterns match', async () => {
-      await processManager.start();
+			const result = await processManager.start();
+			expect(result).toBe(false);
+		});
+	});
 
-      pushToStream(stdoutController, 'Some random bootup message...\n');
-      pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+	describe('Piped Output Streams & Line Parsing', () => {
+		it('should promote tracking context to running and load system resources when authentication patterns match', async () => {
+			await processManager.start();
 
-      await Bun.sleep(15); // Extended sleep value to let the text decoder transform stream cycles settle
+			pushToStream(stdoutController, 'Some random bootup message...\n');
+			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
 
-      expect(processManager.getState().status).toBe('running');
-      expect(mockLoadResources).toHaveBeenCalled();
-      expect(mockBufferPush).toHaveBeenCalled();
-    });
+			await Bun.sleep(15); // Extended sleep value to let the text decoder transform stream cycles settle
 
-    it('should completely filter out empty cfx interactive terminal prompt wrappers from the buffer logs', async () => {
-      await processManager.start();
+			expect(processManager.getState().status).toBe('running');
+			expect(mockLoadResources).toHaveBeenCalled();
+			expect(mockBufferPush).toHaveBeenCalled();
+		});
 
-      pushToStream(stdoutController, 'cfx> \n');
-      await Bun.sleep(15);
+		it('should completely filter out empty cfx interactive terminal prompt wrappers from the buffer logs', async () => {
+			await processManager.start();
 
-      // Total calls must only reflect the initial startup console banner sequence
-      expect(mockBufferPush).toHaveBeenCalled();
-    });
-  });
+			pushToStream(stdoutController, 'cfx> \n');
+			await Bun.sleep(15);
 
-  describe('stop()', () => {
-    it('should refuse processing commands if server configurations present an inactive tracking state', async () => {
-      const result = await processManager.stop();
-      expect(result).toBe(false);
-    });
+			// Total calls must only reflect the initial startup console banner sequence
+			expect(mockBufferPush).toHaveBeenCalled();
+		});
+	});
 
-    it('should gracefully invoke native kill routines, clear memory buffers, and cycle state configurations down', async () => {
-      await processManager.start();
-      
-      pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
-      await Bun.sleep(15);
+	describe('stop()', () => {
+		it('should refuse processing commands if server configurations present an inactive tracking state', async () => {
+			const result = await processManager.stop();
+			expect(result).toBe(false);
+		});
 
-      const stopPromise = processManager.stop();
-      
-      expect(processManager.getState().status).toBe('stopping');
-      expect(mockStoppingServer).toHaveBeenCalled();
+		it('should gracefully invoke native kill routines, clear memory buffers, and cycle state configurations down', async () => {
+			await processManager.start();
 
-      if (currentTriggerExit) currentTriggerExit(0);
-      
-      const result = await stopPromise;
-      expect(result).toBe(true);
-      expect(processManager.getState().status).toBe('stopped');
-    });
-  });
+			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			await Bun.sleep(15);
 
-  describe('restart()', () => {
-    it('should cleanly chain sequential termination and initialization procedures smoothly', async () => {
-      await processManager.start();
-      pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
-      await Bun.sleep(15);
+			const stopPromise = processManager.stop();
 
-      const stopSpy = spyOn(processManager, 'stop');
-      const startSpy = spyOn(processManager, 'start');
+			expect(processManager.getState().status).toBe('stopping');
+			expect(mockStoppingServer).toHaveBeenCalled();
 
-      const restartPromise = processManager.restart();
-      
-      if (currentTriggerExit) currentTriggerExit(143); 
+			if (currentTriggerExit) currentTriggerExit(0);
 
-      await restartPromise;
+			const result = await stopPromise;
+			expect(result).toBe(true);
+			expect(processManager.getState().status).toBe('stopped');
+		});
+	});
 
-      expect(stopSpy).toHaveBeenCalled();
-      expect(startSpy).toHaveBeenCalled();
-    });
-  });
+	describe('restart()', () => {
+		it('should cleanly chain sequential termination and initialization procedures smoothly', async () => {
+			await processManager.start();
+			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			await Bun.sleep(15);
 
-  describe('sendCommand()', () => {
-    it('should securely throw validation errors if an external user targets an inactive process standard input pipe', () => {
-      expect(() => processManager.sendCommand('status')).toThrow('Server stdin not available');
-    });
+			const stopSpy = spyOn(processManager, 'stop');
+			const startSpy = spyOn(processManager, 'start');
 
-    it('should deliver string payloads to native standard output frames followed by mandatory line buffers and flushes', async () => {
-      await processManager.start();
+			const restartPromise = processManager.restart();
 
-      processManager.sendCommand('ensure es_extended');
+			if (currentTriggerExit) currentTriggerExit(143);
 
-      const activeProc = (processManager as any).proc;
-      expect(activeProc.stdin.write).toHaveBeenCalledWith('ensure es_extended\n');
-      expect(activeProc.stdin.flush).toHaveBeenCalled();
-    });
-  });
+			await restartPromise;
 
-  describe('getLogs() & injectConsoleLine()', () => {
-    it('should proxy extraction chains directly to buffer storage maps', () => {
-      processManager.getLogs();
-      expect(mockGetHistory).toHaveBeenCalled();
-    });
+			expect(stopSpy).toHaveBeenCalled();
+			expect(startSpy).toHaveBeenCalled();
+		});
+	});
 
-    it('should compile standardized ANSI string structures when fallback console print elements are omitted', () => {
-      processManager.injectConsoleLine({
-        value: 'Dynamic Trace Event',
-        process: 'auth-layer',
-        noPrint: true,
-      });
+	describe('sendCommand()', () => {
+		it('should securely throw validation errors if an external user targets an inactive process standard input pipe', () => {
+			expect(() => processManager.sendCommand('status')).toThrow(
+				'Server stdin not available',
+			);
+		});
 
-      expect(mockBufferPush).toHaveBeenCalledWith(
-        expect.objectContaining({
-          line: expect.stringContaining('Dynamic Trace Event'),
-          source: 'stdout',
-        })
-      );
-      expect(mockWsBroadcast).toHaveBeenCalledWith(
-        expect.objectContaining({ channel: 'console', event: 'line' })
-      );
-    });
-  });
+		it('should deliver string payloads to native standard output frames followed by mandatory line buffers and flushes', async () => {
+			await processManager.start();
+
+			processManager.sendCommand('ensure es_extended');
+
+			const activeProc = (processManager as any).proc;
+			expect(activeProc.stdin.write).toHaveBeenCalledWith(
+				'ensure es_extended\n',
+			);
+			expect(activeProc.stdin.flush).toHaveBeenCalled();
+		});
+	});
+
+	describe('getLogs() & injectConsoleLine()', () => {
+		it('should proxy extraction chains directly to buffer storage maps', () => {
+			processManager.getLogs();
+			expect(mockGetHistory).toHaveBeenCalled();
+		});
+
+		it('should compile standardized ANSI string structures when fallback console print elements are omitted', () => {
+			processManager.injectConsoleLine({
+				value: 'Dynamic Trace Event',
+				process: 'auth-layer',
+				noPrint: true,
+			});
+
+			expect(mockBufferPush).toHaveBeenCalledWith(
+				expect.objectContaining({
+					line: expect.stringContaining('Dynamic Trace Event'),
+					source: 'stdout',
+				}),
+			);
+			expect(mockWsBroadcast).toHaveBeenCalledWith(
+				expect.objectContaining({ channel: 'console', event: 'line' }),
+			);
+		});
+	});
 });
