@@ -10,7 +10,7 @@ import { isFxManagerSetup, isProduction } from './common/utils';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
-import { ProcessManager } from './modules/process.manager';
+import { ProcessManager } from './modules/process/manager';
 import { GameManager } from './modules/game/manager';
 import { ConfigManager } from './modules/config/manager';
 import { perfManager } from './modules/perf/manager';
