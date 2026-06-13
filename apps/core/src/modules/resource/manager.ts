@@ -3,7 +3,7 @@ import type {
 	ResourceData,
 	ResourceInitialData,
 } from '@fxmanager/shared/types';
-import { wsManager } from '../ws.manager';
+import { wsManager } from '../ws/manager';
 import { ConfigManager } from '../config/manager';
 
 class ResourceManager {

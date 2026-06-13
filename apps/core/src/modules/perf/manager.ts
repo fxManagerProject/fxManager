@@ -4,7 +4,7 @@ import {
 	type RawPerf,
 } from '@fxmanager/shared/types';
 import { diffPerfs, didPerfReset, parseRawPerf } from './parser';
-import { wsManager } from '../ws.manager';
+import { wsManager } from '../ws/manager';
 
 // TODO: replace this with a utility function for getting the actual server endpoint at a later date
 const PERF_PORT = 30120;

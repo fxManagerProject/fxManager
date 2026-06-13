@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 
 const mockWsBroadcast = mock(() => {});
-mock.module('../ws.manager', () => ({
+mock.module('../ws/manager', () => ({
   wsManager: {
     broadcast: mockWsBroadcast,
   },

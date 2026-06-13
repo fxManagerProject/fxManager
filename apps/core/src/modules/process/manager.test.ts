@@ -34,7 +34,7 @@ mock.module('../config/manager', () => ({
 }));
 
 const mockWsBroadcast = mock(() => {});
-mock.module('../ws.manager', () => ({
+mock.module('../ws/manager', () => ({
   wsManager: {
     broadcast: mockWsBroadcast,
   },

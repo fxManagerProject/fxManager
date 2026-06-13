@@ -9,7 +9,7 @@ import type {
 } from '@fxmanager/shared/types';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { sessionAuth } from '../../middleware/session';
-import { wsManager } from '../../modules/ws.manager';
+import { wsManager } from '../../modules/ws/manager';
 import type { AuthedRequest, RouteModule } from '../../types';
 import { resourceManager } from '../../modules/resource/manager';
 import { perfManager } from '../../modules/perf/manager';

@@ -28,7 +28,7 @@ mock.module('@fxmanager/database', () => ({
 }));
 
 const mockBroadcast = mock(() => {});
-mock.module('../ws.manager', () => ({
+mock.module('../ws/manager', () => ({
   wsManager: {
     broadcast: mockBroadcast,
   },

@@ -8,7 +8,7 @@ import type {
 	PlayerIdentifiers,
 	PlayerUpdatePackage,
 } from '@fxmanager/shared/types';
-import { wsManager } from '../ws.manager';
+import { wsManager } from '../ws/manager';
 import { discordManager } from '../discord/manager';
 import { ConfigManager } from '../config/manager';
 
