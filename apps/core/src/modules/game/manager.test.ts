@@ -1,0 +1,448 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: test file - we're skipping private checks to facilitate tests */
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+
+const mockCheckBanned = mock(() => null as any);
+const mockGetSetting = mock(() => 'none');
+const mockFindByLicense = mock(() => null as any);
+const mockIsStaff = mock(() => false);
+const mockIsAnyIdentifierWhitelisted = mock(async () => false);
+const mockUpsertPlayer = mock(async () => ({}));
+const mockUpdatePlaytime = mock(async () => {});
+
+mock.module('@fxmanager/database', () => ({
+  repo: {
+    players: {
+      checkBanned: mockCheckBanned,
+      findByLicense: mockFindByLicense,
+      isStaff: mockIsStaff,
+      upsert: mockUpsertPlayer,
+      updatePlaytime: mockUpdatePlaytime,
+    },
+    settings: {
+      get: mockGetSetting,
+    },
+    whitelist: {
+      isAnyIdentifierWhitelisted: mockIsAnyIdentifierWhitelisted,
+    },
+  },
+}));
+
+const mockBroadcast = mock(() => {});
+mock.module('../ws.manager', () => ({
+  wsManager: {
+    broadcast: mockBroadcast,
+  },
+}));
+
+const mockDiscordIsConnected = mock(() => false);
+const mockDiscordConnect = mock(async () => {});
+const mockDiscordCheckWhitelist = mock(async () => false);
+mock.module('../discord/manager', () => ({
+  discordManager: {
+    isConnected: mockDiscordIsConnected,
+    connect: mockDiscordConnect,
+    checkWhitelist: mockDiscordCheckWhitelist,
+  },
+}));
+
+const mockGetSystemValues = mock(() => ({ resourceApiToken: 'mock-token' }));
+mock.module('../config/manager', () => ({
+  ConfigManager: {
+    getInstance: () => ({
+      getSystemValues: mockGetSystemValues,
+    }),
+  },
+}));
+
+const GameManagerModule = await import('./manager');
+import type { PlayerIdentifiers } from '@fxmanager/shared/types';
+
+type GameManagerInstance = InstanceType<typeof GameManagerModule.GameManager>;
+
+describe('GameManager', () => {
+  let gameManager: GameManagerInstance;
+  const originalFetch = global.fetch;
+
+  const sampleIdentifiers: PlayerIdentifiers = {
+    license: 'license:11112222',
+    discord: 'discord:33334444',
+  };
+
+  beforeEach(() => {
+    // Reset all mock tracking chains
+    mockCheckBanned.mockReset().mockReturnValue(null);
+    mockGetSetting.mockReset().mockReturnValue('none');
+    mockFindByLicense.mockReset().mockReturnValue(null);
+    mockIsStaff.mockReset().mockReturnValue(false);
+    mockIsAnyIdentifierWhitelisted.mockReset().mockResolvedValue(false);
+    mockUpsertPlayer.mockReset();
+    mockUpdatePlaytime.mockReset();
+    mockBroadcast.mockClear();
+    mockDiscordIsConnected.mockReset().mockReturnValue(false);
+    mockDiscordConnect.mockReset().mockResolvedValue(undefined);
+    mockDiscordCheckWhitelist.mockReset().mockResolvedValue(false);
+    mockGetSystemValues.mockReset().mockReturnValue({ resourceApiToken: 'mock-token' });
+
+    gameManager = new GameManagerModule.GameManager();
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  // ==========================================
+  // 3. TEST SPECIFICATIONS
+  // ==========================================
+
+  describe('Player Handling Basics', () => {
+    it('should start with an empty internal tracking playerlist array', () => {
+      expect(gameManager.getPlayerList()).toEqual([]);
+      expect(gameManager.getPlayer(1)).toBeUndefined();
+    });
+  });
+
+  describe('playerDeferralChecks()', () => {
+    it('should block connection immediately if the player has an active permanent ban', async () => {
+      const banDate = new Date('2026-06-01T12:00:00Z');
+      mockCheckBanned.mockReturnValueOnce({
+        reason: 'Cheating/Exploiting',
+        createdAt: banDate,
+        expiresAt: null,
+      });
+
+      const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+
+      expect(mockCheckBanned).toHaveBeenCalledWith(sampleIdentifiers);
+      expect(response).toEqual({
+        access: false,
+        type: 'ban',
+        ban: {
+          permanent: true,
+          reason: 'Cheating/Exploiting',
+          createdAt: banDate,
+        },
+      });
+    });
+
+    it('should calculate temporary ban boundaries cleanly if an expiration timestamp is provided', async () => {
+      const banDate = new Date('2026-06-01T12:00:00Z');
+      const expireDate = new Date('2026-07-01T12:00:00Z');
+      mockCheckBanned.mockReturnValueOnce({
+        reason: 'Toxic behavior',
+        createdAt: banDate,
+        expiresAt: expireDate,
+      });
+
+      const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+
+      expect(response).toEqual({
+        access: false,
+        type: 'ban',
+        ban: {
+          permanent: false,
+          reason: 'Toxic behavior',
+          createdAt: banDate,
+          expiresAt: expireDate,
+        },
+      });
+    });
+
+    it('should allow complete access if whitelist mode configuration is explicitly set to "none"', async () => {
+      mockGetSetting.mockReturnValueOnce('none');
+
+      const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+      expect(response).toEqual({ access: true });
+    });
+
+    it('should bypass any whitelist restriction paths if the target license matches a recognized staff user profile', async () => {
+      mockGetSetting.mockReturnValueOnce('admin-only');
+      mockFindByLicense.mockReturnValueOnce({ id: 1337 });
+      mockIsStaff.mockReturnValueOnce(true);
+
+      const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+      expect(mockFindByLicense).toHaveBeenCalledWith(sampleIdentifiers.license);
+      expect(mockIsStaff).toHaveBeenCalledWith(1337);
+      expect(response).toEqual({ access: true });
+    });
+
+    it('should decline connection access parameters if mode is "admin-only" and user is non-staff', async () => {
+      mockGetSetting.mockReturnValueOnce('admin-only');
+      mockFindByLicense.mockReturnValueOnce({ id: 55 });
+      mockIsStaff.mockReturnValueOnce(false);
+
+      const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+      expect(response).toEqual({
+        access: false,
+        type: 'error',
+        reason: 'Server is in Administer Mode, you can not connect at this time.',
+      });
+    });
+
+    describe('Whitelist Mode: identifier', () => {
+      beforeEach(() => {
+        mockGetSetting.mockReturnValue('identifier');
+      });
+
+      it('should permit entry if raw identifier repository lookup returns successfully', async () => {
+        mockIsAnyIdentifierWhitelisted.mockResolvedValueOnce(true);
+
+        const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+        expect(mockIsAnyIdentifierWhitelisted).toHaveBeenCalledWith(sampleIdentifiers);
+        expect(response).toEqual({ access: true });
+      });
+
+      it('should reject non-whitelisted database identities cleanly', async () => {
+        mockIsAnyIdentifierWhitelisted.mockResolvedValueOnce(false);
+
+        const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+        expect(response).toEqual({
+          access: false,
+          type: 'error',
+          reason: 'You are not whitelisted.',
+        });
+      });
+    });
+
+    describe('Whitelist Mode: discord', () => {
+      beforeEach(() => {
+        mockGetSetting.mockReturnValue('discord');
+      });
+
+      it('should trigger connection loop on discordManager if called while state tracking shows disconnected', async () => {
+        mockDiscordIsConnected.mockReturnValueOnce(false);
+        mockDiscordCheckWhitelist.mockResolvedValueOnce(true);
+
+        const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+        expect(mockDiscordConnect).toHaveBeenCalled();
+        expect(response).toEqual({ access: true });
+      });
+
+      it('should return error response safely if connection setup attempts on discord service fail', async () => {
+        mockDiscordIsConnected.mockReturnValueOnce(false);
+        mockDiscordConnect.mockRejectedValueOnce(new Error('Discord Gateway unavailable'));
+
+        const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+        expect(response).toEqual({
+          access: false,
+          type: 'error',
+          reason: 'Unable to check whitelist status, please contact server administrators',
+        });
+      });
+
+      it('should instantly refuse access validation if player mapping metadata does not contain a discord footprint', async () => {
+        mockDiscordIsConnected.mockReturnValueOnce(true);
+        const missingDiscordPayload = { license: 'license:only_here' };
+
+        const response = await gameManager.playerDeferralChecks(missingDiscordPayload);
+        expect(response).toEqual({
+          access: false,
+          type: 'error',
+          reason: 'No discord identifier found.',
+        });
+      });
+
+      it('should grant authorization payload clearances if role matching verification yields true', async () => {
+        mockDiscordIsConnected.mockReturnValueOnce(true);
+        mockDiscordCheckWhitelist.mockResolvedValueOnce(true);
+
+        const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+        expect(mockDiscordCheckWhitelist).toHaveBeenCalledWith(sampleIdentifiers.discord);
+        expect(response).toEqual({ access: true });
+      });
+
+      it('should refuse access gracefully with dedicated reason if validation roles are missing', async () => {
+        mockDiscordIsConnected.mockReturnValueOnce(true);
+        mockDiscordCheckWhitelist.mockResolvedValueOnce(false);
+
+        const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+        expect(response).toEqual({
+          access: false,
+          type: 'error',
+          reason: 'You are not whitelisted, please address yourself to server staff.',
+        });
+      });
+    });
+
+    it('should throw safe fallback response warnings if system state hits an unhandled fallback setting mode', async () => {
+      mockGetSetting.mockReturnValueOnce('invalid-corrupted-mode' as any);
+
+      const response = await gameManager.playerDeferralChecks(sampleIdentifiers);
+      expect(response).toEqual({
+        access: false,
+        type: 'error',
+        reason: 'Server whitelist mode is not set, please inform server owner.',
+      });
+    });
+  });
+
+  describe('playerJoin()', () => {
+    it('should perform upsert operations to active db records and broadcast state changes across tracking socket channels', async () => {
+      const fakeDate = new Date('2026-06-13T00:00:00Z');
+      const dbPlayerPayload = {
+        id: 12,
+        name: 'Vader',
+        playtime: 4500,
+        identifiers: sampleIdentifiers,
+        isStaff: false,
+        firstSeen: fakeDate,
+        lastSeen: fakeDate,
+      };
+      mockUpsertPlayer.mockResolvedValueOnce(dbPlayerPayload);
+
+      await gameManager.playerJoin({
+        name: 'Vader',
+        identifiers: sampleIdentifiers,
+        serverId: 4,
+      });
+
+      const list = gameManager.getPlayerList();
+      expect(list).toHaveLength(1);
+      
+      const expectedPayload = {
+        serverId: 4,
+        health: -1,
+        ...dbPlayerPayload,
+      };
+      expect(list[0]).toEqual(expectedPayload);
+      expect(gameManager.getPlayer(12)).toEqual(expectedPayload);
+
+      expect(mockBroadcast).toHaveBeenCalledWith({
+        channel: 'playerlist',
+        event: 'player_joined',
+        data: expectedPayload,
+      });
+    });
+  });
+
+  describe('playerDrop()', () => {
+    it('should seamlessly calculate session duration properties and flush tracking items on drop actions', async () => {
+      const fakeStartTime = Date.now() - 30_000; // 30 seconds ago
+      const trackedOnlinePlayer = {
+        serverId: 9,
+        id: 12,
+        name: 'Vader',
+        playtime: 1000,
+        identifiers: sampleIdentifiers,
+        isStaff: false,
+        firstSeen: new Date(),
+        lastSeen: new Date(fakeStartTime),
+        health: 100,
+        ping: 25,
+      };
+
+      // Inject test player into private fields
+      (gameManager as any).playerlist.push(trackedOnlinePlayer);
+
+      await gameManager.playerDrop(9);
+
+      expect(gameManager.getPlayerList()).toHaveLength(0);
+      expect(mockUpdatePlaytime).toHaveBeenCalledWith(12, expect.any(Number));
+      expect(mockBroadcast).toHaveBeenCalledWith({
+        channel: 'playerlist',
+        event: 'player_left',
+        data: { serverId: 9 },
+      });
+    });
+
+    it('should log warning contexts and abandon execution trees safely if requested serverId track targets do not map up', async () => {
+      await gameManager.playerDrop(999);
+      expect(mockUpdatePlaytime).not.toHaveBeenCalled();
+      expect(mockBroadcast).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('playerUpdates()', () => {
+    it('should cleanly parse parameter updates across dynamic payload dictionary tables', async () => {
+      const player1 = { serverId: 1, health: 100, ping: 10 };
+      const player2 = { serverId: 2, health: 100, ping: 20 };
+      (gameManager as any).playerlist = [player1, player2];
+
+      const updatePackage = {
+        '1': [85, 12],
+        '2': [40, 150],
+      } as const;
+
+      await gameManager.playerUpdates(updatePackage as any);
+
+      expect(player1.health).toBe(85);
+      expect(player1.ping).toBe(12);
+      expect(player2.health).toBe(40);
+      expect(player2.ping).toBe(150);
+
+      expect(mockBroadcast).toHaveBeenCalledWith({
+        channel: 'playerlist',
+        event: 'player_update',
+        data: updatePackage,
+      });
+    });
+  });
+
+  describe('dropPlayer()', () => {
+    it('should dispatch valid post payloads out to routing gateways and decode success structures perfectly', async () => {
+      global.fetch = mock(async () => {
+				return {
+					ok: true,
+					json: async () => ({ success: true }),
+				} as Response;
+			}) as any;
+
+      const response = await gameManager.dropPlayer(2, 'Exploiting Loop holes');
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'http://localhost:30120/fxManager/drop',
+        {
+          method: 'POST',
+          body: JSON.stringify({ serverId: 2, reason: 'Exploiting Loop holes' }),
+          headers: {
+            Application: 'json/application',
+            'x-resource-token': 'mock-token',
+          },
+        }
+      );
+      expect(response).toEqual({ success: true, data: null });
+    });
+
+    it('should catch validation error flags gracefully if target router gates declare response failures', async () => {
+      global.fetch = mock(async () => {
+        return {
+          ok: false,
+          status: 403,
+          statusText: 'Forbidden Token Footprint',
+        } as Response;
+      }) as any;
+
+      const response = await gameManager.dropPlayer(2, 'Reason');
+      expect(response).toEqual({
+        success: false,
+        error: 'Server responded with 403: Forbidden Token Footprint',
+      });
+    });
+
+    it('should forward structural error data payloads cleanly if response execution properties explicitly fail success validations', async () => {
+      global.fetch = mock(async () => {
+        return {
+          ok: true,
+          json: async () => ({ success: false, error: 'Target player missing' }),
+        } as Response;
+      }) as any;
+
+      const response = await gameManager.dropPlayer(2, 'Reason');
+      expect(response).toEqual({
+        success: false,
+        error: 'Target player missing',
+      });
+    });
+
+    it('should absorb connection drop metrics processing faults safely through operational try/catch blocks', async () => {
+      global.fetch = mock(async () => {
+        throw new Error('Test Error');
+      }) as any;
+
+      const response = await gameManager.dropPlayer(2, 'Reason');
+      expect(response).toEqual({
+        success: false,
+        error: 'Test Error',
+      });
+    });
+  });
+});
