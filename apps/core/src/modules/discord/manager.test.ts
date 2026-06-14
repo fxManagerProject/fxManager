@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: explicit any allows testing hidden state properties & mocking frames */
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { Events } from 'discord.js';
-import { mockDestroy, mockGuildsFetch, mockLogin } from './test.setup';
+import { mockDestroy, mockGuildsFetch, mockLogin } from './discord.mock';
 import { discordManager } from './manager';
 
 const mockMembersFetch = mock(async () => ({}));
