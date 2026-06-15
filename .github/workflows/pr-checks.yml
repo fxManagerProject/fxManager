@@ -25,6 +25,7 @@ jobs:
 
   build:
     name: Verify Build System (${{ matrix.os }})
+    needs: test
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
