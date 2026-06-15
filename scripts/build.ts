@@ -1,4 +1,4 @@
-import { Build, type PluginBuilder } from 'bun';
+import type { Build, PluginBuilder } from 'bun';
 import fs from 'node:fs/promises';
 import path, { join } from 'node:path';
 import { name, version } from '../package.json' with { type: 'json' };
@@ -45,7 +45,7 @@ async function copyDir(src: string, dest: string) {
 async function waitForFile(filePath: string, timeout = 5000) {
 	const start = Date.now();
 	while (Date.now() - start < timeout) {
-		if (await fs.exists(filePath)) return true;
+		if (await Bun.file(filePath).exists()) return true;
 		await new Promise((resolve) => setTimeout(resolve, 100)); // Sleep 100ms
 	}
 	throw new Error(
@@ -57,11 +57,11 @@ await copyDir(webpanelDist, ASSETS_DIR);
 
 const resourceDist = path.join(process.cwd(), 'apps/resource');
 
-['locales', 'static', 'dist'].forEach(async (localPath) => {
+await Promise.all(['locales', 'static', 'dist'].map(async (localPath) => {
 	const path = join(resourceDist, localPath);
 	const targetpath = join(RESOURCE_DIR, localPath);
 	await copyDir(path, targetpath);
-});
+}));
 
 await Promise.all(
 	['fxmanifest.lua', 'README.md', '.yarn.installed'].map(async (localPath) => {
@@ -141,9 +141,9 @@ for (const [platform, target] of toBuild) {
 	}
 }
 
-console.log('\n' + '='.repeat(60));
+console.log(`\n${'='.repeat(60)}`);
 console.log(`📦 FXMANAGER BUILD SUMMARY (v${version})`);
 console.log('='.repeat(60));
 console.table(buildResults);
 console.log(`\n📂 Artifacts directory: ${DIST_DIR}`);
-console.log('='.repeat(60) + '\n');
+console.log(`\n${'='.repeat(60)}`);
