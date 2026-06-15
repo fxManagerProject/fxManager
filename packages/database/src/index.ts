@@ -13,8 +13,10 @@ import { createApiTokensRepository } from './repositories/api-tokens';
 import { createAuthRepository } from './repositories/auth';
 import { createAdminsRepository } from './repositories/admins';
 import { createWhitelistRepository } from './repositories/whitelist';
+import { createMigrateRepository } from './repositories/migrate';
 
 export type { Migration } from './migrations/types';
+export type { ImportSummary } from './import/txadmin.importer';
 
 // region initialise
 
@@ -77,4 +79,5 @@ export const repo = {
 	auth: createAuthRepository(db),
 	admins: createAdminsRepository(db),
 	whitelist: createWhitelistRepository(db),
+	migrate: createMigrateRepository(db),
 };

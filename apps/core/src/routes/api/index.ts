@@ -6,6 +6,7 @@ import WhitelistModule from './whitelist';
 import WsModule from './sockets';
 import SettingsModule from './settings';
 import ResourcesModule from './resources';
+import MigrateModule from './migrate';
 
 const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(AuthModule.handler, {
@@ -41,6 +42,11 @@ const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(WsModule.handler, {
 		...options,
 		prefix: WsModule.prefix,
+	});
+
+	fastify.register(MigrateModule.handler, {
+		...options,
+		prefix: MigrateModule.prefix,
 	});
 };
 
