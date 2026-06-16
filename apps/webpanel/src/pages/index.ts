@@ -13,6 +13,7 @@ import AdminCreate from './settings/admincreate';
 import { ResourceList } from './resources';
 import WhitelistIndex from './whitelist';
 import AuditLogPage from './settings/auditlogs';
+import PerformancePage from './performance';
 
 type RouteConfig = {
 	path: string;
@@ -37,6 +38,11 @@ export const routes: RouteConfig[] = [
 		path: '/resources',
 		element: ResourceList,
 		permission: UserPermissions.RESOURCE_LIST,
+	},
+	{
+		path: '/perf',
+		element: PerformancePage,
+		permission: UserPermissions.CONSOLE_ACCESS,
 	},
 
 	// Player Management
