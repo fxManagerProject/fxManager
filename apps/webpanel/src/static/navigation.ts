@@ -35,7 +35,7 @@ const NAV_SERVER: NavCategory = {
 			title: 'Resource List',
 			url: '/resources',
 			icon: LayoutList,
-			permission: UserPermissions.CONSOLE_ACCESS,
+			permission: UserPermissions.RESOURCE_LIST,
 		},
 	],
 };
