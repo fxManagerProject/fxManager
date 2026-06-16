@@ -28,6 +28,7 @@ export const UserPermissions = {
 	RESOURCE_LIST: 1 << 16, // 65536 - view & (re)start/stop resources
 
 	AUDIT_LOG: 1 << 17, // 131072 - view audit logs
+	PERFORMANCE: 1 << 18, // 262144 - view perfomance data
 
 	MASTER: 1 << 30, // 1073741824
 } as const;
@@ -113,6 +114,11 @@ export const PERMISSION_LABELS: Record<
 	[UserPermissions.AUDIT_LOG]: {
 		label: 'Audit log',
 		desc: 'View the history of all staff actions and system events.',
+		category: 'Administration',
+	},
+	[UserPermissions.PERFORMANCE]: {
+		label: 'Perfomance',
+		desc: 'View server performance data.',
 		category: 'Administration',
 	},
 	[UserPermissions.RESOURCE_LIST]: {
