@@ -148,7 +148,7 @@ export const PERMISSION_GROUPS: AdminGroup[] = [
 	},
 	{
 		label: 'Development',
-		permissions: 30720,
+		permissions: 292864,
 		colour: '#00FF00',
 		icon: 'FileCode',
 	},
