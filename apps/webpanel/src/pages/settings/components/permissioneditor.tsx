@@ -144,7 +144,7 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 								value={
 									permissionGroup !== undefined
 										? `${permissionGroup.permissions}`
-										: undefined
+										: '0'
 								}
 								disabled={!canEdit}
 								onValueChange={(value) => setBitField(parseInt(value, 10))}
