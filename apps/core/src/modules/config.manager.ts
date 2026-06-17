@@ -11,6 +11,13 @@ type CoreSettings = CoreConfig &
 		[key: string]: any;
 	};
 
+const fxServerSettingsMap = {
+	onesync: 'fxserver.onesync',
+	executablePath: 'fxserver.executablePath',
+	serverDataPath: 'fxserver.serverDataPath',
+	serverConfigPath: 'fxserver.serverConfigPath',
+};
+
 export class ConfigManager {
 	private static instance: ConfigManager | null = null;
 
@@ -54,7 +61,7 @@ export class ConfigManager {
 		if (!useDb) return this.fxServerValues;
 
 		const dbValues = repo.settings.getMultiple(
-			Object.keys(this.fxServerValues),
+			Object.values(fxServerSettingsMap),
 		);
 
 		const persistent = Object.entries(dbValues).reduce(

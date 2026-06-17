@@ -1,3 +1,4 @@
+import type { SETTINGS_SCOPES } from '../constants';
 import type { UserPermissionsType } from './security';
 
 export type AdminGroup = {
@@ -22,3 +23,16 @@ export interface CreateAdminForm {
 	permissions: UserPermissionsType;
 	playerId: number | null;
 }
+
+export type SettingsScope = keyof typeof SETTINGS_SCOPES;
+
+export type SettingsField<T extends SettingsScope> = typeof SETTINGS_SCOPES[T][number];
+
+export type SettingsKey<T extends SettingsScope = SettingsScope> = {
+  [Scope in SettingsScope]: `${Scope}.${SettingsField<Scope>}`;
+}[T];
+
+export type SettingsKeysByScope = {
+  [Scope in SettingsScope]: SettingsKey<Scope>[];
+};
+

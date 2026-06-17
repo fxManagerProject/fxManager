@@ -1,5 +1,6 @@
 import { Client, Events, GatewayIntentBits, type Guild } from 'discord.js';
 import type { DiscordManagerConfig } from '@fxmanager/shared/types';
+import { repo } from '@fxmanager/database';
 
 class DiscordManager {
 	private client = new Client({
@@ -98,6 +99,13 @@ class DiscordManager {
 
 export const discordManager = new DiscordManager({
 	token: process.env.DISCORD_BOT_TOKEN ?? '',
-	guildId: process.env.DISCORD_GUILDID ?? '',
-	whitelistedRoles: (process.env.DISCORD_ROLE_IDS ?? '')?.split(','),
+	guildId:
+		process.env.DISCORD_GUILDID ??
+		repo.settings.get('whitelist.discordGuildId') ??
+		'',
+	whitelistedRoles: (
+		process.env.DISCORD_ROLE_IDS ??
+		repo.settings.get('whitelist.discordGuildId') ??
+		''
+	)?.split(','),
 });
