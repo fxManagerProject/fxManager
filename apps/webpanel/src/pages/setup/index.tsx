@@ -9,16 +9,8 @@ import { ServerStep } from './ServerStep';
 import { PermissionsStep } from './PermissionsStep';
 import { QueryService } from '@/lib/query';
 
-interface SetupFormProps extends React.ComponentProps<'div'> {
-	onSetupComplete?: () => void;
-}
-
-export function SetupForm({
-	className,
-	onSetupComplete,
-	...props
-}: SetupFormProps) {
-	const [step, setStep] = useState<SetupSteps>('server');
+export function SetupApp() {
+	const [step, setStep] = useState<SetupSteps>('account');
 	const [formData, setFormData] = useState<SetupFormData>({
 		username: '',
 		password: '',
@@ -76,7 +68,6 @@ export function SetupForm({
 				throw new Error('Setup configuration failed.');
 			}
 
-			onSetupComplete?.();
 			window.location.href = '/';
 		} catch (err) {
 			setError((err as Error).message);
@@ -86,108 +77,102 @@ export function SetupForm({
 	}
 
 	return (
-		<div className={cn('w-full flex flex-col gap-6', className)} {...props}>
-			<div className="flex flex-col md:flex-row items-center justify-between border-b pb-5 gap-4">
-				<div className="flex items-center gap-3">
-					<div className="relative flex size-10 items-center justify-center rounded-xl bg-primary">
-						<Server className="size-5 text-primary-foreground z-10" />
-					</div>
-					<div className="text-left">
-						<h1 className="text-xl font-bold tracking-tight">
-							fxManager Setup Console
-						</h1>
-						<p className="text-xs text-muted-foreground">
-							Global deployment environment configuration wizard
-						</p>
-					</div>
-				</div>
-
-				<div className="flex items-center gap-2 text-sm font-medium">
-					<span
-						className={cn(
-							'px-3 py-1.5 rounded-md text-xs font-mono',
-							step === 'account'
-								? 'bg-primary text-primary-foreground'
-								: 'bg-muted text-muted-foreground',
-						)}
-					>
-						01_ACCOUNT
-					</span>
-					<div className="w-3 h-px bg-border" />
-					<span
-						className={cn(
-							'px-3 py-1.5 rounded-md text-xs font-mono',
-							step === 'server'
-								? 'bg-primary text-primary-foreground'
-								: 'bg-muted text-muted-foreground',
-						)}
-					>
-						02_ENVIRONMENT
-					</span>
-					<div className="w-3 h-px bg-border" />
-					<span
-						className={cn(
-							'px-3 py-1.5 rounded-md text-xs font-mono',
-							step === 'permissions'
-								? 'bg-primary text-primary-foreground'
-								: 'bg-muted text-muted-foreground',
-						)}
-					>
-						03_PERMISSIONS_GRID
-					</span>
-				</div>
-			</div>
-
-			{error && (
-				<Alert variant="destructive">
-					<AlertDescription className="font-medium text-center">
-						{error}
-					</AlertDescription>
-				</Alert>
-			)}
-
-			{step === 'account' && (
-				<AccountStep
-					formData={formData}
-					onChange={handleChange}
-					onNext={handleAccountNext}
-				/>
-			)}
-
-			{step === 'server' && (
-				<ServerStep
-					formData={formData}
-					onChange={handleChange}
-					onNext={() => setStep('permissions')}
-				/>
-			)}
-
-			{step === 'permissions' && (
-				<PermissionsStep
-					formData={formData}
-					loading={loading}
-					onAddGroup={(group) =>
-						handleChange('adminGroups', [...formData.adminGroups, group])
-					}
-					onRemoveGroup={(index) =>
-						handleChange(
-							'adminGroups',
-							formData.adminGroups.filter((_, i) => i !== index),
-						)
-					}
-					onBack={() => setStep('server')}
-					onSubmit={handleFinalSubmit}
-				/>
-			)}
-		</div>
-	);
-}
-
-export function SetupApp() {
-	return (
 		<div className="flex min-h-screen items-center justify-center p-4 md:p-8 bg-background">
 			<div className="w-full max-w-7xl border p-6 md:p-8 rounded-2xl bg-card shadow-lg">
-				<SetupForm />
+				<div className="w-full flex flex-col gap-6">
+					<div className="flex flex-col md:flex-row items-center justify-between border-b pb-5 gap-4">
+						<div className="flex items-center gap-3">
+							<div className="relative flex size-10 items-center justify-center rounded-xl bg-primary">
+								<Server className="size-5 text-primary-foreground z-10" />
+							</div>
+							<div className="text-left">
+								<h1 className="text-xl font-bold tracking-tight">
+									fxManager Setup Console
+								</h1>
+								<p className="text-xs text-muted-foreground">
+									Global deployment environment configuration wizard
+								</p>
+							</div>
+						</div>
+
+						<div className="flex items-center gap-2 text-sm font-medium">
+							<span
+								className={cn(
+									'px-3 py-1.5 rounded-md text-xs font-mono',
+									step === 'account'
+										? 'bg-primary text-primary-foreground'
+										: 'bg-muted text-muted-foreground',
+								)}
+							>
+								01_ACCOUNT
+							</span>
+							<div className="w-3 h-px bg-border" />
+							<span
+								className={cn(
+									'px-3 py-1.5 rounded-md text-xs font-mono',
+									step === 'server'
+										? 'bg-primary text-primary-foreground'
+										: 'bg-muted text-muted-foreground',
+								)}
+							>
+								02_ENVIRONMENT
+							</span>
+							<div className="w-3 h-px bg-border" />
+							<span
+								className={cn(
+									'px-3 py-1.5 rounded-md text-xs font-mono',
+									step === 'permissions'
+										? 'bg-primary text-primary-foreground'
+										: 'bg-muted text-muted-foreground',
+								)}
+							>
+								03_PERMISSIONS_GRID
+							</span>
+						</div>
+					</div>
+
+					{error && (
+						<Alert variant="destructive">
+							<AlertDescription className="font-medium text-center">
+								{error}
+							</AlertDescription>
+						</Alert>
+					)}
+
+					{step === 'account' && (
+						<AccountStep
+							formData={formData}
+							onChange={handleChange}
+							onNext={handleAccountNext}
+						/>
+					)}
+
+					{step === 'server' && (
+						<ServerStep
+							formData={formData}
+							onChange={handleChange}
+							onNext={() => setStep('permissions')}
+						/>
+					)}
+
+					{step === 'permissions' && (
+						<PermissionsStep
+							formData={formData}
+							loading={loading}
+							onAddGroup={(group) =>
+								handleChange('adminGroups', [...formData.adminGroups, group])
+							}
+							onRemoveGroup={(index) =>
+								handleChange(
+									'adminGroups',
+									formData.adminGroups.filter((_, i) => i !== index),
+								)
+							}
+							onBack={() => setStep('server')}
+							onSubmit={handleFinalSubmit}
+						/>
+					)}
+				</div>
 			</div>
 		</div>
 	);
