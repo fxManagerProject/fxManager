@@ -8,9 +8,10 @@ import { ServerStep } from './ServerStep';
 import { PermissionsStep } from './PermissionsStep';
 import { QueryService } from '@/lib/query';
 import { toast } from 'sonner';
+import type { ApiError } from '@fxmanager/shared/types';
 
 export function SetupApp() {
-	const [step, setStep] = useState<SetupSteps>('permissions');
+	const [step, setStep] = useState<SetupSteps>('account');
 	const [formData, setFormData] = useState<SetupFormData>({
 		username: '',
 		password: '',
@@ -31,7 +32,7 @@ export function SetupApp() {
 			closeButton: true,
 			richColors: true,
 			duration: 10_000,
-		})
+		});
 	}
 
 	function handleChange<K extends keyof SetupFormData>(
@@ -58,7 +59,7 @@ export function SetupApp() {
 		setLoading(true);
 		try {
 			const result = await QueryService<{ success: boolean }>({
-				endpoint: '/auth/setup',
+				endpoint: '/setup',
 				method: 'POST',
 				body: {
 					username: formData.username,
@@ -78,7 +79,10 @@ export function SetupApp() {
 
 			window.location.href = '/';
 		} catch (err) {
-			setError((err as Error).message);
+			const error = err as ApiError<{ error?: string }>;
+			setError(
+				`(${error.status}) - ${error.data?.error ?? 'Unknown error occurred.'}`,
+			);
 		} finally {
 			setLoading(false);
 		}
