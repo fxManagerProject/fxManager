@@ -106,6 +106,7 @@ export function ServerStep({ formData, onChange, onNext }: ServerStepProps) {
 					type="button"
 					className="gap-2 w-full md:w-auto px-5"
 					onClick={onNext}
+					disabled={formData.serverSetupMethod !== 'manual'}
 				>
 					Continue <ArrowRight className="size-4" />
 				</Button>
