@@ -20,38 +20,55 @@ import { useCallback, useEffect, useState } from 'react';
 import FXServerTab from './tabs/fxserver';
 import WhitelistTab from './tabs/whitelist';
 import { QueryService } from '@/lib/query';
-import type { ApiResponse } from '@fxmanager/shared/types';
+import type {
+	ApiResponse,
+	SettingsKey,
+	SettingsScope,
+} from '@fxmanager/shared/types';
 import { Spinner } from '@fxmanager/ui/components/spinner';
 import { Button } from '@fxmanager/ui/components/button';
 import { cn } from '@fxmanager/ui/lib/utils';
+import { Skeleton } from '@fxmanager/ui/components/skeleton';
+import type { SettingsTabProps } from '@/types/settings';
+import { toast } from 'sonner';
+
+interface Tab {
+	value: SettingsScope;
+	label: string;
+	description: string;
+	component: React.FC<SettingsTabProps<SettingsScope>>;
+}
 
 const TABS = [
 	{
 		value: 'general',
 		label: 'General',
 		description: 'General configuration options for fxManager.',
-		component: <GeneralTab />,
+		component: GeneralTab,
 	},
 	{
 		value: 'fxserver',
 		label: 'FXServer',
 		description: 'Paths and runtime behaviour of the FXServer instance.',
-		component: <FXServerTab />,
+		component: FXServerTab,
 	},
 	{
 		value: 'whitelist',
 		label: 'Whitelist',
 		description: 'Control who is allowed to join the server.',
-		component: <WhitelistTab />,
+		component: WhitelistTab,
 	},
-];
+] satisfies Tab[];
+
+type SettingsCache = {
+	[S in SettingsScope]?: Partial<Record<SettingsKey<S>, string>>;
+};
 
 export default function SettingsPage() {
 	const [currentTab, setCurrentTab] = useState<string>(TABS[0].value);
 	const [loading, setLoading] = useState(true);
-	const [cache, setCache] = useState<Record<string, string | number | boolean>>(
-		{},
-	);
+	const [disabled, setDisabled] = useState(false);
+	const [cache, setCache] = useState<SettingsCache>({});
 
 	const loadTab = useCallback(
 		async (tab: string, useCache = true) => {
@@ -59,16 +76,67 @@ export default function SettingsPage() {
 
 			setLoading(true);
 
-			const response = await QueryService<ApiResponse>({
+			const response = await QueryService<ApiResponse<SettingsCache>>({
 				endpoint: `/settings/${tab}`,
 				method: 'GET',
 			});
 
-			setCache((prev) => ({ ...prev, [tab]: response.success }));
+			if (response.success) {
+				setCache((prev) => ({ ...prev, [tab]: response.data }));
+			}
+
 			setLoading(false);
 		},
 		[cache],
 	);
+
+	async function updateSettings<S extends SettingsScope>(
+		scope: S,
+		key: SettingsKey<S>,
+		value: string,
+	) {
+		const previousValue = cache[scope]?.[key];
+
+		setCache((prev) => ({
+			...prev,
+			[scope]: {
+				...prev[scope],
+				[key]: value,
+			},
+		}));
+
+		setDisabled(true);
+
+		try {
+			const response = await QueryService<ApiResponse>({
+				endpoint: `/settings/${scope}`,
+				method: 'POST',
+				body: { key, value },
+			});
+
+			if (!response.success) {
+				setCache((prev) => ({
+					...prev,
+					[scope]: {
+						...prev[scope],
+						[key]: previousValue,
+					},
+				}));
+			}
+		} catch {
+			toast.error(`Failed to update setting.`);
+
+			setCache((prev) => ({
+				...prev,
+				[scope]: {
+					...prev[scope],
+					[key]: previousValue,
+				},
+			}));
+		}
+
+		setDisabled(false);
+	}
 
 	useEffect(() => {
 		void loadTab(currentTab);
@@ -98,7 +166,7 @@ export default function SettingsPage() {
 				</TabsList>
 
 				<ScrollArea className="h-[calc(100vh-12rem)]">
-					{TABS.map(({ value, label, description, component }) => (
+					{TABS.map(({ value, label, description, component: Component }) => (
 						<TabsContent key={value} value={value}>
 							<Card>
 								<CardHeader className="gap-0.5">
@@ -117,7 +185,21 @@ export default function SettingsPage() {
 												'blur-sm pointer-events-none',
 										)}
 									>
-										{component}
+										{loading || !cache[value as keyof typeof cache] ? (
+											<div className="space-y-4">
+												<Skeleton className="h-10 w-full" />
+												<Skeleton className="h-10 w-full" />
+												<Skeleton className="h-10 w-2/3" />
+											</div>
+										) : (
+											<Component
+												data={cache[value as keyof typeof cache] ?? {}}
+												onChange={(key, newValue) =>
+													updateSettings(value, key, newValue)
+												}
+												disabled={disabled}
+											/>
+										)}
 									</div>
 
 									{loading && currentTab === value && (

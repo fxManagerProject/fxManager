@@ -12,10 +12,10 @@ type CoreSettings = CoreConfig &
 	};
 
 const fxServerSettingsMap = {
-	onesync: 'fxserver.onesync',
-	executablePath: 'fxserver.executablePath',
-	serverDataPath: 'fxserver.serverDataPath',
-	serverConfigPath: 'fxserver.serverConfigPath',
+	'fxserver.onesync': 'onesync',
+	'fxserver.executablePath': 'executablePath',
+	'fxserver.serverDataPath': 'serverDataPath',
+	'fxserver.serverConfigPath': 'serverConfigPath',
 };
 
 export class ConfigManager {
@@ -34,12 +34,40 @@ export class ConfigManager {
 
 	private fxServerValues: ServerConfig = {
 		onesync: 'on',
-		executable: process.env.FXSERVER_EXECUTABLE || './FXServer',
-		serverDataPath: process.env.FXSERVER_DATA_PATH || './server-data',
-		serverConfigFile: process.env.FXSERVER_CFG || 'server.cfg',
+		executable:
+			repo.settings.get('fxserver.executablePath') ||
+			process.env.FXSERVER_EXECUTABLE ||
+			'./FXServer',
+		serverDataPath:
+			repo.settings.get('fxserver.serverDataPath') ||
+			process.env.FXSERVER_DATA_PATH ||
+			'./server-data',
+		serverConfigFile:
+			repo.settings.get('fxserver.serverConfigPath') ||
+			process.env.FXSERVER_CFG ||
+			'server.cfg',
 	};
 
-	private constructor() {}
+	private constructor() {
+		// Initializes FXServer settings from environment variables if they are not already set.
+		const dbValues = repo.settings.getMultiple([
+			'fxserver.executablePath',
+			'fxserver.serverDataPath',
+			'fxserver.serverConfigPath',
+		]);
+		const valuesToEnv = {
+			'fxserver.executablePath': 'FXSERVER_EXECUTABLE',
+			'fxserver.serverDataPath': 'FXSERVER_DATA_PATH',
+			'fxserver.serverConfigPath': 'FXSERVER_CFG',
+		};
+
+		Object.keys(valuesToEnv).forEach((key) => {
+			const envVar = valuesToEnv[key as keyof typeof valuesToEnv];
+			if (!dbValues[key as keyof typeof dbValues] && process.env[envVar]) {
+				repo.settings.set(key, process.env[envVar]);
+			}
+		});
+	}
 
 	static getInstance() {
 		if (!ConfigManager.instance) {
@@ -61,13 +89,15 @@ export class ConfigManager {
 		if (!useDb) return this.fxServerValues;
 
 		const dbValues = repo.settings.getMultiple(
-			Object.values(fxServerSettingsMap),
+			Object.keys(fxServerSettingsMap),
 		);
 
 		const persistent = Object.entries(dbValues).reduce(
 			(acc, [key, value]) => {
 				if (value !== undefined) {
-					acc[key] = value;
+					const mappedKey =
+						fxServerSettingsMap[key as keyof typeof fxServerSettingsMap];
+					acc[mappedKey] = value;
 				}
 				return acc;
 			},

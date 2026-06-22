@@ -1,4 +1,4 @@
-import { Label } from "@fxmanager/ui/components/label";
+import { Label } from '@fxmanager/ui/components/label';
 
 export default function SettingRow({
 	label,

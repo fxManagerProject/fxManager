@@ -94,18 +94,10 @@ class DiscordManager {
 	}
 }
 
-// NOTE / ToDo:
-// config settings for the bot will be migrated to settings db
-
 export const discordManager = new DiscordManager({
 	token: process.env.DISCORD_BOT_TOKEN ?? '',
-	guildId:
-		process.env.DISCORD_GUILDID ??
-		repo.settings.get('whitelist.discordGuildId') ??
-		'',
+	guildId: repo.settings.get('whitelist.discordGuildId') ?? '',
 	whitelistedRoles: (
-		process.env.DISCORD_ROLE_IDS ??
-		repo.settings.get('whitelist.discordGuildId') ??
-		''
+		repo.settings.get('whitelist.discordRoleIds') ?? ''
 	)?.split(','),
 });

@@ -26,13 +26,13 @@ export interface CreateAdminForm {
 
 export type SettingsScope = keyof typeof SETTINGS_SCOPES;
 
-export type SettingsField<T extends SettingsScope> = typeof SETTINGS_SCOPES[T][number];
+export type SettingsField<T extends SettingsScope> =
+	(typeof SETTINGS_SCOPES)[T][number];
 
 export type SettingsKey<T extends SettingsScope = SettingsScope> = {
-  [Scope in SettingsScope]: `${Scope}.${SettingsField<Scope>}`;
+	[Scope in SettingsScope]: `${Scope}.${SettingsField<Scope>}`;
 }[T];
 
 export type SettingsKeysByScope = {
-  [Scope in SettingsScope]: SettingsKey<Scope>[];
+	[Scope in SettingsScope]: SettingsKey<Scope>[];
 };
-

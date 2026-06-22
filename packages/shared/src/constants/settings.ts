@@ -1,4 +1,4 @@
-import type { SettingsField, SettingsKey, SettingsKeysByScope } from "../types";
+import type { SettingsKey, SettingsKeysByScope } from '../types';
 
 export const SETTINGS_SCOPES = {
 	general: [],
@@ -7,15 +7,15 @@ export const SETTINGS_SCOPES = {
 } as const;
 
 export const SETTINGS_KEYS = Object.fromEntries(
-  Object.entries(SETTINGS_SCOPES).map(([scope, keys]) => [
-    scope,
-    keys.map((key) => `${scope}.${key}`),
-  ])
+	Object.entries(SETTINGS_SCOPES).map(([scope, keys]) => [
+		scope,
+		keys.map((key) => `${scope}.${key}`),
+	]),
 ) as SettingsKeysByScope;
 
-export const SETTINGS_DEFAULTS: Partial<Record<SettingsKey, string | number | boolean>> = {
+export const SETTINGS_DEFAULTS = {
 	'fxserver.onesync': 'on',
-	"fxserver.executablePath": './FXServer',
-	"fxserver.serverDataPath": './server-data',
-	"fxserver.serverConfigPath": 'server.cfg'
-} as const;
+	'fxserver.executablePath': './FXServer',
+	'fxserver.serverDataPath': './server-data',
+	'fxserver.serverConfigPath': 'server.cfg',
+} satisfies Partial<Record<SettingsKey, string>>;
