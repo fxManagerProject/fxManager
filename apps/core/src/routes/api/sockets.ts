@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type {
 	OnlinePlayer,
+	PerfSnapshot,
 	ProcessOutputLine,
 	ResourceInitialData,
 	ServerState,
@@ -11,6 +12,7 @@ import { sessionAuth } from '../../middleware/session';
 import { wsManager } from '../../modules/ws.manager';
 import type { AuthedRequest, RouteModule } from '../../types';
 import { resourceManager } from '../../modules/resource.manager';
+import { perfManager } from '../../modules/perf.manager';
 
 wsManager.addCheck('console', (admin) => {
 	return PermissionManager.has(
@@ -72,9 +74,7 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 					value: `  Protected Convar - \x1b[1maction denied\x1b[0m`,
 					color: '\x1b[31m',
 				});
-			} else if (
-				/{start|stop|ensure|restart|start}\s+fxManager/.test(command)
-			) {
+			} else if (/^(start|stop|ensure|restart)\s+fxManager/.test(command)) {
 				pm.injectConsoleLine({
 					process: `fxManager`,
 					value: `  Cannot perform action on protected resource \x1b[1mfxManager\x1b[0m`,
@@ -96,6 +96,11 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 
 	wsManager.setInitialData<ResourceInitialData>('resourcelist', () => {
 		return resourceManager.getResourceList();
+	});
+
+	// backfill new clients with the last 30 min of samples
+	wsManager.setInitialData<PerfSnapshot[]>('perf', () => {
+		return perfManager.getRecent();
 	});
 };
 

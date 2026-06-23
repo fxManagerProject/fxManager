@@ -3,6 +3,7 @@ export type Channel =
 	| 'resourcelist'
 	| 'playerlist'
 	| 'console'
+	| 'perf'
 	| `report:general`
 	| `report:${number}`;
 
