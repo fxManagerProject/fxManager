@@ -3,7 +3,7 @@ import type { SettingsKey, SettingsKeysByScope } from '../types';
 export const SETTINGS_SCOPES = {
 	general: [],
 	fxserver: ['onesync', 'executablePath', 'serverDataPath', 'serverConfigPath'],
-	whitelist: ['mode', 'discordGuildId', 'discordWhitelistedRoles'],
+	whitelist: ['mode', 'discordGuildId', 'discordRoleIds'],
 } as const;
 
 export const SETTINGS_KEYS = Object.fromEntries(
@@ -18,4 +18,5 @@ export const SETTINGS_DEFAULTS = {
 	'fxserver.executablePath': './FXServer',
 	'fxserver.serverDataPath': './server-data',
 	'fxserver.serverConfigPath': 'server.cfg',
+	'whitelist.mode': 'none',
 } satisfies Partial<Record<SettingsKey, string>>;

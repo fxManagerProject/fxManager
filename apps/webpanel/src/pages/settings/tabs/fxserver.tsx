@@ -59,6 +59,7 @@ export default function FXServerTab({
 					key={data['fxserver.executablePath'] ?? ''}
 					defaultValue={executablePath}
 					disabled={disabled}
+					placeholder={SETTINGS_DEFAULTS['fxserver.executablePath']}
 					onBlur={(event) => {
 						const value = event.currentTarget.value;
 						if (value === executablePath) return;
@@ -69,13 +70,12 @@ export default function FXServerTab({
 				/>
 			</SettingRow>
 
-			<Separator />
-
 			<SettingRow label="Server Data Path">
 				<Input
 					key={data['fxserver.serverDataPath'] ?? ''}
 					defaultValue={serverDataPath}
 					disabled={disabled}
+					placeholder={SETTINGS_DEFAULTS['fxserver.serverDataPath']}
 					onBlur={(event) => {
 						const value = event.currentTarget.value;
 						if (value === serverDataPath) return;
@@ -86,13 +86,12 @@ export default function FXServerTab({
 				/>
 			</SettingRow>
 
-			<Separator />
-
 			<SettingRow label="Config File Path">
 				<Input
 					key={data['fxserver.serverConfigPath'] ?? ''}
 					defaultValue={serverConfigPath}
 					disabled={disabled}
+					placeholder={SETTINGS_DEFAULTS['fxserver.serverConfigPath']}
 					onBlur={(event) => {
 						const value = event.currentTarget.value;
 						if (value === serverConfigPath) return;

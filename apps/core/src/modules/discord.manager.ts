@@ -71,6 +71,10 @@ class DiscordManager {
 		return this.connectionState;
 	}
 
+	private getRoles() {
+		return repo.settings.get('whitelist.discordRoleIds')?.split(',') ?? [];
+	}
+
 	async checkWhitelist(discordId: string): Promise<boolean> {
 		if (!this.guild) {
 			throw new Error(`No guild was found for id: ${this.config.guildId}`);
@@ -87,7 +91,7 @@ class DiscordManager {
 
 			const { roles } = member;
 
-			return roles.cache.hasAny(...this.config.whitelistedRoles);
+			return roles.cache.hasAny(...this.getRoles());
 		} catch {
 			return false;
 		}

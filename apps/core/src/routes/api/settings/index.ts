@@ -68,6 +68,13 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 		const scope = rawScope as SettingsScope;
 		const settingsKeys = (SETTINGS_KEYS[scope] ?? []).map((key) => key); // Done to avoid never.
 		const { key, value } = request.body as { key: string; value: string };
+		console.log(
+			key,
+			value,
+			settingsKeys,
+			settingsKeys.includes(key as SettingsKey),
+		);
+
 		if (!settingsKeys.includes(key as SettingsKey)) {
 			throw new Error(`Invalid settings key: ${key}`);
 		}

@@ -11,7 +11,6 @@ import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from '@fxmanager/ui/components/card';
@@ -95,6 +94,8 @@ export default function SettingsPage() {
 		key: SettingsKey<S>,
 		value: string,
 	) {
+		console.log(scope, key, value);
+
 		const previousValue = cache[scope]?.[key];
 
 		setCache((prev) => ({
@@ -170,10 +171,22 @@ export default function SettingsPage() {
 						<TabsContent key={value} value={value}>
 							<Card>
 								<CardHeader className="gap-0.5">
-									<CardTitle className="text-2xl dark:text-neutral-200 text-neutral-700">
-										{label}
-									</CardTitle>
-									<CardDescription>{description}</CardDescription>
+									<div className="flex items-start justify-between gap-4">
+										<div>
+											<CardTitle className="text-2xl text-neutral-700 dark:text-neutral-200">
+												{label}
+											</CardTitle>
+											<CardDescription>{description}</CardDescription>
+										</div>
+
+										<Button
+											disabled={loading}
+											variant="secondary"
+											onClick={() => loadTab(value, false)}
+										>
+											<RefreshCcw /> Refresh Tab
+										</Button>
+									</div>
 								</CardHeader>
 
 								<CardContent className="relative">
@@ -208,16 +221,6 @@ export default function SettingsPage() {
 										</div>
 									)}
 								</CardContent>
-
-								<CardFooter className="ml-auto">
-									<Button
-										disabled={loading}
-										variant="secondary"
-										onClick={() => loadTab(value, false)}
-									>
-										<RefreshCcw /> Refresh Tab
-									</Button>
-								</CardFooter>
 							</Card>
 						</TabsContent>
 					))}
