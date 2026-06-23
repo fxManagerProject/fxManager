@@ -20,6 +20,10 @@ class DiscordManager {
 
 	async connect() {
 		try {
+			this.config.guildId = repo.settings.get('whitelist.discordGuildId') ?? '';
+			this.config.whitelistedRoles =
+				repo.settings.get('whitelist.discordRoleIds')?.split(',') ?? [];
+
 			const readyPromise = new Promise<void>((resolve, reject) => {
 				this.client.once(Events.ClientReady, async (readyClient) => {
 					try {
@@ -100,8 +104,6 @@ class DiscordManager {
 
 export const discordManager = new DiscordManager({
 	token: process.env.DISCORD_BOT_TOKEN ?? '',
-	guildId: repo.settings.get('whitelist.discordGuildId') ?? '',
-	whitelistedRoles: (
-		repo.settings.get('whitelist.discordRoleIds') ?? ''
-	)?.split(','),
+	guildId: '',
+	whitelistedRoles: [],
 });
