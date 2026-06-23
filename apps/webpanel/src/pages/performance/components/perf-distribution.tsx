@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { usePerfSocket } from '@/hooks/ws-channels/use-perf';
 import {
 	PERF_WINDOW_MS,
 	type PerfSnapshot,
@@ -69,8 +68,7 @@ function aggregate(
 	};
 }
 
-export function PerfDistribution() {
-	const { samples } = usePerfSocket();
+export function PerfDistribution({ samples }: { samples: PerfSnapshot[] }) {
 	const [thread, setThread] = useState<PerfThread>('svMain');
 
 	const data = useMemo(() => aggregate(samples, thread), [samples, thread]);
@@ -107,7 +105,12 @@ export function PerfDistribution() {
 			</CardHeader>
 			<CardContent>
 				{!data ? (
-					<div className="flex h-[260px] items-center justify-center text-center text-sm text-muted-foreground">
+					<div
+						style={{
+							height: `calc((${BANDS} * 16px) + ((${BANDS} - 1) * 6px))`,
+						}}
+						className="flex items-center justify-center text-center text-sm text-muted-foreground"
+					>
 						No performance data yet. Metrics appear ~30s after the server
 						starts.
 					</div>

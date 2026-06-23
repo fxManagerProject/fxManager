@@ -10,11 +10,18 @@ import { isFxManagerSetup, isProduction } from './common/utils';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
-import { ProcessManager } from './modules/process.manager';
-import { GameManager } from './modules/game.manager';
-import { ConfigManager } from './modules/config.manager';
-import { perfManager } from './modules/perf.manager';
+import { ProcessManager } from './modules/process/manager';
+import { GameManager } from './modules/game/manager';
+import { ConfigManager } from './modules/config/manager';
+import { perfManager } from './modules/perf/manager';
 import { applyMigrations } from '@fxmanager/database';
+import { MIGRATE_WORKER_FLAG, runMigrateWorker } from './migrate-worker';
+
+// when re-exec'd as a migrate worker, run the import and exit before any
+// server/port/migration bootstrapping happens
+if (process.argv.includes(MIGRATE_WORKER_FLAG)) {
+	await runMigrateWorker();
+}
 
 applyMigrations();
 // hardcode for the time being

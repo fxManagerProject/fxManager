@@ -2,7 +2,7 @@ import type { AuthedRequest, RouteModule } from '../../types';
 import { sessionAuth } from '../../middleware/session';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
-import { resourceManager } from '../../modules/resource.manager';
+import { resourceManager } from '../../modules/resource/manager';
 
 const ResourceEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { pm } = options;

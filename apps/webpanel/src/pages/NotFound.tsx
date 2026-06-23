@@ -28,8 +28,8 @@ export default function NotFound() {
 						</p>
 						<p className="text-muted-foreground text-xs pt-1">
 							{user
-								? 'The requested resource does not exist or has been moved.'
-								: 'Authentication required to access this resource.'}
+								? "The requested resource does not exist, has been moved, or you don't have permission to view it."
+								: 'You must be logged in to access this resource.'}
 						</p>
 					</div>
 				</div>

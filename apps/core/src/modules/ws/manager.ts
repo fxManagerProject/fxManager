@@ -4,7 +4,7 @@ import type {
 	WSClientMessage,
 	WSMessage,
 } from '@fxmanager/shared/types';
-import type { AuthedRequest } from '../types';
+import type { AuthedRequest } from '../../types';
 
 interface Subscription {
 	id: string;

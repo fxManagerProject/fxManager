@@ -3,8 +3,8 @@ import type {
 	ResourceData,
 	ResourceInitialData,
 } from '@fxmanager/shared/types';
-import { wsManager } from './ws.manager';
-import { ConfigManager } from './config.manager';
+import { wsManager } from '../ws/manager';
+import { ConfigManager } from '../config/manager';
 
 class ResourceManager {
 	private config = ConfigManager.getInstance();
@@ -94,7 +94,7 @@ class ResourceManager {
 				(res) => res.name === payload.data.name,
 			);
 
-			if (!idx) {
+			if (idx < 0) {
 				this.resourcelist.push(payload.data);
 			} else {
 				this.resourcelist[idx] = {

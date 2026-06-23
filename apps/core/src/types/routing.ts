@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import 'fastify';
-import type { ProcessManager } from '../modules/process.manager';
-import type { GameManager } from '../modules/game.manager';
+import type { ProcessManager } from '../modules/process/manager';
+import type { GameManager } from '../modules/game/manager';
 
 export interface Managers {
 	pm: ProcessManager;

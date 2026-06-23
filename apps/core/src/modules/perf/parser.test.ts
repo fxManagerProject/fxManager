@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { diffPerfs, didPerfReset, parseRawPerf } from './perf.parser';
+import { diffPerfs, didPerfReset, parseRawPerf } from './parser';
 
 const sample = `# HELP tickTime time spent
 # TYPE tickTime histogram

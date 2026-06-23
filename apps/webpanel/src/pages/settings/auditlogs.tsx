@@ -1,25 +1,16 @@
 import {
 	Calendar as CalendarIcon,
 	ChevronsUpDown,
-	Cog,
-	FileQuestion,
 	Info,
-	MessagesSquare,
-	ScanEye,
 	ScrollText,
-	Server,
-	Shield,
-	User,
 	X,
 } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import { Checkbox } from '@fxmanager/ui/components/checkbox';
-import { formatDate } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import type { AuditLog } from '@fxmanager/database/types';
 import { QueryService } from '@/lib/query';
-import { Link } from 'react-router-dom';
 import { Label } from '@fxmanager/ui/components/label';
 import { Input } from '@fxmanager/ui/components/input';
 import type { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
@@ -44,18 +35,7 @@ import { Calendar } from '@fxmanager/ui/components/calendar';
 import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
-
-const ACTION_ICON_MAP: Record<
-	string,
-	React.ComponentType<{ className?: string }>
-> = {
-	server: Server,
-	player: User,
-	whitelist: ScanEye,
-	admin: Shield,
-	report: MessagesSquare,
-	settings: Cog,
-};
+import { AuditLogRow } from './components/auditlog-row';
 
 type AdminItem = { id: number; username: string };
 
@@ -76,7 +56,7 @@ export default function AuditLogPage() {
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
 	const debouncedTarget = useDebounce(target, 400);
-	const debouncedadmin = useDebounce(target, 400);
+	const debouncedadmin = useDebounce(admin, 400);
 
 	useEffect(() => {
 		setIsLoading(true);
@@ -175,7 +155,7 @@ export default function AuditLogPage() {
 			/>
 
 			<div className="flex flex-wrap justify-between items-end border-b border-border/60 pb-4">
-				<div className="flex flex-wrap items-end gap-4 ">
+				<div className="flex flex-wrap items-end gap-4">
 					<div className="flex flex-col gap-1.5">
 						<Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
 							Search Target
@@ -385,6 +365,7 @@ export default function AuditLogPage() {
 					onClick={() => {
 						setTarget('');
 						setSelectedActions([]);
+						setSelectedAdmins([]);
 						setDateRange(undefined);
 						setPage(1);
 					}}
@@ -402,67 +383,9 @@ export default function AuditLogPage() {
 					</div>
 				) : auditLogs.length > 0 ? (
 					<div className="divide-y divide-border">
-						{auditLogs.map((log) => {
-							const group = log.action.split('.')[0] || '';
-							const ActionIcon = ACTION_ICON_MAP[group] || FileQuestion;
-
-							return (
-								<div
-									key={log.id}
-									className="grid grid-cols-[24px_1fr_180px_130px] items-center gap-4 py-3.5 px-2 hover:bg-muted/30 transition-colors"
-								>
-									<ActionIcon className="h-4 w-4 text-muted-foreground/70" />
-
-									<div className="space-y-1.5 min-w-0">
-										<div className="flex flex-wrap items-center gap-2">
-											<span className="text-xs font-semibold uppercase tracking-wider text-foreground">
-												{log.action.replace('_', ' ').replace('.', ': ')}
-											</span>
-
-											{log.player && (
-												<span className="text-xs font-mono bg-muted border border-border/80 text-muted-foreground px-2 py-0.5 rounded">
-													target: {log.player} (#{log.playerId})
-												</span>
-											)}
-										</div>
-
-										{log.metadata && Object.keys(log.metadata).length > 0 && (
-											<div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground/80 font-medium">
-												{Object.entries(log.metadata).map(([key, val]) => (
-													<span key={key} className="inline-block">
-														<span className="text-muted-foreground/50">
-															{key}:
-														</span>{' '}
-														{String(val)}
-													</span>
-												))}
-											</div>
-										)}
-									</div>
-
-									<div className="text-sm">
-										{log.adminId ? (
-											<Link
-												to={`/settings/admins/${log.adminId}`}
-												className="inline-flex items-center text-xs font-medium text-primary-foreground hover:underline bg-primary/40 px-2.5 py-1 rounded-md border"
-											>
-												{log.admin ?? `Admin #${log.adminId}`}
-											</Link>
-										) : (
-											<span className="text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md border border-border">
-												System
-											</span>
-										)}
-									</div>
-
-									<div className="text-right">
-										<span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
-											{formatDate(log.createdAt)}
-										</span>
-									</div>
-								</div>
-							);
-						})}
+						{auditLogs.map((log) => (
+							<AuditLogRow key={log.id} log={log} showAdmin />
+						))}
 					</div>
 				) : (
 					<div className="flex flex-col items-center justify-center py-16 px-4 border-2 border-dashed rounded-xl bg-muted/20">

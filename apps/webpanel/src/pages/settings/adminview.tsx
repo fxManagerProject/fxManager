@@ -59,6 +59,7 @@ import {
 	type LucidIconName,
 } from '@fxmanager/ui/components/dynamic-icon';
 import { PlayerSearch } from './components/player-search';
+import { AuditLogRow } from './components/auditlog-row';
 
 function LoadingSkeleton() {
 	return (
@@ -376,43 +377,7 @@ export default function AdminView() {
 										<div className="">
 											{adminData.auditLogs.length > 0 ? (
 												adminData.auditLogs.map((log) => (
-													<div
-														key={log.id}
-														className="flex justify-between items-start border-b py-3 last:border-0 hover:bg-muted/20 transition-colors mr-4"
-													>
-														<div className="space-y-1">
-															<div className="flex items-center gap-2">
-																<span className="text-sm font-semibold uppercase tracking-wide">
-																	{log.action.replace('_', ' ')}
-																</span>
-																{log.player && (
-																	<>
-																		<span className="text-muted-foreground text-xs">
-																			→
-																		</span>
-																		<span className="text-xs font-mono bg-secondary px-1.5 py-0.5 rounded text-secondary-foreground">
-																			{log.player}
-																		</span>
-																	</>
-																)}
-															</div>
-
-															{log.metadata &&
-																Object.keys(log.metadata).length > 0 && (
-																	<p className="text-xs text-muted-foreground italic">
-																		{Object.entries(log.metadata)
-																			.map(([key, val]) => `${key}: ${val}`)
-																			.join(' | ')}
-																	</p>
-																)}
-														</div>
-
-														<div className="flex flex-col justify-center items-end gap-1 self-stretch">
-															<span className="text-xs text-muted-foreground">
-																{formatDate(log.createdAt)}
-															</span>
-														</div>
-													</div>
+													<AuditLogRow key={log.id} log={log} />
 												))
 											) : (
 												<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">

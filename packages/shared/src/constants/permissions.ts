@@ -28,6 +28,7 @@ export const UserPermissions = {
 	RESOURCE_LIST: 1 << 16, // 65536 - view & (re)start/stop resources
 
 	AUDIT_LOG: 1 << 17, // 131072 - view audit logs
+	PERFORMANCE: 1 << 18, // 262144 - view perfomance data
 
 	MASTER: 1 << 30, // 1073741824
 } as const;
@@ -115,6 +116,11 @@ export const PERMISSION_LABELS: Record<
 		desc: 'View the history of all staff actions and system events.',
 		category: 'Administration',
 	},
+	[UserPermissions.PERFORMANCE]: {
+		label: 'Perfomance',
+		desc: 'View server performance data.',
+		category: 'Administration',
+	},
 	[UserPermissions.RESOURCE_LIST]: {
 		label: 'Resource list',
 		desc: 'Start, stop and restart resources.',
@@ -142,7 +148,7 @@ export const PERMISSION_GROUPS: AdminGroup[] = [
 	},
 	{
 		label: 'Development',
-		permissions: 30720,
+		permissions: 292864,
 		colour: '#00FF00',
 		icon: 'FileCode',
 	},

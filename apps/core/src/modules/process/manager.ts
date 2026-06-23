@@ -3,10 +3,10 @@ import type {
 	ProcessState,
 	ServerState,
 } from '@fxmanager/shared/types';
-import { LogBuffer } from './buffer.manager';
-import { ConfigManager } from './config.manager';
-import { wsManager } from './ws.manager';
-import { resourceManager } from './resource.manager';
+import { LogBuffer } from '../buffer/manager';
+import { ConfigManager } from '../config/manager';
+import { wsManager } from '../ws/manager';
+import { resourceManager } from '../resource/manager';
 
 export class ProcessManager {
 	private state: ServerState = { status: 'stopped', startedAt: null };

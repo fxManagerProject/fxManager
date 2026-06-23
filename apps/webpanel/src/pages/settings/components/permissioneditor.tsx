@@ -39,18 +39,28 @@ type PermissionEditorProps =
 			editable: boolean;
 			value: number;
 			skipServerSave?: false;
+			hideGroup?: boolean;
+			hideReset?: boolean;
 			updatePerms: (perms: number) => void;
 	  }
 	| {
 			skipServerSave: true;
 			value: number;
 			updatePerms: (perms: number) => void;
+			hideGroup?: boolean;
+			hideReset?: boolean;
 			adminId?: never;
 			editable?: never;
 	  };
 
 export default function PermissionEditor(props: PermissionEditorProps) {
-	const { value, updatePerms, skipServerSave = false } = props;
+	const {
+		value,
+		updatePerms,
+		skipServerSave = false,
+		hideGroup = false,
+		hideReset = false,
+	} = props;
 
 	const [bitfield, setBitField] = useState<number>(value ?? 0);
 	const [permissionGroup, setPermissionGroup] = useState<
@@ -62,10 +72,12 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 
 	const togglePermission = (bit: number) => {
 		if (!canEdit || bit === UserPermissions.MASTER) return;
-		setBitField((prev) => prev ^ bit);
+
+		const nextBitfield = bitfield ^ bit;
+		setBitField(nextBitfield);
 
 		if (skipServerSave) {
-			updatePerms(bitfield & ~UserPermissions.MASTER);
+			updatePerms(nextBitfield & ~UserPermissions.MASTER);
 			return;
 		}
 	};
@@ -110,7 +122,6 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 	};
 
 	useEffect(() => {
-		console.log(bitfield, PermissionManager.getGroup(bitfield));
 		setPermissionGroup(PermissionManager.getGroup(bitfield) ?? undefined);
 	}, [bitfield]);
 
@@ -134,48 +145,50 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 						</div>
 					</div>
 
-					<div className="flex flex-row gap-2 items-center pl-3">
-						<Layers className="h-6 w-6 text-muted-foreground" />
-						<div className="flex flex-col items-start">
-							<span className="text-[10px] uppercase font-bold text-muted-foreground">
-								Permission Group
-							</span>
-							<Select
-								value={
-									permissionGroup !== undefined
-										? `${permissionGroup.permissions}`
-										: undefined
-								}
-								disabled={!canEdit}
-								onValueChange={(value) => setBitField(parseInt(value, 10))}
-							>
-								<SelectTrigger className="w-44 border-none bg-muted">
-									<SelectValue placeholder="Custom" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectGroup>
-										{PERMISSION_GROUPS.filter(
-											(g) => g.permissions !== UserPermissions.MASTER,
-										).map((g) => (
-											<SelectItem
-												key={`${g.permissions}`}
-												value={`${g.permissions}`}
-											>
-												<DynamicIcon
-													name={(g.icon as LucidIconName) ?? 'UserRound'}
-												/>
-												{g.label}
+					{!hideGroup && (
+						<div className="flex flex-row gap-2 items-center pl-3">
+							<Layers className="h-6 w-6 text-muted-foreground" />
+							<div className="flex flex-col items-start">
+								<span className="text-[10px] uppercase font-bold text-muted-foreground">
+									Permission Group
+								</span>
+								<Select
+									value={
+										permissionGroup !== undefined
+											? `${permissionGroup.permissions}`
+											: '0'
+									}
+									disabled={!canEdit}
+									onValueChange={(value) => setBitField(parseInt(value, 10))}
+								>
+									<SelectTrigger className="w-44 border-none bg-muted">
+										<SelectValue placeholder="Custom" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectGroup>
+											{PERMISSION_GROUPS.filter(
+												(g) => g.permissions !== UserPermissions.MASTER,
+											).map((g) => (
+												<SelectItem
+													key={`${g.permissions}`}
+													value={`${g.permissions}`}
+												>
+													<DynamicIcon
+														name={(g.icon as LucidIconName) ?? 'UserRound'}
+													/>
+													{g.label}
+												</SelectItem>
+											))}
+											<SelectItem value="0">
+												<Blend className="h-4 w-4" />
+												Custom
 											</SelectItem>
-										))}
-										<SelectItem value="0">
-											<Blend className="h-4 w-4" />
-											Custom
-										</SelectItem>
-									</SelectGroup>
-								</SelectContent>
-							</Select>
+										</SelectGroup>
+									</SelectContent>
+								</Select>
+							</div>
 						</div>
-					</div>
+					)}
 				</div>
 
 				{canEdit && (
@@ -190,15 +203,17 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 							Clear
 						</button>
 
-						<button
-							type="button"
-							onClick={() => setBitField(value)}
-							disabled={bitfield === value}
-							className="flex items-center gap-2 px-3 py-2 text-xs font-medium enabled:hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
-						>
-							<RotateCcw className="h-4 w-4" />
-							Reset
-						</button>
+						{!hideReset && (
+							<button
+								type="button"
+								onClick={() => setBitField(value)}
+								disabled={bitfield === value}
+								className="flex items-center gap-2 px-3 py-2 text-xs font-medium enabled:hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+							>
+								<RotateCcw className="h-4 w-4" />
+								Reset
+							</button>
+						)}
 
 						{!skipServerSave && (
 							<button
