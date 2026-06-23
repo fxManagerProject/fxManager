@@ -81,7 +81,7 @@ export function RoleListSetting({
 
 			<div className="space-y-2">
 				{draft.map((roleId, index) => (
-					<div key={index} className="flex gap-2">
+					<div key={String(index)} className="flex gap-2">
 						<Input
 							value={roleId}
 							disabled={disabled}
