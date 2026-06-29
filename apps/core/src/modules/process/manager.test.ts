@@ -28,6 +28,7 @@ const mockGetSystemValues = mock(() => ({
 const mockGetFxServerValues = mock(() => ({
 	executable: 'FXServer.exe',
 	serverDataPath: '/home/fxserver/server-data',
+	serverConfigFile: 'server.cfg',
 }));
 
 // Use spyOn to safely intercept instances without corrupting Bun's global module cache
@@ -56,6 +57,7 @@ describe('ProcessManager', () => {
 	let processManager: ProcessManagerInstance;
 
 	let originalBunSpawn: typeof Bun.spawn;
+	let originalGlobalFetch: typeof globalThis.fetch;
 	let stdoutController: ReadableStreamDefaultController<Uint8Array> | null =
 		null;
 	let stderrController: ReadableStreamDefaultController<Uint8Array> | null =
@@ -112,6 +114,19 @@ describe('ProcessManager', () => {
 		originalBunSpawn = Bun.spawn;
 		Bun.spawn = mock(() => createMockProcess()) as any;
 
+		originalGlobalFetch = globalThis.fetch;
+		globalThis.fetch = mock(() =>
+			Promise.resolve(
+				new Response(
+					JSON.stringify({
+						success: true,
+						data: 'FXServer-master SERVER v1.0.0.31725 win32',
+					}),
+					{ status: 200 },
+				),
+			),
+		) as any;
+
 		processManager = new ProcessManagerModule.ProcessManager();
 
 		// FORCE BIND SPIES onto the instantiated internal buffer field directly
@@ -123,6 +138,7 @@ describe('ProcessManager', () => {
 
 	afterEach(() => {
 		Bun.spawn = originalBunSpawn;
+		globalThis.fetch = originalGlobalFetch;
 	});
 
 	// CRITICAL FIX: Fully restore our spied targets back to their baseline code states
@@ -151,6 +167,7 @@ describe('ProcessManager', () => {
 			expect(processManager.getState()).toEqual({
 				status: 'stopped',
 				startedAt: null,
+				version: null,
 			});
 		});
 	});
@@ -221,6 +238,16 @@ describe('ProcessManager', () => {
 			expect(processManager.getState().status).toBe('running');
 			expect(loadResourcesSpy).toHaveBeenCalled();
 			expect(mockBufferPush).toHaveBeenCalled();
+		});
+
+		it('reads, parses, and stores the fxServer artifact build once the server is running', async () => {
+			await processManager.start();
+
+			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			await Bun.sleep(15);
+
+			expect(processManager.getState().status).toBe('running');
+			expect(processManager.getState().version).toBe('31725');
 		});
 
 		it('should completely filter out empty cfx interactive terminal prompt wrappers from the buffer logs', async () => {

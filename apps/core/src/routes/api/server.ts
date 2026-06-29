@@ -4,6 +4,7 @@ import { UserPermissions } from '@fxmanager/shared/constants';
 import type { AuthedRequest, RouteModule } from '../../types';
 import { sessionAuth } from '../../middleware/session';
 import { resourceManager } from '../../modules/resource/manager';
+import { getRecommendedArtifact } from '../../common/recommended-artifact';
 
 const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { pm } = options;
@@ -78,6 +79,11 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		});
 
 		return reply.code(result ? 200 : 500).send({ success: result });
+	});
+
+	fastify.get('/artifact/recommended', async (_request, reply) => {
+		const recommended = await getRecommendedArtifact();
+		return reply.code(200).send({ recommended });
 	});
 
 	fastify.post('/resource/action/start', async (request, reply) => {

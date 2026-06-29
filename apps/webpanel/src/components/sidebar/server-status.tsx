@@ -10,6 +10,7 @@ import { STATUS_VARIANT } from '@/static/server-state';
 import { formatUptime } from '@/lib/utils';
 import { Button } from '@fxmanager/ui/components/button';
 import {
+	ExternalLink,
 	MonitorCog,
 	Play,
 	RefreshCw,
@@ -23,6 +24,7 @@ import {
 } from '@fxmanager/ui/components/tooltip';
 import { HandleServerAction } from '@/lib/query';
 import { usePlayerlistSocket, useServerStateSocket } from '@/hooks/ws-channels';
+import { useRecommendedArtifact } from '@/hooks/use-recommended-artifact';
 
 interface ActionButtonProps {
 	Icon: LucideIcon;
@@ -66,6 +68,7 @@ function ActionButton({
 export function ServerStatusCard() {
 	const { state: serverState } = useServerStateSocket();
 	const { count } = usePlayerlistSocket();
+	const recommendedArtifact = useRecommendedArtifact();
 	const { state: sideBarState, setOpen } = useSidebar();
 	const isCollapsed = sideBarState === 'collapsed';
 	const canStart =
@@ -135,6 +138,29 @@ export function ServerStatusCard() {
 							/>
 						</div>
 					</div>
+					{serverState.version && (
+						<div className="space-y-3 border-t pt-3">
+							<div className="flex flex-row justify-between">
+								<p>Artifact</p>
+								<p className="font-mono">b{serverState.version}</p>
+							</div>
+							{recommendedArtifact && (
+								<div className="flex flex-row justify-between">
+									<p>Recommended</p>
+									<a
+										href="https://artifacts.jgscripts.com/"
+										target="_blank"
+										rel="noreferrer"
+										className="inline-flex items-center gap-1 font-mono text-primary hover:underline"
+										title="Source: artifacts.jgscripts.com"
+									>
+										b{recommendedArtifact}
+										<ExternalLink className="h-3 w-3" />
+									</a>
+								</div>
+							)}
+						</div>
+					)}
 				</CardContent>
 			</Card>
 		</SidebarGroup>

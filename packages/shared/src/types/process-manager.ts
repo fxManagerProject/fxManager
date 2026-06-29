@@ -8,6 +8,7 @@ export type ProcessState =
 export interface ServerState {
 	status: ProcessState;
 	startedAt: Date | null;
+	version: string | null;
 }
 
 export interface ProcessOutputLine {
