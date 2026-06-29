@@ -6,6 +6,7 @@ import type { SetupFormData, SetupSteps } from './types';
 import { AccountStep } from './AccountStep';
 import { ServerStep } from './ServerStep';
 import { PermissionsStep } from './PermissionsStep';
+import { ImportStep } from './ImportStep';
 import { QueryService } from '@/lib/query';
 import { toast } from 'sonner';
 import type { ApiError } from '@fxmanager/shared/types';
@@ -77,7 +78,7 @@ export function SetupApp() {
 				throw new Error('Setup configuration failed.');
 			}
 
-			window.location.href = '/';
+			setStep('import');
 		} catch (err) {
 			const error = err as ApiError<{ error?: string }>;
 			setError(
@@ -140,6 +141,17 @@ export function SetupApp() {
 							>
 								03_PERMISSIONS_GRID
 							</span>
+							<div className="w-3 h-px bg-border" />
+							<span
+								className={cn(
+									'px-3 py-1.5 rounded-md text-xs font-mono',
+									step === 'import'
+										? 'bg-primary text-primary-foreground'
+										: 'bg-muted text-muted-foreground',
+								)}
+							>
+								04_DB_IMPORT
+							</span>
 						</div>
 					</div>
 
@@ -175,6 +187,10 @@ export function SetupApp() {
 							onBack={() => setStep('server')}
 							onSubmit={handleFinalSubmit}
 						/>
+					)}
+
+					{step === 'import' && (
+						<ImportStep onFinish={() => (window.location.href = '/')} />
 					)}
 				</div>
 			</div>

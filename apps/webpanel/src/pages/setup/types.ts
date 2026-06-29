@@ -13,4 +13,4 @@ export interface SetupFormData {
 	adminGroups: AdminGroup[];
 }
 
-export type SetupSteps = 'account' | 'server' | 'permissions';
+export type SetupSteps = 'account' | 'server' | 'permissions' | 'import';

@@ -32,6 +32,8 @@ export interface PlayerProfile extends Player {
 	notes: (typeof playerNotes.$inferSelect)[];
 }
 
+export type { ImportSummary } from './import/txadmin.importer';
+
 export type BaseAuditLog = typeof auditLog.$inferSelect;
 export type AuditLog = BaseAuditLog & {
 	admin: string | null;
