@@ -3,7 +3,7 @@ import 'fastify';
 import type { ProcessManager } from '../modules/process/manager';
 import type { GameManager } from '../modules/game/manager';
 
-export interface Managers {
+interface Managers {
 	pm: ProcessManager;
 	gm: GameManager;
 }

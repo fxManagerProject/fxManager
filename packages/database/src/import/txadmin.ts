@@ -5,7 +5,7 @@ export interface TxAdminIdentifier {
 	value: string;
 }
 
-export interface ImportPlayerNote {
+interface ImportPlayerNote {
 	content: string;
 	issuedAt: Date;
 }
@@ -30,7 +30,7 @@ export interface ImportAction {
 	acked: boolean;
 }
 
-export interface ImportWhitelist {
+interface ImportWhitelist {
 	type: string;
 	value: string;
 	addedAt: Date;

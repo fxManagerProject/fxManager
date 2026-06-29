@@ -260,7 +260,6 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 			// ToDo: warn player in game
 			// - needs to be able to be done offline so on connection he receives it
-			// await gm.warnPlayer(playerId, reason)
 
 			return {
 				success: true,

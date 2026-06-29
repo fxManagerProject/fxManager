@@ -24,8 +24,7 @@ if (process.argv.includes(MIGRATE_WORKER_FLAG)) {
 }
 
 applyMigrations();
-// hardcode for the time being
-// checkVersion(isProduction ? process.env.VERSION as string : 'dev-build');
+// hardcoded until release versioning is wired up
 checkVersion('dev-build');
 
 const cm = ConfigManager.getInstance();

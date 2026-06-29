@@ -227,7 +227,7 @@ export function NotesTab({ notes }: { notes: PlayerProfile['notes'] }) {
 	);
 }
 
-export function EmptyState({
+function EmptyState({
 	icon: Icon,
 	message,
 }: {

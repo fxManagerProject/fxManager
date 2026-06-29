@@ -18,10 +18,7 @@ import { Server } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
-export function LoginForm({
-	className,
-	...props
-}: React.ComponentProps<'div'>) {
+function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
 	const { login } = useAuth();
 	const [formData, setData] = useState<{ username: string; password: string }>({
 		username: '',

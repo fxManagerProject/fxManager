@@ -11,13 +11,7 @@ import { useAuth } from '@/hooks/use-auth';
 import type { AuthUser } from '@/types/auth';
 import { PermissionManager } from '@fxmanager/shared/utils';
 
-export function NavItemNoItems({
-	item,
-	user,
-}: {
-	item: NavItem;
-	user: AuthUser;
-}) {
+function NavItemNoItems({ item, user }: { item: NavItem; user: AuthUser }) {
 	if (
 		item.permission &&
 		!PermissionManager.has(user.permissions, item.permission)

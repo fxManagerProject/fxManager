@@ -33,7 +33,6 @@ export async function QueryService<T>(
 	}
 
 	try {
-		// console.log('fetch request', options);
 		const response = await fetch(url, options);
 
 		if (!response.ok) {

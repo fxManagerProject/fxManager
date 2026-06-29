@@ -196,8 +196,6 @@ export function ResourceList() {
 				method: 'POST',
 				...(resource && { body: { resource } }),
 			});
-
-			console.log('Finished with', action, resource);
 		} catch (err) {
 			console.error(
 				`Unable to execute action ${action}`,

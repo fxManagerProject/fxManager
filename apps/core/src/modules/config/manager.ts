@@ -75,10 +75,13 @@ export class ConfigManager {
 
 		const dbEntries = repo.settings.all();
 
-		const persistent = dbEntries.reduce((acc, curr) => {
-			acc[curr.key] = curr.value;
-			return acc;
-		}, {} as any);
+		const persistent = dbEntries.reduce(
+			(acc, curr) => {
+				acc[curr.key] = curr.value;
+				return acc;
+			},
+			{} as Record<string, unknown>,
+		);
 
 		return {
 			...this.fxServerValues,

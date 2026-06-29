@@ -115,8 +115,6 @@ export default function Players() {
 
 		if (debouncedSearch) params.set('search', debouncedSearch);
 
-		console.log('Searching for', params);
-
 		QueryService<PaginatedResponse<Omit<Player, 'identifiers'>>>({
 			endpoint: `/players?${params.toString()}`,
 			method: 'GET',
