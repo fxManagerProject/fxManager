@@ -104,7 +104,7 @@ export function RoleListSetting({
 	);
 }
 
-export default function FXServerTab({
+export default function WhitelistTab({
 	data,
 	onChange,
 	disabled,

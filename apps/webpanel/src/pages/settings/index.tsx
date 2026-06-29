@@ -94,7 +94,6 @@ export default function SettingsPage() {
 		key: SettingsKey<S>,
 		value: string,
 	) {
-		console.log(scope, key, value);
 
 		const previousValue = cache[scope]?.[key];
 
