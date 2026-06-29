@@ -15,7 +15,7 @@ const fxServerSettingsMap = {
 	'fxserver.onesync': 'onesync',
 	'fxserver.executablePath': 'executablePath',
 	'fxserver.serverDataPath': 'serverDataPath',
-	'fxserver.serverConfigPath': 'serverConfigPath',
+	'fxserver.serverConfigPath': 'serverConfigFile',
 };
 
 export class ConfigManager {
@@ -61,6 +61,7 @@ export class ConfigManager {
 		if (!useDb) return this.fxServerValues;
 
 		const dbValues = repo.settings.getMultiple([
+			'fxserver.onesync',
 			'fxserver.executablePath',
 			'fxserver.serverDataPath',
 			'fxserver.serverConfigPath',
