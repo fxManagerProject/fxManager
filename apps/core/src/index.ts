@@ -30,7 +30,7 @@ checkVersion('dev-build');
 
 const cm = ConfigManager.getInstance();
 const { cookieSecret, webServerPort } = cm.getSystemValues();
-const fastify = Fastify({ logger: !isProduction });
+const fastify = Fastify({ logger: !isProduction, forceCloseConnections: true });
 
 fastify.register(fastifyCookie, {
 	secret: cookieSecret,
@@ -164,5 +164,24 @@ const start = async () => {
 		process.exit(1);
 	}
 };
+
+// Stop the supervised FXServer before exiting so `docker stop` / Ctrl+C shut the child down cleanly instead of orphaning it
+let shuttingDown = false;
+const shutdown = async (signal: string) => {
+	if (shuttingDown) return;
+	shuttingDown = true;
+	console.log(`[core] Received ${signal}, shutting down`);
+	try {
+		await pm.stop();
+		await fastify.close();
+	} catch (err) {
+		console.error('[core] Error during shutdown', err);
+	} finally {
+		process.exit(0);
+	}
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 start();
