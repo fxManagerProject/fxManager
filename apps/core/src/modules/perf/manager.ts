@@ -5,10 +5,7 @@ import {
 } from '@fxmanager/shared/types';
 import { diffPerfs, didPerfReset, parseRawPerf } from './parser';
 import { wsManager } from '../ws/manager';
-
-// TODO: replace this with a utility function for getting the actual server endpoint at a later date
-const PERF_PORT = 30120;
-const PERF_ENDPOINT = `http://localhost:${PERF_PORT}/perf.json`;
+import { getServerNetEndpoint } from '../../common/fxserver-endpoint';
 
 const SAMPLE_INTERVAL_MS = 30_000;
 
@@ -17,7 +14,7 @@ class PerfManager {
 	private lastRaw: RawPerf | null = null;
 	private recent: PerfSnapshot[] = [];
 
-	/** Poll `/perf.json` continuously, regardless of who started the fxserver. */
+	/** Poll `/perf/` continuously, regardless of who started the fxserver. */
 	start(): void {
 		if (this.interval) return;
 		void this.tick();
@@ -40,7 +37,8 @@ class PerfManager {
 
 	private async fetchRawPerfData(): Promise<RawPerf | null> {
 		try {
-			const res = await fetch(PERF_ENDPOINT, {
+			const endpoint = await getServerNetEndpoint();
+			const res = await fetch(`http://${endpoint}/perf/`, {
 				signal: AbortSignal.timeout(SAMPLE_INTERVAL_MS / 2),
 			});
 			if (!res.ok) return null;
