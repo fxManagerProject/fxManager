@@ -26,7 +26,7 @@ const mockGetSystemValues = mock(() => ({
 	webServerPort: 30120,
 }));
 const mockGetFxServerValues = mock(() => ({
-	executable: 'FXServer.exe',
+	executablePath: 'FXServer.exe',
 	serverDataPath: '/home/fxserver/server-data',
 }));
 

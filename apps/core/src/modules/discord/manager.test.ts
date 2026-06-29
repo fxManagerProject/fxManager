@@ -2,6 +2,24 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { Events } from 'discord.js';
 import { mockDestroy, mockGuildsFetch, mockLogin } from './discord.mock';
+
+const TEST_GUILD_ID = '1234567890';
+const TEST_ROLE_IDS = ['role-admin', 'role-mod'];
+
+const mockSettingsGet = mock((key: string): string | undefined => {
+	if (key === 'whitelist.discordGuildId') return TEST_GUILD_ID;
+	if (key === 'whitelist.discordRoleIds') return TEST_ROLE_IDS.join(',');
+	return undefined;
+});
+
+mock.module('@fxmanager/database', () => ({
+	repo: {
+		settings: { get: mockSettingsGet },
+		players: {},
+		whitelist: {},
+	},
+}));
+
 import { discordManager } from './manager';
 
 const mockMembersFetch = mock(async () => ({}));
@@ -14,8 +32,8 @@ describe('DiscordManager', () => {
 	const originalEnv = { ...process.env };
 	const mockConfig = {
 		token: 'test-token',
-		guildId: '1234567890',
-		whitelistedRoles: ['role-admin', 'role-mod'],
+		guildId: TEST_GUILD_ID,
+		whitelistedRoles: TEST_ROLE_IDS,
 	};
 
 	// Re-instantiate a clean class instance for every test block if isolation is needed
