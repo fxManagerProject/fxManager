@@ -17,8 +17,8 @@ class DiscordManager {
 	private guild: Guild | null = null;
 
 	private syncSettings() {
-		this.botToken ??= repo.settings.get('whitelist.discordBotToken') ?? '';
-		this.config.guildId ??= repo.settings.get('whitelist.discordGuildId') ?? '';
+		this.botToken = repo.settings.get('whitelist.discordBotToken') ?? '';
+		this.config.guildId = repo.settings.get('whitelist.discordGuildId') ?? '';
 		this.config.whitelistedRoles =
 			repo.settings.get('whitelist.discordRoleIds')?.split(',') ?? [];
 	}

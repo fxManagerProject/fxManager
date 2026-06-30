@@ -3,10 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { Events } from 'discord.js';
 import { mockDestroy, mockGuildsFetch, mockLogin } from './discord.mock';
 
+const TEST_BOT_TOKEN = 'test-token';
 const TEST_GUILD_ID = '1234567890';
 const TEST_ROLE_IDS = ['role-admin', 'role-mod'];
 
 const mockSettingsGet = mock((key: string): string | undefined => {
+	if (key === 'whitelist.discordBotToken') return TEST_BOT_TOKEN;
 	if (key === 'whitelist.discordGuildId') return TEST_GUILD_ID;
 	if (key === 'whitelist.discordRoleIds') return TEST_ROLE_IDS.join(',');
 	return undefined;
@@ -31,7 +33,7 @@ const getPrivateClient = (manager: typeof discordManager): any =>
 describe('DiscordManager', () => {
 	const originalEnv = { ...process.env };
 	const mockConfig = {
-		token: 'test-token',
+		token: TEST_BOT_TOKEN,
 		guildId: TEST_GUILD_ID,
 		whitelistedRoles: TEST_ROLE_IDS,
 	};

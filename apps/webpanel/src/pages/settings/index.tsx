@@ -75,16 +75,20 @@ export default function SettingsPage() {
 
 			setLoading(true);
 
-			const response = await QueryService<ApiResponse<SettingsCache>>({
-				endpoint: `/settings/${tab}`,
-				method: 'GET',
-			});
+			try {
+				const response = await QueryService<ApiResponse<SettingsCache>>({
+					endpoint: `/settings/${tab}`,
+					method: 'GET',
+				});
 
-			if (response.success) {
-				setCache((prev) => ({ ...prev, [tab]: response.data }));
+				if (response.success) {
+					setCache((prev) => ({ ...prev, [tab]: response.data }));
+				}
+			} catch {
+				toast.error('Failed to load settings.');
+			} finally {
+				setLoading(false);
 			}
-
-			setLoading(false);
 		},
 		[cache],
 	);
