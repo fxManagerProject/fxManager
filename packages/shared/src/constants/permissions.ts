@@ -30,6 +30,8 @@ export const UserPermissions = {
 	AUDIT_LOG: 1 << 17, // 131072 - view audit logs
 	PERFORMANCE: 1 << 18, // 262144 - view perfomance data
 
+	CONFIG_EDITOR: 1 << 19, // 524288 - access & edit server.cfg files
+
 	MASTER: 1 << 30, // 1073741824
 } as const;
 
@@ -129,6 +131,11 @@ export const PERMISSION_LABELS: Record<
 	[UserPermissions.SETTINGS_ACCESS]: {
 		label: 'System Settings',
 		desc: 'Modify global server configuration.',
+		category: 'Administration',
+	},
+	[UserPermissions.CONFIG_EDITOR]: {
+		label: 'Config Editor',
+		desc: 'Edit server.cfg and the files it includes.',
 		category: 'Administration',
 	},
 	[UserPermissions.SETTINGS_ADMIN_MANAGEMENT]: {

@@ -9,6 +9,7 @@ import {
 	BookUser,
 	ScrollText,
 	ChartBar,
+	FileCog,
 } from 'lucide-react';
 import type { NavCategory } from '@/types/sidebar';
 import { UserPermissions } from '@fxmanager/shared/constants';
@@ -71,6 +72,12 @@ const NAV_CONFIGURATION: NavCategory = {
 			url: '/settings/',
 			icon: Settings,
 			permission: UserPermissions.SETTINGS_ACCESS,
+		},
+		{
+			title: 'Config Editor',
+			url: '/settings/config',
+			icon: FileCog,
+			permission: UserPermissions.CONFIG_EDITOR,
 		},
 		{
 			url: '/settings/admins/',

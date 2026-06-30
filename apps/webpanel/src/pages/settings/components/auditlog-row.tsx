@@ -6,6 +6,7 @@ import {
 	ChevronUp,
 	Cog,
 	FileQuestion,
+	FileSliders,
 	MessagesSquare,
 	ScanEye,
 	Server,
@@ -27,6 +28,7 @@ const ACTION_ICON_MAP: Record<
 	report: MessagesSquare,
 	settings: Cog,
 	migrate: Upload,
+	config: FileSliders,
 };
 
 export function AuditLogRow({
