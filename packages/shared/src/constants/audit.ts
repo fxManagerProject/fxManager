@@ -11,5 +11,6 @@ export const AUDIT_LOG_ACTIONS = {
 	ADMIN: ['admin.create', 'admin.delete', 'admin.update'],
 	REPORT: ['report.close', 'report.join'],
 	SETTINGS: ['settings.update'],
+	CONFIG: ['config.update'],
 	MIGRATE: ['migrate.txadmin'],
 } as const;
