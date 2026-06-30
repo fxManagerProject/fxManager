@@ -8,6 +8,11 @@ import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import { repo } from '@fxmanager/database';
 import type { PaginatedResponse, Player } from '@fxmanager/shared/types';
+import { txAdminCompat } from '../../modules/txadmin/compat';
+import {
+	buildBannedPayload,
+	buildWarnedPayload,
+} from '../../modules/txadmin/payloads';
 
 const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { gm } = options;
@@ -138,16 +143,30 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			});
 
 			const onlinePlayer = gm.getPlayer(playerId);
+			const expiryDate = expiresAt
+				? new Date(expiresAt).toLocaleString()
+				: 'Permanent';
+
+			const kickMessage = `You have been banned from the server. Reason: ${reason}. Expires: ${expiryDate}`;
+
 			if (onlinePlayer) {
-				const expiryDate = expiresAt
-					? new Date(expiresAt).toLocaleString()
-					: 'Permanent';
-
-				// apparently drop modal in fivem/redm doesn't support new lines ?
-				const kickMessage = `You have been banned from the server. Reason: ${reason}. Expires: ${expiryDate}`;
-
 				await gm.dropPlayer(onlinePlayer.serverId, kickMessage);
 			}
+
+			const profile = onlinePlayer ?? (await repo.players.findById(playerId));
+			void txAdminCompat.emit(
+				'playerBanned',
+				buildBannedPayload({
+					author: admin.username,
+					reason,
+					banId: result.id,
+					expiresAt,
+					targetNetId: onlinePlayer?.serverId ?? null,
+					targetName: profile?.name ?? 'Unknown',
+					identifiers: profile?.identifiers,
+					kickMessage,
+				}),
+			);
 
 			return {
 				success: true,
@@ -213,6 +232,13 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			const kickMessage = `You have been kicked from the server. Reason: ${reason}`;
 			await gm.dropPlayer(onlinePlayer.serverId, kickMessage);
 
+			void txAdminCompat.emit('playerKicked', {
+				target: onlinePlayer.serverId,
+				author: admin.username,
+				reason,
+				dropMessage: kickMessage,
+			});
+
 			return {
 				success: true,
 				data: null,
@@ -261,6 +287,20 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			// ToDo: warn player in game
 			// - needs to be able to be done offline so on connection he receives it
 			// await gm.warnPlayer(playerId, reason)
+
+			const onlinePlayer = gm.getPlayer(playerId);
+			const profile = onlinePlayer ?? (await repo.players.findById(playerId));
+			void txAdminCompat.emit(
+				'playerWarned',
+				buildWarnedPayload({
+					author: admin.username,
+					reason,
+					warnId: result.id,
+					targetNetId: onlinePlayer?.serverId ?? null,
+					targetName: profile?.name ?? 'Unknown',
+					identifiers: profile?.identifiers,
+				}),
+			);
 
 			return {
 				success: true,

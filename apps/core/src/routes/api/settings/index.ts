@@ -14,6 +14,7 @@ import {
 	UserPermissions,
 } from '@fxmanager/shared/constants';
 import { repo } from '@fxmanager/database';
+import { restartScheduler } from '../../../modules/schedule/manager';
 
 const SettingsEndpoints: RouteModule['handler'] = async (
 	fastify,
@@ -74,6 +75,9 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 		}
 
 		repo.settings.set(key, value);
+
+		if (scope === 'restarts') restartScheduler.reload();
+
 		return { success: true, data: undefined };
 	});
 

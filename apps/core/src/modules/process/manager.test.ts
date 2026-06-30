@@ -14,6 +14,7 @@ import {
 import { ConfigManager } from '../config/manager';
 import { wsManager } from '../ws/manager';
 import { resourceManager } from '../resource/manager';
+import { txAdminCompat } from '../txadmin/compat';
 
 const mockGetHistory = mock(() => []);
 const mockBufferPush = mock(() => {});
@@ -47,6 +48,7 @@ const stoppingServerSpy = spyOn(
 	resourceManager,
 	'stoppingServer',
 ).mockImplementation(() => {});
+const txEmitSpy = spyOn(txAdminCompat, 'emit').mockResolvedValue(undefined);
 
 const ProcessManagerModule = await import('./manager');
 type ProcessManagerInstance = InstanceType<
@@ -105,6 +107,7 @@ describe('ProcessManager', () => {
 		broadcastSpy.mockClear();
 		loadResourcesSpy.mockClear();
 		stoppingServerSpy.mockClear();
+		txEmitSpy.mockClear();
 
 		stdoutController = null;
 		stderrController = null;
@@ -127,7 +130,9 @@ describe('ProcessManager', () => {
 			),
 		) as any;
 
-		processManager = new ProcessManagerModule.ProcessManager();
+		processManager = new ProcessManagerModule.ProcessManager({
+			shutdownGraceMs: 0,
+		});
 
 		// FORCE BIND SPIES onto the instantiated internal buffer field directly
 		(processManager as any).buffer = {
@@ -147,6 +152,7 @@ describe('ProcessManager', () => {
 		broadcastSpy.mockRestore();
 		loadResourcesSpy.mockRestore();
 		stoppingServerSpy.mockRestore();
+		txEmitSpy.mockRestore();
 	});
 
 	const pushToStream = (
@@ -303,6 +309,63 @@ describe('ProcessManager', () => {
 
 			expect(stopSpy).toHaveBeenCalled();
 			expect(startSpy).toHaveBeenCalled();
+		});
+	});
+
+	describe('txAdmin serverShuttingDown compat', () => {
+		it('relays serverShuttingDown when stopping a running server, with the grace delay and author', async () => {
+			await processManager.start();
+			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			await Bun.sleep(15);
+			expect(processManager.getState().status).toBe('running');
+
+			const stopPromise = processManager.stop({ author: 'Maximus' });
+			if (currentTriggerExit) currentTriggerExit(0);
+			await stopPromise;
+
+			expect(txEmitSpy).toHaveBeenCalledWith(
+				'serverShuttingDown',
+				expect.objectContaining({ delay: 0, author: 'Maximus' }),
+			);
+		});
+
+		it('defaults the author to System when none is supplied', async () => {
+			await processManager.start();
+			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			await Bun.sleep(15);
+
+			const stopPromise = processManager.stop();
+			if (currentTriggerExit) currentTriggerExit(0);
+			await stopPromise;
+
+			expect(txEmitSpy).toHaveBeenCalledWith(
+				'serverShuttingDown',
+				expect.objectContaining({ author: 'System' }),
+			);
+		});
+
+		it('does not relay serverShuttingDown when stopping a server still starting', async () => {
+			await processManager.start();
+			expect(processManager.getState().status).toBe('starting');
+
+			await processManager.stop();
+
+			expect(txEmitSpy).not.toHaveBeenCalled();
+		});
+
+		it('relays serverShuttingDown once on the stop leg of a restart', async () => {
+			await processManager.start();
+			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			await Bun.sleep(15);
+
+			const restartPromise = processManager.restart({ author: 'Maximus' });
+			if (currentTriggerExit) currentTriggerExit(143);
+			await restartPromise;
+
+			const shutdownCalls = txEmitSpy.mock.calls.filter(
+				(call) => call[0] === 'serverShuttingDown',
+			);
+			expect(shutdownCalls).toHaveLength(1);
 		});
 	});
 

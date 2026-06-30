@@ -7,6 +7,7 @@ export * from './process-manager';
 export * from './players';
 export * from './security';
 export * from './settings';
+export * from './txadmin';
 export * from './websockets';
 export * from './perf';
 export * from './whitelist';

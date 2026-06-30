@@ -5,6 +5,7 @@ import type { AuthedRequest, RouteModule } from '../../types';
 import { sessionAuth } from '../../middleware/session';
 import { resourceManager } from '../../modules/resource/manager';
 import { getRecommendedArtifact } from '../../common/recommended-artifact';
+import { restartScheduler } from '../../modules/schedule/manager';
 
 const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { pm } = options;
@@ -47,7 +48,10 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			return reply.code(403).send({ error: 'Not authorized' });
 		}
 
-		const result = await pm.stop();
+		const result = await pm.stop({
+			author: admin.username,
+			message: 'Server stopped by an admin.',
+		});
 
 		repo.audit.log({
 			adminId: admin.id,
@@ -70,7 +74,10 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			return reply.code(403).send({ error: 'Not authorized' });
 		}
 
-		const result = await pm.restart();
+		const result = await pm.restart({
+			author: admin.username,
+			message: 'Server is restarting.',
+		});
 
 		repo.audit.log({
 			adminId: admin.id,
@@ -155,6 +162,74 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		await resourceManager.loadResources();
 
 		return reply.code(200).send({ success: true });
+	});
+
+	fastify.get('/schedule', async (request, reply) => {
+		const { admin } = request as AuthedRequest;
+
+		if (
+			!PermissionManager.has(admin.permissions, UserPermissions.SERVER_ACTIONS)
+		) {
+			return reply.code(403).send({ error: 'Not authorized' });
+		}
+
+		return reply
+			.code(200)
+			.send({ success: true, data: restartScheduler.getStatus() });
+	});
+
+	fastify.post('/schedule/skip', async (request, reply) => {
+		const { admin } = request as AuthedRequest;
+
+		if (
+			!PermissionManager.has(admin.permissions, UserPermissions.SERVER_ACTIONS)
+		) {
+			return reply.code(403).send({ error: 'Not authorized' });
+		}
+
+		const result = restartScheduler.skipNext(admin.username);
+
+		if (result.skipped) {
+			repo.audit.log({
+				adminId: admin.id,
+				action: 'server.restart',
+				metadata: { skippedScheduledRestart: result.nextRestart },
+			});
+		}
+
+		return reply.code(200).send({ success: true, data: result });
+	});
+
+	fastify.post('/schedule/restart-in', async (request, reply) => {
+		const { admin } = request as AuthedRequest;
+
+		if (
+			!PermissionManager.has(admin.permissions, UserPermissions.SERVER_ACTIONS)
+		) {
+			return reply.code(403).send({ error: 'Not authorized' });
+		}
+
+		const { minutes } = request.body as { minutes?: number };
+		if (
+			typeof minutes !== 'number' ||
+			!Number.isFinite(minutes) ||
+			minutes < 1 ||
+			minutes > 1440
+		) {
+			return reply
+				.code(400)
+				.send({ success: false, error: 'minutes must be between 1 and 1440' });
+		}
+
+		const result = restartScheduler.scheduleTemp(Math.round(minutes));
+
+		repo.audit.log({
+			adminId: admin.id,
+			action: 'server.restart',
+			metadata: { temporaryRestartIn: minutes, at: result.nextRestart },
+		});
+
+		return reply.code(200).send({ success: true, data: result });
 	});
 };
 

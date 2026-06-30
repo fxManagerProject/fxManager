@@ -18,6 +18,7 @@ import GeneralTab from './tabs/general';
 import { useCallback, useEffect, useState } from 'react';
 import FXServerTab from './tabs/fxserver';
 import WhitelistTab from './tabs/whitelist';
+import RestartsTab from './tabs/restarts';
 import { QueryService } from '@/lib/query';
 import type {
 	ApiResponse,
@@ -56,6 +57,12 @@ const TABS = [
 		label: 'Whitelist',
 		description: 'Control who is allowed to join the server.',
 		component: WhitelistTab,
+	},
+	{
+		value: 'restarts',
+		label: 'Restarts',
+		description: 'Schedule automatic server restarts and warn players.',
+		component: RestartsTab,
 	},
 ] satisfies Tab[];
 

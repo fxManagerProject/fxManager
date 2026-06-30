@@ -5,6 +5,7 @@ import type {
 } from '@fxmanager/shared/types';
 import { wsManager } from '../ws/manager';
 import { ConfigManager } from '../config/manager';
+import { getServerNetEndpoint } from '../../common/fxserver-endpoint';
 
 class ResourceManager {
 	private config = ConfigManager.getInstance();
@@ -21,8 +22,9 @@ class ResourceManager {
 	async loadResources(): Promise<void> {
 		try {
 			const apiToken = this.getApiToken();
+			const endpoint = await getServerNetEndpoint();
 			const response = await fetch(
-				'http://localhost:30120/fxManager/resources/load',
+				`http://${endpoint}/fxManager/resources/load`,
 				{
 					method: 'GET',
 					headers: {

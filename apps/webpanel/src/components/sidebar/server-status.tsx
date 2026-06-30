@@ -25,6 +25,21 @@ import {
 import { HandleServerAction } from '@/lib/query';
 import { usePlayerlistSocket, useServerStateSocket } from '@/hooks/ws-channels';
 import { useRecommendedArtifact } from '@/hooks/use-recommended-artifact';
+import { useSchedule } from '@/hooks/use-schedule';
+import { useEffect, useState } from 'react';
+
+const TEMP_PRESETS = [5, 15, 30] as const;
+
+function formatRemaining(ms: number): string {
+	if (ms <= 0) return 'now';
+	const total = Math.floor(ms / 1000);
+	const h = Math.floor(total / 3600);
+	const m = Math.floor((total % 3600) / 60);
+	const s = total % 60;
+	if (h > 0) return `${h}h ${m}m`;
+	if (m > 0) return `${m}m ${s}s`;
+	return `${s}s`;
+}
 
 interface ActionButtonProps {
 	Icon: LucideIcon;
@@ -70,11 +85,23 @@ export function ServerStatusCard() {
 	const { count } = usePlayerlistSocket();
 	const recommendedArtifact = useRecommendedArtifact();
 	const { state: sideBarState, setOpen } = useSidebar();
+	const { status: schedule, restartIn, skip } = useSchedule();
 	const isCollapsed = sideBarState === 'collapsed';
 	const canStart =
 		serverState.status === 'stopped' || serverState.status === 'crashed';
 	const canStop =
 		serverState.status === 'running' || serverState.status === 'starting';
+
+	const [now, setNow] = useState(() => Date.now());
+	useEffect(() => {
+		const id = setInterval(() => setNow(Date.now()), 1000);
+		return () => clearInterval(id);
+	}, []);
+
+	const nextRestartMs = schedule?.nextRestart
+		? new Date(schedule.nextRestart).getTime() - now
+		: null;
+	const hasUpcomingRestart = nextRestartMs !== null;
 
 	if (isCollapsed) {
 		return (
@@ -112,6 +139,21 @@ export function ServerStatusCard() {
 						<p>Players:</p>
 						<p>{count}</p>
 					</div>
+					<div className="flex flex-row justify-between">
+						<p>Next restart</p>
+						<p className="tabular-nums">
+							{hasUpcomingRestart ? (
+								<>
+									in {formatRemaining(nextRestartMs)}
+									{schedule?.temporary && (
+										<span className="text-muted-foreground"> (manual)</span>
+									)}
+								</>
+							) : (
+								<span className="text-muted-foreground">Not scheduled</span>
+							)}
+						</p>
+					</div>
 					<div>
 						<p className="mb-2 text-sm font-medium">Actions</p>
 						<div className="flex w-full flex-row gap-2">
@@ -137,6 +179,32 @@ export function ServerStatusCard() {
 								tooltip="Restart server"
 							/>
 						</div>
+					</div>
+					<div className="space-y-2">
+						<p className="text-sm font-medium">Quick restart</p>
+						<div className="flex w-full flex-row gap-2">
+							{TEMP_PRESETS.map((m) => (
+								<Button
+									key={m}
+									size="sm"
+									variant="outline"
+									disabled={!canStop}
+									className="flex-1"
+									onClick={() => restartIn(m)}
+								>
+									+{m}m
+								</Button>
+							))}
+						</div>
+						<Button
+							size="sm"
+							variant="ghost"
+							className="w-full"
+							disabled={!hasUpcomingRestart}
+							onClick={() => skip()}
+						>
+							Cancel restart
+						</Button>
 					</div>
 					{serverState.version && (
 						<div className="space-y-3 border-t pt-3">
