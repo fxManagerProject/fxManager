@@ -11,7 +11,11 @@ import type {
 	ManagedConvar,
 	SaveCfgResult,
 } from '@fxmanager/shared/types';
-import { Alert, AlertDescription, AlertTitle } from '@fxmanager/ui/components/alert';
+import {
+	Alert,
+	AlertDescription,
+	AlertTitle,
+} from '@fxmanager/ui/components/alert';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -26,7 +30,16 @@ import { Badge } from '@fxmanager/ui/components/badge';
 import { Button } from '@fxmanager/ui/components/button';
 import { Card } from '@fxmanager/ui/components/card';
 import { Input } from '@fxmanager/ui/components/input';
-import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectSeparator,
+	SelectTrigger,
+	SelectValue,
+} from '@fxmanager/ui/components/select';
 import { Spinner } from '@fxmanager/ui/components/spinner';
 import {
 	FileCog,
@@ -37,7 +50,14 @@ import {
 	Save,
 	TriangleAlert,
 } from 'lucide-react';
-import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import {
+	Suspense,
+	lazy,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
 import { toast } from 'sonner';
 
 const CfgCodeEditor = lazy(() =>
@@ -131,8 +151,8 @@ export default function ConfigEditor() {
 
 	const submitCreate = async () => {
 		const raw = newName.trim();
-        if (!raw) return;
-		
+		if (!raw) return;
+
 		const name = /\.cfg$/i.test(raw) ? raw : `${raw}.cfg`;
 
 		const request = QueryService<ApiResponse<CreateCfgResult>>({
@@ -257,111 +277,148 @@ export default function ConfigEditor() {
 			)}
 
 			<Card className="flex flex-1 min-h-0 flex-row overflow-hidden p-0">
-				{/* File switcher */}
-				<div className="flex w-64 shrink-0 flex-col border-r">
-					<div className="flex items-center justify-between border-b px-3 py-2">
-						<span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-							Files
-						</span>
-						<button
-							type="button"
-							onClick={startCreating}
-							title="New .cfg file"
-							className="flex size-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-						>
-							<Plus className="size-4" />
-						</button>
-					</div>
-					{creating && (
-						<div className="border-b p-2">
-							<Input
-								ref={newNameRef}
-								value={newName}
-								placeholder="name.cfg"
-								className="h-7 font-mono text-xs"
-								onChange={(e) => setNewName(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === 'Enter') submitCreate();
-									if (e.key === 'Escape') setCreating(false);
-								}}
-								onBlur={() => setCreating(false)}
-							/>
-							<p className="mt-1 text-[10px] text-muted-foreground">
-								Created under server.cfg. Only .cfg files are supported.
-							</p>
-						</div>
-					)}
-					<ScrollArea className="flex-1">
-						<div className="flex flex-col py-1">
-							{files.map((file) => {
-								const active = open?.path === file.path;
-								return (
-									<button
-										type="button"
-										key={file.path}
-										onClick={() => openFile(file.path)}
-										style={{ paddingLeft: `${0.75 + file.depth * 0.85}rem` }}
-										className={`flex items-center gap-2 py-1.5 pr-3 text-left text-sm transition-colors hover:bg-accent ${
-											active ? 'bg-accent font-medium' : ''
-										}`}
-									>
-										<span className="truncate font-mono text-xs">
-											{file.path}
-										</span>
-										{!file.exists && (
-											<Badge variant="outline" className="ml-auto shrink-0">
-												new
-											</Badge>
-										)}
-										{file.exists && file.restartNeeded && (
-											<span
-												className="ml-auto size-1.5 shrink-0 rounded-full bg-amber-500"
-												title="Changed since the server loaded"
-											/>
-										)}
-									</button>
-								);
-							})}
-						</div>
-					</ScrollArea>
-				</div>
-
 				{/* Editor pane */}
 				<div className="flex min-w-0 flex-1 flex-col">
-					{open ? (
-						<>
-							<div className="flex items-center gap-2 border-b px-4 py-2">
-								<span className="font-mono text-sm">{open.path}</span>
+					<div className="flex items-center gap-3 border-b px-4 py-2">
+
+						{/* File switcher */}
+						<div className="flex items-center gap-2 min-w-[200px]">
+							<Select
+								onValueChange={(value) => openFile(value)}
+								value={open?.path || ''}
+							>
+								<SelectTrigger className="h-9 w-[18em]">
+									<SelectValue placeholder="Select a file" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem
+										value="server.cfg"
+										className={`flex items-center gap-2 py-1.5 pr-3 text-left text-sm transition-colors hover:bg-accent ${
+											open?.path === 'server.cfg' ? 'bg-accent font-medium' : ''
+										}`}
+									>
+										server.cfg
+									</SelectItem>
+
+									<SelectGroup>
+										<SelectLabel>Sub-files</SelectLabel>
+										{files
+											.filter((file) => file.path !== 'server.cfg')
+											.map((file) => {
+												const active = open?.path === file.path;
+												return (
+													<SelectItem
+														key={file.path}
+														value={file.path}
+														className={`flex items-center gap-2 py-1.5 pr-3 text-left text-sm transition-colors hover:bg-accent ${
+															active ? 'bg-accent font-medium' : ''
+														}`}
+													>
+														<span className="truncate font-mono text-xs">
+															{file.path}
+														</span>
+														{!file.exists && (
+															<Badge
+																variant="outline"
+																className="ml-auto shrink-0"
+															>
+																new
+															</Badge>
+														)}
+														{file.exists && file.restartNeeded && (
+															<span
+																className="ml-auto size-1.5 shrink-0 rounded-full bg-amber-500"
+																title="Changed since the server loaded"
+															/>
+														)}
+													</SelectItem>
+												);
+											})}
+									</SelectGroup>
+
+									<SelectSeparator />
+
+									<div className="p-1 border-b">
+										<button
+											type="button"
+											onClick={(e) => {
+												e.stopPropagation();
+												startCreating();
+											}}
+											className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+										>
+											<Plus className="size-3.5" />
+											Create New File
+										</button>
+									</div>
+								</SelectContent>
+							</Select>
+						</div>
+
+						{open && (
+							<div className="flex items-center gap-2 min-w-0">
 								{dirty && (
 									<span
-										className="size-2 rounded-full bg-primary"
+										className="size-2 shrink-0 rounded-full bg-primary"
 										title="Unsaved changes"
 									/>
 								)}
 								{!open.exists && (
-									<Badge variant="outline">will be created</Badge>
+									<Badge variant="outline" className="shrink-0">
+										will be created
+									</Badge>
 								)}
-								<div className="ml-auto flex items-center gap-2">
+							</div>
+						)}
+
+						{open && (
+							<div className="ml-auto flex items-center gap-2">
+								<Button
+									size="sm"
+									variant="outline"
+									disabled={!dirty || saving}
+									onClick={() => save(false)}
+								>
+									<Save className="size-4" /> Save
+								</Button>
+								{canRestart && (
 									<Button
 										size="sm"
-										variant="outline"
-										disabled={!dirty || saving}
-										onClick={() => save(false)}
+										disabled={saving}
+										onClick={() => setPendingRestart('save-restart')}
 									>
-										<Save className="size-4" /> Save
+										<RotateCw className="size-4" /> Save &amp; Restart
 									</Button>
-									{canRestart && (
-										<Button
-											size="sm"
-											disabled={saving}
-											onClick={() => setPendingRestart('save-restart')}
-										>
-											<RotateCw className="size-4" /> Save &amp; Restart
-										</Button>
-									)}
-								</div>
+								)}
 							</div>
+						)}
+					</div>
 
+					{creating && (
+						<div className="border-b bg-muted/30 p-3">
+							<div className="max-w-xs">
+								<Input
+									ref={newNameRef}
+									value={newName}
+									placeholder="name.cfg"
+									className="h-8 font-mono text-xs"
+									onChange={(e) => setNewName(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter') submitCreate();
+										if (e.key === 'Escape') setCreating(false);
+									}}
+									onBlur={() => setCreating(false)}
+								/>
+								<p className="mt-1 text-[10px] text-muted-foreground">
+									Created under server.cfg. Only .cfg files are supported.
+								</p>
+							</div>
+						</div>
+					)}
+
+					{/* Editor Content  */}
+					{open ? (
+						<>
 							{open.managed.length > 0 && (
 								<div className="flex flex-col gap-1 border-b bg-muted/40 px-4 py-2">
 									{open.managed.map((hit) => (
@@ -408,7 +465,9 @@ export default function ConfigEditor() {
 							) : (
 								<>
 									<FileWarning className="size-8" />
-									<span className="text-sm">Select a file to edit</span>
+									<span className="text-sm">
+										Select a file from the menu above to edit
+									</span>
 								</>
 							)}
 						</div>
