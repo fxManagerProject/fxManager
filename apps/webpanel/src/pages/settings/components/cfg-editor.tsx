@@ -92,6 +92,9 @@ export function CfgCodeEditor({
 	}, [editable]);
 
 	return (
-		<div ref={host} className="h-full w-full overflow-hidden font-mono text-sm" />
+		<div
+			ref={host}
+			className="h-full w-full overflow-hidden font-mono text-sm"
+		/>
 	);
 }
