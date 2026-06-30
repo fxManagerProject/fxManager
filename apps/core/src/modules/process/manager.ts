@@ -1,8 +1,11 @@
 import type {
+	ApiResponse,
 	ProcessOutputLine,
 	ProcessState,
 	ServerState,
 } from '@fxmanager/shared/types';
+import { getServerNetEndpoint } from '../../common/fxserver-endpoint';
+import { parseFxServerBuild } from '../../common/fxserver-version';
 import { LogBuffer } from '../buffer/manager';
 import { ConfigManager } from '../config/manager';
 import { wsManager } from '../ws/manager';
@@ -12,7 +15,11 @@ const STARTUP_STALL_MS = 90_000;
 const KILL_GRACE_MS = 5_000;
 
 export class ProcessManager {
-	private state: ServerState = { status: 'stopped', startedAt: null };
+	private state: ServerState = {
+		status: 'stopped',
+		startedAt: null,
+		version: null,
+	};
 	private proc: ReturnType<typeof Bun.spawn> | null = null;
 	private buffer = new LogBuffer<ProcessOutputLine>();
 	private config = ConfigManager.getInstance();
@@ -224,7 +231,8 @@ export class ProcessManager {
 					? null
 					: this.state.startedAt;
 
-		const newState = { status, startedAt } satisfies ServerState;
+		const version = status === 'running' ? this.state.version : null;
+		const newState = { status, startedAt, version } satisfies ServerState;
 
 		this.state = newState;
 		wsManager.broadcast({
@@ -235,8 +243,54 @@ export class ProcessManager {
 
 		if (status === 'running') {
 			resourceManager.loadResources();
+			void this.fetchServerVersion();
 		} else if (status === 'crashed' || status === 'stopping') {
 			resourceManager.stoppingServer();
+		}
+	}
+
+	private async fetchServerVersion(): Promise<void> {
+		try {
+			const { resourceApiToken } = this.config.getSystemValues();
+			const endpoint = await getServerNetEndpoint();
+			const response = await fetch(
+				`http://${endpoint}/fxManager/server/version`,
+				{
+					method: 'GET',
+					headers: {
+						Application: 'json/application',
+						'x-resource-token': resourceApiToken,
+					},
+				},
+			);
+
+			if (!response.ok) {
+				throw new Error(
+					`Server responded with ${response.status}: ${response.statusText}`,
+				);
+			}
+
+			const result = (await response.json()) as ApiResponse<string>;
+			if (!result.success) {
+				console.error(
+					`[core] Failed to read fxServer version: ${result.error}`,
+				);
+				return;
+			}
+
+			const build = parseFxServerBuild(result.data);
+			if (build && this.state.status === 'running') {
+				this.state = { ...this.state, version: build };
+				wsManager.broadcast({
+					channel: 'server_state',
+					event: 'status_changed',
+					data: this.state,
+				});
+			}
+		} catch (err) {
+			console.error(
+				`[core] Failed to fetch fxServer version: ${(err as Error).message}`,
+			);
 		}
 	}
 

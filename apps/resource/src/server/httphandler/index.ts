@@ -33,4 +33,11 @@ api.get('/resources/load', () => {
 	};
 });
 
+api.get('/server/version', () => {
+	return {
+		status: 200,
+		body: { success: true, data: GetConvar('version', 'unknown') },
+	};
+});
+
 console.log('Webserver initialized');

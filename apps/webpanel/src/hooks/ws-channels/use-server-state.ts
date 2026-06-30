@@ -4,6 +4,7 @@ import { useWsChannel } from './use-ws-core';
 const INITIAL: ServerState = {
 	status: 'stopped',
 	startedAt: null,
+	version: null,
 };
 
 export function useServerStateSocket() {
