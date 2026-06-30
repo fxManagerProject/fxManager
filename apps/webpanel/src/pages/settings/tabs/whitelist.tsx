@@ -110,6 +110,7 @@ export default function WhitelistTab({
 	disabled,
 }: SettingsTabProps<'whitelist'>) {
 	const mode = data['whitelist.mode'] ?? SETTINGS_DEFAULTS['whitelist.mode'];
+	const discordBotToken = data['whitelist.discordBotToken'] ?? '';
 	const discordGuildId = data['whitelist.discordGuildId'] ?? '';
 	const discordRoleIds = data['whitelist.discordRoleIds']?.split(',') ?? [];
 
@@ -140,9 +141,24 @@ export default function WhitelistTab({
 
 			<Separator />
 
+			<SettingRow label="Discord Bot Token">
+				<Input
+					className={discordBotToken && 'blur-xs focus:blur-none'}
+					defaultValue={discordBotToken}
+					disabled={disabled}
+					placeholder={'XXXXXXXXXXXXXXXXXXX'}
+					onBlur={(event) => {
+						const value = event.currentTarget.value;
+						if (value === discordBotToken) return;
+
+						onChange('whitelist.discordBotToken', value);
+					}}
+					onKeyDown={blur}
+				/>
+			</SettingRow>
+
 			<SettingRow label="Discord Guild ID">
 				<Input
-					key={data['whitelist.discordGuildId'] ?? ''}
 					defaultValue={discordGuildId}
 					disabled={disabled}
 					placeholder={'1234567890123456789'}

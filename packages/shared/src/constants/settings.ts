@@ -3,7 +3,7 @@ import type { SettingsKey, SettingsKeysByScope } from '../types';
 export const SETTINGS_SCOPES = {
 	general: [],
 	fxserver: ['onesync', 'executablePath', 'serverDataPath', 'serverConfigPath'],
-	whitelist: ['mode', 'discordGuildId', 'discordRoleIds'],
+	whitelist: ['mode', 'discordBotToken', 'discordGuildId', 'discordRoleIds'],
 } as const;
 
 export const SETTINGS_KEYS = Object.fromEntries(

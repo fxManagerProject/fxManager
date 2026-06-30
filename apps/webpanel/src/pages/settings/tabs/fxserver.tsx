@@ -56,7 +56,6 @@ export default function FXServerTab({
 
 			<SettingRow label="Server Executable Path">
 				<Input
-					key={data['fxserver.executablePath'] ?? ''}
 					defaultValue={executablePath}
 					disabled={disabled}
 					placeholder={SETTINGS_DEFAULTS['fxserver.executablePath']}
@@ -72,7 +71,6 @@ export default function FXServerTab({
 
 			<SettingRow label="Server Data Path">
 				<Input
-					key={data['fxserver.serverDataPath'] ?? ''}
 					defaultValue={serverDataPath}
 					disabled={disabled}
 					placeholder={SETTINGS_DEFAULTS['fxserver.serverDataPath']}
@@ -88,7 +86,6 @@ export default function FXServerTab({
 
 			<SettingRow label="Config File Path">
 				<Input
-					key={data['fxserver.serverConfigPath'] ?? ''}
 					defaultValue={serverConfigPath}
 					disabled={disabled}
 					placeholder={SETTINGS_DEFAULTS['fxserver.serverConfigPath']}

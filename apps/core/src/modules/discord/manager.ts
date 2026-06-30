@@ -1,6 +1,6 @@
 import { Client, Events, GatewayIntentBits, type Guild } from 'discord.js';
-import type { DiscordManagerConfig } from '@fxmanager/shared/types';
 import { repo } from '@fxmanager/database';
+import type { DiscordManagerConfig } from '@fxmanager/shared/types';
 
 class DiscordManager {
 	private client = new Client({
@@ -8,21 +8,32 @@ class DiscordManager {
 	});
 	private connectionState: boolean = false;
 
-	private botToken: string;
-	private config: Omit<DiscordManagerConfig, 'token'>;
+	private botToken = '';
+	private config: Omit<DiscordManagerConfig, 'token'> = {
+		guildId: '',
+		whitelistedRoles: [],
+	};
 
 	private guild: Guild | null = null;
 
-	constructor({ token, ...config }: DiscordManagerConfig) {
-		this.botToken = token;
-		this.config = config;
+	private syncSettings() {
+		this.botToken ??= repo.settings.get('whitelist.discordBotToken') ?? '';
+		this.config.guildId ??= repo.settings.get('whitelist.discordGuildId') ?? '';
+		this.config.whitelistedRoles =
+			repo.settings.get('whitelist.discordRoleIds')?.split(',') ?? [];
 	}
 
 	async connect() {
 		try {
-			this.config.guildId = repo.settings.get('whitelist.discordGuildId') ?? '';
-			this.config.whitelistedRoles =
-				repo.settings.get('whitelist.discordRoleIds')?.split(',') ?? [];
+			this.syncSettings();
+
+			if (!this.botToken) {
+				throw new Error('Discord bot token is not configured.');
+			}
+
+			if (!this.config.guildId) {
+				throw new Error('Discord guild ID is not configured.');
+			}
 
 			const readyPromise = new Promise<void>((resolve, reject) => {
 				this.client.once(Events.ClientReady, async (readyClient) => {
@@ -77,7 +88,7 @@ class DiscordManager {
 	}
 
 	private getRoles() {
-		return repo.settings.get('whitelist.discordRoleIds')?.split(',') ?? [];
+		return this.config.whitelistedRoles;
 	}
 
 	async checkWhitelist(discordId: string): Promise<boolean> {
@@ -103,8 +114,4 @@ class DiscordManager {
 	}
 }
 
-export const discordManager = new DiscordManager({
-	token: process.env.DISCORD_BOT_TOKEN ?? '',
-	guildId: '',
-	whitelistedRoles: [],
-});
+export const discordManager = new DiscordManager();
