@@ -1,4 +1,4 @@
-import { Activity, Clock, LayoutDashboard, Shield, User } from 'lucide-react';
+import { Activity, Clock, InfoIcon, LayoutDashboard, Shield, User } from 'lucide-react';
 import { formatRemaining, formatUptime } from '@/lib/utils';
 import { STATUS_VARIANT } from '@/static/server-state';
 import { PageHeader } from '@/components/page-header';
@@ -14,12 +14,71 @@ import {
 import { useSchedule } from '@/hooks/use-schedule';
 import { useMemo } from 'react';
 import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
+import {
+	Area,
+	AreaChart,
+  CartesianGrid,
+  ChartContainer,
+  ChartTooltip,
+  XAxis,
+  YAxis,
+  type ChartConfig,
+	type TooltipContentProps,
+} from "@fxmanager/ui/components/chart";
+import { Alert, AlertDescription, AlertTitle } from '@fxmanager/ui/components/alert';
+
+const MOCK_CHART_DATA = [
+	{ time: "00:00", players: 145 },
+	{ time: "01:00", players: 110 },
+	{ time: "02:00", players: 78  },
+	{ time: "03:00", players: 45  },
+	{ time: "04:00", players: 28  },
+	{ time: "05:00", players: 15  },
+	{ time: "06:00", players: 22  },
+	{ time: "07:00", players: 38  },
+	{ time: "08:00", players: 55  },
+	{ time: "09:00", players: null}, // no players
+	{ time: "10:00", players: 90  },
+	{ time: "11:00", players: 115 },
+	{ time: "12:00", players: 140 },
+	{ time: "13:00", players: 155 },
+	{ time: "14:00", players: 138 },
+	{ time: "15:00", players: 160 },
+	{ time: "16:00", players: 195 },
+	{ time: "17:00", players: 230 },
+	{ time: "18:00", players: 265 },
+	{ time: "19:00", players: 290 },
+	{ time: "20:00", players: 312 },
+	{ time: "21:00", players: 285 },
+	{ time: "22:00", players: 240 },
+	{ time: "23:00", players: 190 },
+];
+const chartConfig = {
+  players: {
+    color: "var(--chart-2)",
+  },
+} satisfies ChartConfig;
 
 function pingColor(ping?: number): string {
 	if (ping === undefined) return 'text-zinc-500';
 	if (ping < 80) return 'text-emerald-400';
 	if (ping < 150) return 'text-yellow-400';
 	return 'text-red-500';
+}
+
+function PlayerTooltip({ active, payload, label }: TooltipContentProps) {
+  const playerPayload = payload?.find(p => p.dataKey === 'players');
+  const isVisible = active && playerPayload?.value !== undefined;
+
+  if (!isVisible) return null;
+
+return (
+    <div className="rounded-md border bg-popover px-2.5 py-1.5 text-xs font-medium text-popover-foreground shadow-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="mx-1.5 text-border">|</span>
+      <span className="font-bold">{playerPayload.value} players</span>
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -107,8 +166,67 @@ export default function DashboardPage() {
 
 			<div className="grid gap-6 lg:grid-cols-3">
 				<div className="lg:col-span-2 space-y-6">
-					<Card className="bg-card/50 h-[300px] flex items-center justify-center text-muted-foreground">
-						somethin like player count overtime ?
+					<Card className="bg-card/50 min-h-[350px] w-full">
+						<CardHeader>
+							<CardTitle>Players over the last 24h</CardTitle>
+						</CardHeader>
+						<CardContent className="pb-4 space-y-4">
+							<ChartContainer config={chartConfig} className="h-[30em] w-full">
+								<AreaChart
+									accessibilityLayer
+									data={MOCK_CHART_DATA}
+									margin={{
+										top: 10
+									}}
+								>
+									<CartesianGrid vertical={false} className="stroke-muted/30" />
+									<XAxis
+										dataKey="time"
+										tickLine={false}
+										axisLine={false}
+										tickMargin={8}
+										interval={3}
+									/>
+									<YAxis
+										dataKey="players"
+										tickLine={false}
+										axisLine={false}
+									/>
+									<ChartTooltip cursor={false} content={PlayerTooltip} />
+									<defs>
+										<linearGradient id="fillPlayers" x1="0" y1="0" x2="0" y2="1">
+											<stop
+												offset="5%"
+												stopColor="var(--color-players)"
+												stopOpacity={0.4}
+											/>
+											<stop
+												offset="95%"
+												stopColor="var(--color-players)"
+												stopOpacity={0.0}
+											/>
+										</linearGradient>
+									</defs>
+									<Area
+										dataKey="players"
+										type="monotone"
+										fill="url(#fillPlayers)"
+										stroke="var(--color-players)"
+										strokeWidth={2}
+										stackId="a"
+									/>
+								</AreaChart>
+							</ChartContainer>
+							<Alert>
+								<AlertTitle className="flex items-center gap-2 text-base font-semibold tracking-tight text-amber-600 dark:text-amber-500">
+									<InfoIcon className="size-4 shrink-0" />
+									<span>Under Development</span>
+								</AlertTitle>
+								<AlertDescription className="text-sm leading-relaxed">
+									This chart is currently only a placeholder, statistic measuring is coming soon.
+								</AlertDescription>
+							</Alert>
+						</CardContent>
 					</Card>
 				</div>
 
