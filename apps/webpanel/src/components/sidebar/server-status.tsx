@@ -7,7 +7,7 @@ import {
 import { Card, CardContent } from '@fxmanager/ui/components/card';
 import { Badge } from '@fxmanager/ui/components/badge';
 import { STATUS_VARIANT } from '@/static/server-state';
-import { formatUptime } from '@/lib/utils';
+import { formatRemaining, formatUptime } from '@/lib/utils';
 import { Button } from '@fxmanager/ui/components/button';
 import {
 	ExternalLink,
@@ -29,17 +29,6 @@ import { useSchedule } from '@/hooks/use-schedule';
 import { useEffect, useState } from 'react';
 
 const TEMP_PRESETS = [5, 15, 30] as const;
-
-function formatRemaining(ms: number): string {
-	if (ms <= 0) return 'now';
-	const total = Math.floor(ms / 1000);
-	const h = Math.floor(total / 3600);
-	const m = Math.floor((total % 3600) / 60);
-	const s = total % 60;
-	if (h > 0) return `${h}h ${m}m`;
-	if (m > 0) return `${m}m ${s}s`;
-	return `${s}s`;
-}
 
 interface ActionButtonProps {
 	Icon: LucideIcon;
@@ -144,7 +133,7 @@ export function ServerStatusCard() {
 						<p className="tabular-nums">
 							{hasUpcomingRestart ? (
 								<>
-									in {formatRemaining(nextRestartMs)}
+									{formatRemaining(nextRestartMs, 'in')}
 									{schedule?.temporary && (
 										<span className="text-muted-foreground"> (manual)</span>
 									)}

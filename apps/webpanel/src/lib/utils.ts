@@ -1,11 +1,18 @@
 import { toast } from 'sonner';
 
-export function formatDuration(milliseconds: number): string {
-	const minutes = Math.floor(milliseconds / 60_000);
-	if (minutes < 60) return `${minutes}m`;
-	const h = Math.floor(minutes / 60);
-	const m = minutes % 60;
-	return m > 0 ? `${h}h ${m}m` : `${h}h`;
+export function formatDuration(ms: number): string {
+	const total = Math.floor(ms / 1000);
+	const h = Math.floor(total / 3600);
+	const m = Math.floor((total % 3600) / 60);
+	const s = total % 60;
+	if (h > 0) return `${h}h ${m}m`;
+	if (m > 0) return `${m}m ${s}s`;
+	return `${s}s`;
+}
+
+export function formatRemaining(ms: number, prefix?: string): string {
+	if (ms <= 0) return 'now';
+	return prefix ? `${prefix} ${formatDuration(ms)}` : formatDuration(ms);
 }
 
 export function formatUptime(startedAt: Date | string | number): string {
