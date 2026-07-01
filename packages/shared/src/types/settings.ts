@@ -36,3 +36,11 @@ export type SettingsKey<T extends SettingsScope = SettingsScope> = {
 export type SettingsKeysByScope = {
 	[Scope in SettingsScope]: SettingsKey<Scope>[];
 };
+
+export interface RestartScheduleStatus {
+	enabled: boolean;
+	times: string[];
+	nextRestart: string | null;
+	temporary: boolean;
+	skipped: boolean;
+}

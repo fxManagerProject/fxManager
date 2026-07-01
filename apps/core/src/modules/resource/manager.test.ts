@@ -24,6 +24,10 @@ const getInstanceSpy = spyOn(ConfigManager, 'getInstance').mockReturnValue({
 	getSystemValues: mockGetSystemValues,
 } as any);
 
+mock.module('../../common/fxserver-endpoint', () => ({
+	getServerNetEndpoint: async () => '127.0.0.1:30120',
+}));
+
 // Import the system under test (SUT) after establishing the spies
 import { resourceManager } from './manager';
 

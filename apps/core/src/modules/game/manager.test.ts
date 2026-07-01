@@ -34,6 +34,10 @@ mock.module('@fxmanager/database', () => ({
 	},
 }));
 
+mock.module('../../common/fxserver-endpoint', () => ({
+	getServerNetEndpoint: async () => '127.0.0.1:30120',
+}));
+
 const GameManagerModule = await import('./manager');
 import type { PlayerIdentifiers } from '@fxmanager/shared/types';
 
@@ -415,7 +419,7 @@ describe('GameManager', () => {
 			const response = await gameManager.dropPlayer(2, 'Exploiting Loop holes');
 
 			expect(global.fetch).toHaveBeenCalledWith(
-				'http://localhost:30120/fxManager/drop',
+				'http://127.0.0.1:30120/fxManager/drop',
 				{
 					method: 'POST',
 					body: JSON.stringify({

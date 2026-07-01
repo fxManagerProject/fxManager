@@ -15,6 +15,12 @@ class PlayerManager {
 		if (this.players.size === 0) this.clearUpdates();
 	}
 
+	dropAll(reason: string): number {
+		const ids = [...this.players.keys()];
+		for (const id of ids) DropPlayer(id, reason);
+		return ids.length;
+	}
+
 	private startUpdates() {
 		this.updateInterval = setInterval(async () => {
 			const updatePacket: PlayerUpdatePackage = {};
