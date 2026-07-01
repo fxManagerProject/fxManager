@@ -1,10 +1,19 @@
 import { toast } from 'sonner';
 
-export function formatDuration(ms: number): string {
-	const total = Math.floor(ms / 1000);
-	const h = Math.floor(total / 3600);
-	const m = Math.floor((total % 3600) / 60);
-	const s = total % 60;
+export function formatDuration(
+	ms: number,
+	showSeconds: boolean = true,
+): string {
+	const totalSeconds = Math.floor(ms / 1000);
+	const h = Math.floor(totalSeconds / 3600);
+	const m = Math.floor((totalSeconds % 3600) / 60);
+	const s = totalSeconds % 60;
+
+	if (!showSeconds) {
+		if (h > 0) return `${h}h ${m}m`;
+		return `${m}m`;
+	}
+
 	if (h > 0) return `${h}h ${m}m`;
 	if (m > 0) return `${m}m ${s}s`;
 	return `${s}s`;
@@ -19,7 +28,7 @@ export function formatUptime(startedAt: Date | string | number): string {
 	const initialDate =
 		startedAt instanceof Date ? startedAt : new Date(startedAt);
 
-	return formatDuration(Date.now() - initialDate.getTime());
+	return formatDuration(Date.now() - initialDate.getTime(), false);
 }
 
 export function formatDate(date: Date | string | null | undefined): string {
