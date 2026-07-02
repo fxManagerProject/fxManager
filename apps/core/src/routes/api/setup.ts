@@ -30,7 +30,7 @@ async function fileExists(target: string): Promise<boolean> {
 }
 
 const AdminGroupSchema = Type.Object({
-	label: Type.String(),
+	name: Type.String(),
 	permissions: Type.Number(),
 	colour: Type.Optional(Type.String()),
 	icon: Type.Optional(Type.String()),
@@ -90,10 +90,28 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 			repo.settings.set('executable', server.fxserverPath);
 			repo.settings.set('serverDataPath', server.resourcePath);
 
-			// ToDo:
-			// Store admin groups in the database
-			// await repo.settings.set('admingroups', customGroups);
-			console.log('customGroups', customGroups);
+			if (customGroups.length > 0) {
+				try {
+					// staged groups replace the seeded defaults, nothing can be
+					// assigned to a group before setup has completed
+					for (const group of repo.groups.list()) {
+						if (group.memberCount === 0) repo.groups.delete(group.id);
+					}
+
+					for (const group of customGroups) {
+						repo.groups.create({
+							name: group.name,
+							permissions: group.permissions,
+							colour: group.colour ?? '#ffffff',
+							icon: group.icon,
+						});
+					}
+				} catch (err) {
+					return reply.code(400).send({
+						error: `Failed to store admin groups: ${(err as Error).message}`,
+					});
+				}
+			}
 
 			const user = await repo.auth.createUser(
 				username,

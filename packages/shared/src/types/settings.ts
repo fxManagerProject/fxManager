@@ -9,6 +9,13 @@ export type AdminGroup = {
 	icon: string | null;
 };
 
+export type AdminGroupForm = {
+	name: string;
+	permissions: number;
+	colour: string;
+	icon?: string | null;
+};
+
 export interface BaseAdminUser {
 	id: number;
 	username: string;
