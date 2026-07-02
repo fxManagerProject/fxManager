@@ -59,6 +59,17 @@ export const whitelistedIdentifers = sqliteTable(
 
 // region Admins & Sessions
 
+export const adminGroups = sqliteTable('admin_groups', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	name: text('name').notNull().unique(),
+	permissions: integer('permissions').default(0).notNull(),
+	colour: text('colour').default('#ffffff').notNull(),
+	icon: text('icon'),
+	createdAt: integer('created_at', { mode: 'timestamp' })
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
 export const adminUsers = sqliteTable(
 	'admin_users',
 	{
@@ -69,6 +80,9 @@ export const adminUsers = sqliteTable(
 			onDelete: 'set null',
 		}),
 		permissions: integer('permissions').default(0).notNull(),
+		groupId: integer('group_id').references(() => adminGroups.id, {
+			onDelete: 'set null',
+		}),
 		createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 		lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
 	},
@@ -285,10 +299,18 @@ export const playersRelations = relations(players, ({ many, one }) => ({
 	}),
 }));
 
+export const adminGroupsRelations = relations(adminGroups, ({ many }) => ({
+	admins: many(adminUsers),
+}));
+
 export const adminUsersRelations = relations(adminUsers, ({ many, one }) => ({
 	player: one(players, {
 		fields: [adminUsers.playerId],
 		references: [players.id],
+	}),
+	group: one(adminGroups, {
+		fields: [adminUsers.groupId],
+		references: [adminGroups.id],
 	}),
 	bans: many(bans),
 	warns: many(warns),
