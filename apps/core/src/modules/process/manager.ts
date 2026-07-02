@@ -10,6 +10,7 @@ import { LogBuffer } from '../buffer/manager';
 import { ConfigManager } from '../config/manager';
 import { wsManager } from '../ws/manager';
 import { resourceManager } from '../resource/manager';
+import { aceSync } from '../ace/manager';
 import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
 import { gameManager } from '../game/manager';
@@ -298,6 +299,7 @@ export class ProcessManager {
 		if (status === 'running') {
 			resourceManager.loadResources();
 			gameManager.resetPlayerlist();
+			aceSync.apply(this);
 			const session = sessionManager.openSession();
 			disconnectManager.onSessionOpen(session);
 			void this.fetchServerVersion();

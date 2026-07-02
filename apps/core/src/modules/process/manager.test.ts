@@ -17,6 +17,7 @@ import { resourceManager } from '../resource/manager';
 import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
 import { gameManager } from '../game/manager';
+import { aceSync } from '../ace/manager';
 import { txAdminCompat } from '../txadmin/compat';
 
 const mockGetHistory = mock(() => []);
@@ -78,6 +79,7 @@ const resetPlayerlistSpy = spyOn(
 	gameManager,
 	'resetPlayerlist',
 ).mockImplementation(() => {});
+const aceApplySpy = spyOn(aceSync, 'apply').mockImplementation(() => {});
 const txEmitSpy = spyOn(txAdminCompat, 'emit').mockResolvedValue(undefined);
 
 const ProcessManagerModule = await import('./manager');
@@ -142,6 +144,7 @@ describe('ProcessManager', () => {
 		onSessionOpenSpy.mockClear();
 		onSessionCloseSpy.mockClear();
 		resetPlayerlistSpy.mockClear();
+		aceApplySpy.mockClear();
 		txEmitSpy.mockClear();
 
 		stdoutController = null;
@@ -192,6 +195,7 @@ describe('ProcessManager', () => {
 		onSessionOpenSpy.mockRestore();
 		onSessionCloseSpy.mockRestore();
 		resetPlayerlistSpy.mockRestore();
+		aceApplySpy.mockRestore();
 		txEmitSpy.mockRestore();
 	});
 
@@ -283,6 +287,7 @@ describe('ProcessManager', () => {
 
 			expect(processManager.getState().status).toBe('running');
 			expect(loadResourcesSpy).toHaveBeenCalled();
+			expect(aceApplySpy).toHaveBeenCalledWith(processManager);
 			expect(mockBufferPush).toHaveBeenCalled();
 		});
 
