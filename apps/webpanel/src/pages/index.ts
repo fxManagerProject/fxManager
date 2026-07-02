@@ -10,6 +10,7 @@ import PlayerView from './players/playerview';
 import AdminManagementList from './settings/adminmanagement';
 import AdminView from './settings/adminview';
 import AdminCreate from './settings/admincreate';
+import GroupManagement from './settings/groupmanagement';
 import { ResourceList } from './resources';
 import WhitelistIndex from './whitelist';
 import AuditLogPage from './settings/auditlogs';
@@ -84,6 +85,11 @@ export const routes: RouteConfig[] = [
 	{
 		path: '/settings/admins/:adminId',
 		element: AdminView,
+		permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+	},
+	{
+		path: '/settings/groups',
+		element: GroupManagement,
 		permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
 	},
 ];

@@ -1,4 +1,4 @@
-import type { AdminGroup } from '@fxmanager/shared/types';
+import type { AdminGroupForm } from '@fxmanager/shared/types';
 
 export interface SetupFormData {
 	// Step 1: Account
@@ -10,7 +10,7 @@ export interface SetupFormData {
 	fxserverPath: string;
 	resourcePath: string;
 	// Step 3: Groups
-	adminGroups: AdminGroup[];
+	adminGroups: AdminGroupForm[];
 }
 
 export type SetupSteps = 'account' | 'server' | 'permissions' | 'import';

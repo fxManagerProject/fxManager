@@ -253,7 +253,7 @@ export default function AdminManagementList() {
 																name={a.group.icon as LucidIconName}
 															/>
 														)}
-														{a.group.label}
+														{a.group.name}
 													</Badge>
 												)}
 											</TableCell>

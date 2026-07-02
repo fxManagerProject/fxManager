@@ -4,8 +4,9 @@ import { Label } from '@fxmanager/ui/components/label';
 import { Input } from '@fxmanager/ui/components/input';
 import { Button } from '@fxmanager/ui/components/button';
 import type { SetupFormData } from './types';
-import type { AdminGroup } from '@fxmanager/shared/types';
-import PermissionEditor from '../settings/components/permissioneditor';
+import type { AdminGroupForm } from '@fxmanager/shared/types';
+import { UserPermissions } from '@fxmanager/shared/constants';
+import { PermissionGrid } from '../settings/components/permissiongrid';
 import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
 import { IconPicker } from '@fxmanager/ui/components/icon-selectmenu';
 import { getIconComponent } from '@fxmanager/ui/lib/icons';
@@ -13,7 +14,7 @@ import { getIconComponent } from '@fxmanager/ui/lib/icons';
 interface PermissionsStepProps {
 	formData: SetupFormData;
 	loading: boolean;
-	onAddGroup: (group: AdminGroup) => void;
+	onAddGroup: (group: AdminGroupForm) => void;
 	onRemoveGroup: (index: number) => void;
 	onBack: () => void;
 	onSubmit: () => void;
@@ -27,18 +28,18 @@ export function PermissionsStep({
 	onBack,
 	onSubmit,
 }: PermissionsStepProps) {
-	const [newGroup, setNewGroup] = useState<AdminGroup>({
-		label: '',
+	const [newGroup, setNewGroup] = useState<AdminGroupForm & { icon: string }>({
+		name: '',
 		colour: '#3b82f6',
 		icon: 'Shield',
 		permissions: 0,
 	});
 
 	function handleAdd() {
-		if (!newGroup.label.trim()) return;
+		if (!newGroup.name.trim()) return;
 		onAddGroup(newGroup);
 		setNewGroup({
-			label: '',
+			name: '',
 			colour: '#3b82f6',
 			icon: 'Shield',
 			permissions: 0,
@@ -62,9 +63,9 @@ export function PermissionsStep({
 						<Label className="text-xs">Group Identifier/Label</Label>
 						<Input
 							placeholder="e.g. Lead Moderator"
-							value={newGroup.label}
+							value={newGroup.name}
 							onChange={(e) =>
-								setNewGroup((p) => ({ ...p, label: e.target.value }))
+								setNewGroup((p) => ({ ...p, name: e.target.value }))
 							}
 						/>
 					</div>
@@ -99,15 +100,14 @@ export function PermissionsStep({
 				</div>
 
 				<ScrollArea className="h-[380px] w-full">
-					<div className="min-w-[600px] pr-4">
-						<PermissionEditor
-							hideGroup
-							hideReset
-							skipServerSave={true}
-							value={newGroup.permissions}
-							updatePerms={(pBits) =>
-								setNewGroup((p) => ({ ...p, permissions: pBits }))
-							}
+					<div className="min-w-[600px] pr-4 flex flex-col">
+						<PermissionGrid
+							bitfield={newGroup.permissions}
+							editable={true}
+							onToggle={(bit) => {
+								if (bit === UserPermissions.MASTER) return;
+								setNewGroup((p) => ({ ...p, permissions: p.permissions ^ bit }));
+							}}
 						/>
 					</div>
 					<ScrollBar orientation="vertical" />
@@ -151,7 +151,7 @@ export function PermissionsStep({
 
 									return (
 										<div
-											key={grp.label.toLowerCase().replace(' ','-')}
+											key={grp.name.toLowerCase().replace(' ', '-')}
 											className="flex items-center justify-between text-xs bg-background p-3 rounded-lg border shadow-xs"
 										>
 											<div className="flex items-center gap-2.5 overflow-hidden">
@@ -161,7 +161,7 @@ export function PermissionsStep({
 												/>
 												<div className="truncate">
 													<p className="font-bold text-foreground truncate">
-														{grp.label}
+														{grp.name}
 													</p>
 													<p className="text-[10px] font-mono text-muted-foreground truncate">
 														Bits: {grp.permissions}

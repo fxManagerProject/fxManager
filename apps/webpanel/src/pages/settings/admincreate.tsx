@@ -1,6 +1,10 @@
 import { PageHeader } from '@/components/page-header';
 import { QueryService } from '@/lib/query';
-import type { ApiResponse, CreateAdminForm } from '@fxmanager/shared/types';
+import type {
+	AdminGroup,
+	ApiResponse,
+	CreateAdminForm,
+} from '@fxmanager/shared/types';
 import { UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,9 +19,11 @@ import { PlayerSearch } from './components/player-search';
 export default function AdminCreate() {
 	const navigate = useNavigate();
 	const [saving, setSaving] = useState<boolean>(false);
+	const [group, setGroup] = useState<AdminGroup | null>(null);
 	const [formData, setFormData] = useState<CreateAdminForm>({
 		username: '',
 		permissions: 0,
+		groupId: null,
 		playerId: null,
 	});
 
@@ -93,9 +99,14 @@ export default function AdminCreate() {
 						<PermissionEditor
 							skipServerSave={true}
 							value={formData.permissions}
+							group={group}
 							updatePerms={(newPerms) =>
 								setFormData({ ...formData, permissions: newPerms })
 							}
+							updateGroup={(newGroup) => {
+								setGroup(newGroup);
+								setFormData({ ...formData, groupId: newGroup?.id ?? null });
+							}}
 						/>
 					</div>
 

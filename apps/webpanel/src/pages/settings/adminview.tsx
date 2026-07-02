@@ -341,7 +341,7 @@ export default function AdminView() {
 						}
 						className="hidden lg:block"
 						label={`Staff Group`}
-						value={adminData.group?.label ?? 'None'}
+						value={adminData.group?.name ?? 'Custom'}
 					/>
 				</div>
 
@@ -426,10 +426,17 @@ export default function AdminView() {
 										editable={adminData.id !== user?.id}
 										adminId={params.adminId}
 										value={adminData.permissions}
+										group={adminData.group}
 										updatePerms={(permissions) =>
 											setAdminData((prev) => {
 												if (!prev) return null;
 												return { ...prev, permissions };
+											})
+										}
+										updateGroup={(group) =>
+											setAdminData((prev) => {
+												if (!prev) return null;
+												return { ...prev, group };
 											})
 										}
 									/>
