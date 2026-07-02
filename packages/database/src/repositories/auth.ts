@@ -1,8 +1,9 @@
 import { eq, and, gt } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { adminUsers, sessions } from '../schema';
+import { adminGroups, adminUsers, sessions } from '../schema';
 import type * as schema from '../schema';
 import { UserPermissions } from '@fxmanager/shared/constants';
+import { PermissionManager } from '@fxmanager/shared/utils';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -122,12 +123,23 @@ class AuthRepository {
 
 	validateSession(sessionId: string) {
 		const now = new Date();
-		return this.db
-			.select({ session: sessions, user: adminUsers })
+		const row = this.db
+			.select({ session: sessions, user: adminUsers, group: adminGroups })
 			.from(sessions)
 			.innerJoin(adminUsers, eq(sessions.adminId, adminUsers.id))
+			.leftJoin(adminGroups, eq(adminUsers.groupId, adminGroups.id))
 			.where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, now)))
 			.get();
+
+		if (!row) return row;
+
+		return {
+			...row,
+			effectivePermissions: PermissionManager.effective(
+				row.user.permissions,
+				row.group?.permissions,
+			),
+		};
 	}
 
 	deleteSession(sessionId: string) {

@@ -1,5 +1,3 @@
-import type { AdminGroup } from '../types';
-
 // acts like an enum
 export const UserPermissions = {
 	NONE: 0,
@@ -171,31 +169,3 @@ export const PERMISSION_LABELS: Record<
 		category: 'Administration',
 	},
 };
-
-// ToDo: move to dynamic loading from DB
-export const PERMISSION_GROUPS: AdminGroup[] = [
-	{
-		label: 'Master Account',
-		permissions: 1073741824,
-		colour: '#FF0000',
-		icon: 'Star',
-	},
-	{
-		label: 'Development',
-		permissions: 292864,
-		colour: '#00FF00',
-		icon: 'FileCode',
-	},
-	{
-		label: 'Management',
-		permissions: 167935,
-		colour: '#0000FF',
-		icon: 'UserRoundKey',
-	},
-	{
-		label: 'Moderation',
-		permissions: 1991,
-		colour: '#ff6600',
-		icon: 'Shield',
-	},
-];

@@ -239,5 +239,46 @@ describe('AuthRepository', () => {
 			const validated = authRepo.validateSession(session.id);
 			expect(validated).toBeUndefined();
 		});
+
+		it('should resolve the assigned group and effective permissions', async () => {
+			const group = testDb
+				.insert(schema.adminGroups)
+				.values({
+					name: 'SessionMods',
+					permissions: UserPermissions.KICK | UserPermissions.WARN,
+					colour: '#fff',
+					createdAt: new Date(),
+				})
+				.returning()
+				.get();
+			const user = await authRepo.createUser('grouped_user', 'p');
+			testDb
+				.update(adminUsers)
+				.set({ groupId: group.id })
+				.where(eq(adminUsers.id, user.id))
+				.run();
+			const session = authRepo.createSession(user.id);
+
+			const validated = authRepo.validateSession(session.id);
+
+			expect(validated?.group?.id).toBe(group.id);
+			expect(validated?.effectivePermissions).toBe(
+				UserPermissions.KICK | UserPermissions.WARN,
+			);
+		});
+
+		it('should fall back to personal permissions for ungrouped admins', async () => {
+			const user = await authRepo.createUser(
+				'solo_user',
+				'p',
+				UserPermissions.BAN,
+			);
+			const session = authRepo.createSession(user.id);
+
+			const validated = authRepo.validateSession(session.id);
+
+			expect(validated?.group).toBeNull();
+			expect(validated?.effectivePermissions).toBe(UserPermissions.BAN);
+		});
 	});
 });

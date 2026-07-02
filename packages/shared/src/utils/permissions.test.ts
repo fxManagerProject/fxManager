@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { describe, expect, it, mock } from 'bun:test';
 
 mock.module('@fxmanager/shared/constants', () => {
 	return {
@@ -9,26 +9,14 @@ mock.module('@fxmanager/shared/constants', () => {
 			BAN: 1 << 2, // 000100 (4)
 			WARN: 1 << 3, // 001000 (8)
 		},
-		PERMISSION_GROUPS: [
-			{ label: 'User', permissions: 0, colour: 'gray' },
-			{ label: 'Moderator', permissions: (1 << 1) | (1 << 3), colour: 'blue' }, // KICK | WARN = 10
-		],
 	};
 });
 
 // Import target and mocked constants
 import { PermissionManager } from './permissions';
-import {
-	UserPermissions,
-	PERMISSION_GROUPS,
-} from '@fxmanager/shared/constants';
-import type { AdminGroup } from '../types';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 describe('PermissionManager Unit Tests', () => {
-	beforeEach(() => {
-		PermissionManager.loadGroups([...PERMISSION_GROUPS] as AdminGroup[]);
-	});
-
 	describe('has() Bitwise Evaluations', () => {
 		it('should grant immediate access (return true) if user contains the MASTER bitfield flag', () => {
 			const userBitfield = UserPermissions.MASTER; // 1
@@ -119,55 +107,23 @@ describe('PermissionManager Unit Tests', () => {
 		});
 	});
 
-	describe('Group Management Lookups', () => {
-		it('should dynamically update internal group trackers when calling loadGroups()', () => {
-			const customGroups: AdminGroup[] = [
-				{
-					label: 'SuperAdmin',
-					permissions: UserPermissions.MASTER | UserPermissions.BAN,
-					colour: 'red',
-				},
-			];
+	describe('effective() Group Composition', () => {
+		it('should union personal and group bitfields', () => {
+			const result = PermissionManager.effective(
+				UserPermissions.KICK,
+				UserPermissions.WARN,
+			);
 
-			PermissionManager.loadGroups(customGroups);
-			expect(PermissionManager.groups).toHaveLength(1);
-			expect(PermissionManager.groups[0]?.label).toBe('SuperAdmin');
+			expect(result).toBe(UserPermissions.KICK | UserPermissions.WARN);
 		});
 
-		it('should match and return the first organizational group block that fits the bitfield criteria', () => {
-			const prioritizedGroups: AdminGroup[] = [
-				{
-					label: 'Moderator',
-					permissions: UserPermissions.KICK | UserPermissions.WARN,
-					colour: 'blue',
-				}, // 10
-				{ label: 'User', permissions: 0, colour: 'gray' }, // 0
-			];
-			PermissionManager.loadGroups(prioritizedGroups);
-
-			const targetPermissions =
-				UserPermissions.KICK | UserPermissions.WARN | UserPermissions.BAN; // 14
-
-			const matchedGroup = PermissionManager.getGroup(targetPermissions);
-
-			expect(matchedGroup).not.toBeNull();
-			expect(matchedGroup?.label).toBe('Moderator');
-		});
-
-		it('should safely return null if the incoming integer mask cannot map to an active group criteria', () => {
-			const strictGroups: AdminGroup[] = [
-				{
-					label: 'Moderator',
-					permissions: UserPermissions.KICK | UserPermissions.WARN,
-					colour: 'blue',
-				},
-			];
-			PermissionManager.loadGroups(strictGroups);
-
-			const arbitraryPermissions = UserPermissions.BAN; // 4 (Does not satisfy KICK or WARN bits)
-
-			const matchedGroup = PermissionManager.getGroup(arbitraryPermissions);
-			expect(matchedGroup).toBeNull();
+		it('should return the personal bitfield when no group permissions exist', () => {
+			expect(PermissionManager.effective(UserPermissions.BAN, null)).toBe(
+				UserPermissions.BAN,
+			);
+			expect(PermissionManager.effective(UserPermissions.BAN, undefined)).toBe(
+				UserPermissions.BAN,
+			);
 		});
 	});
 });

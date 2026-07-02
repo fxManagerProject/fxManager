@@ -2,16 +2,18 @@ import type { SETTINGS_SCOPES } from '../constants';
 import type { UserPermissionsType } from './security';
 
 export type AdminGroup = {
-	label: string;
+	id: number;
+	name: string;
 	permissions: number;
 	colour: string;
-	icon?: string;
+	icon: string | null;
 };
 
 export interface BaseAdminUser {
 	id: number;
 	username: string;
 	permissions: UserPermissionsType;
+	effectivePermissions: number;
 	group: AdminGroup | null;
 	playerId: number | null;
 	createdAt: Date;
@@ -21,6 +23,7 @@ export interface BaseAdminUser {
 export interface CreateAdminForm {
 	username: string;
 	permissions: UserPermissionsType;
+	groupId: number | null;
 	playerId: number | null;
 }
 
