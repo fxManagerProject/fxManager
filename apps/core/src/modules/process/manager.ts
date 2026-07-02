@@ -259,6 +259,7 @@ export class ProcessManager {
 			this.flushTimer = null;
 			if (this.pendingLines.length > 0) this.scheduleFlush();
 		}, CONSOLE_FLUSH_MS);
+		this.flushTimer.unref?.();
 	}
 
 	private flushLines() {

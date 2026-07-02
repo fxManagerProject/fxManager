@@ -50,15 +50,20 @@ const LogLine = memo(function LogLine({ event }: { event: ProcessOutputLine }) {
 
 export default function Console() {
 	const [maxLines, setMaxLines] = useState<number>(200);
-	const { lines, sendCommand, clear } = useConsoleSocket({ maxLines });
+	const [following, setFollowing] = useState<boolean>(true);
+	// Pausing suspends top-trimming so the buffer can't shift under the reader
+	const { lines, sendCommand, clear } = useConsoleSocket({
+		maxLines,
+		suspendTrim: !following,
+	});
 	const {
 		state: { status: serverStatus },
 	} = useServerStateSocket();
 
 	const { connected } = useWSBase();
+	const [everConnected, setEverConnected] = useState<boolean>(false);
 
 	const viewportRef = useRef<HTMLDivElement>(null);
-	const [following, setFollowing] = useState<boolean>(true);
 	const followingRef = useRef(true);
 	const lastSeqRef = useRef(-1);
 	const pausedSeqRef = useRef(-1);
@@ -76,7 +81,13 @@ export default function Console() {
 		);
 	}, [lines, filter]);
 
-	lastSeqRef.current = lines.length > 0 ? lines[lines.length - 1].seq : -1;
+	useEffect(() => {
+		lastSeqRef.current = lines.length > 0 ? lines[lines.length - 1].seq : -1;
+	}, [lines]);
+
+	useEffect(() => {
+		if (connected) setEverConnected(true);
+	}, [connected]);
 
 	const newCount = following
 		? 0
@@ -155,7 +166,11 @@ export default function Console() {
 				{!connected && (
 					<div className="flex flex-none items-center gap-2 border-b border-amber-500/20 bg-amber-500/10 px-3 pb-2 text-xs text-amber-500">
 						<LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-						<span>Connection lost — reconnecting...</span>
+						<span>
+							{everConnected
+								? 'Connection lost — reconnecting...'
+								: 'Connecting...'}
+						</span>
 					</div>
 				)}
 				{filterOpen && (
@@ -187,7 +202,9 @@ export default function Console() {
 						<div className="p-4 font-mono text-xs leading-relaxed">
 							{lines.length === 0 ? (
 								<p className="text-muted-foreground text-center py-4">
-									No output yet. Start the server to see logs.
+									{serverStatus === 'running'
+										? 'No output to show.'
+										: 'No output yet. Start the server to see logs.'}
 								</p>
 							) : visibleLines.length === 0 ? (
 								<p className="text-muted-foreground text-center py-4">

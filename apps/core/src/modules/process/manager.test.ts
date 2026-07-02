@@ -508,6 +508,7 @@ describe('ProcessManager', () => {
 				expect.objectContaining({
 					line: expect.stringContaining('Dynamic Trace Event'),
 					source: 'stdout',
+					seq: expect.any(Number),
 				}),
 			);
 			expect(broadcastSpy).toHaveBeenCalledWith(
@@ -545,7 +546,7 @@ describe('ProcessManager', () => {
 			expect(batchesWithMarker('burst-')).toHaveLength(1);
 			expect(batchesWithMarker('burst-')[0].data).toHaveLength(1);
 
-			await Bun.sleep(70);
+			await Bun.sleep(100);
 
 			const batches = batchesWithMarker('burst-');
 			expect(batches).toHaveLength(2);
@@ -556,7 +557,7 @@ describe('ProcessManager', () => {
 			processManager.injectConsoleLine({ value: 'seq-a', noPrint: true });
 			processManager.injectConsoleLine({ value: 'seq-b', noPrint: true });
 			processManager.injectConsoleLine({ value: 'seq-c', noPrint: true });
-			await Bun.sleep(70);
+			await Bun.sleep(100);
 
 			const seqs = batchesWithMarker('seq-')
 				.flatMap((msg) => msg.data)
