@@ -39,16 +39,20 @@ export function useConsoleSocket({
 			},
 		);
 
-		const offLine = on<ProcessOutputLine>('console', 'line', ({ data }) => {
+		// Batched delivery; seq filter drops lines already covered by the initial dump
+		const offLines = on<ProcessOutputLine[]>('console', 'lines', ({ data }) => {
 			setLines((prev) => {
-				const next = [...prev, data].slice(-maxLines);
+				const lastSeq = prev.length > 0 ? prev[prev.length - 1].seq : -1;
+				const fresh = data.filter((l) => l.seq > lastSeq);
+				if (fresh.length === 0) return prev;
+				const next = [...prev, ...fresh].slice(-maxLines);
 				cache.current = next;
 				return next;
 			});
 		});
 
 		return () => {
-			offLine();
+			offLines();
 			offInitial();
 			unsubscribe('console');
 		};
