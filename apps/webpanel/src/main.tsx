@@ -3,9 +3,9 @@ import { createRoot } from 'react-dom/client';
 
 import '@fxmanager/ui/globals.css';
 import { App } from './App.tsx';
+import { SetupApp } from './pages/setup/index.tsx';
 import { ThemeProvider } from '@/components/theme-provider.tsx';
 import { BrowserRouter } from 'react-router-dom';
-import SetupApp from './SetupApp.tsx';
 import { TooltipProvider } from '@fxmanager/ui/components/tooltip';
 import { AuthProvider } from './context/AuthContext.tsx';
 import { WSProvider } from './context/WsContext.tsx';
