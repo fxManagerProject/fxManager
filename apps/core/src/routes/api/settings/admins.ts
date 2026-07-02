@@ -153,8 +153,8 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 				repo.audit.log({
 					adminId: admin.id,
 					action: 'admin.update',
-					target: username,
 					metadata: {
+						target: username,
 						previous_permissions: oldPermissions,
 						new_permissions: newPermissions,
 					},
@@ -214,8 +214,8 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 				repo.audit.log({
 					adminId: admin.id,
 					action: 'admin.update',
-					target: username,
 					metadata: {
+						target: username,
 						previous_playerId: newPlayerId,
 						new_playerId: previousPlayerId,
 					},
@@ -320,8 +320,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 			repo.audit.log({
 				adminId: admin.id,
 				action: 'admin.delete',
-				target: deletedUser.username,
-				metadata: { id: deletedUser.id },
+				metadata: { target: deletedUser.username, id: deletedUser.id },
 			});
 
 			aceSync.resync(pm);
