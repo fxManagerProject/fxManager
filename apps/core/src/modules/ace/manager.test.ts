@@ -1,7 +1,18 @@
 import { afterAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
-import { repo } from '@fxmanager/database';
 import { UserPermissions } from '@fxmanager/shared/constants';
-import { AceSyncManager, buildAceCommands } from './manager';
+
+const mockGroupsList = mock<() => unknown[]>(() => []);
+const mockListForAceSync = mock<() => unknown[]>(() => []);
+
+mock.module('@fxmanager/database', () => ({
+	repo: {
+		groups: { list: mockGroupsList },
+		admins: { listForAceSync: mockListForAceSync },
+	},
+}));
+
+const { AceSyncManager, buildAceCommands } = await import('./manager');
+type AceSyncManagerInstance = InstanceType<typeof AceSyncManager>;
 
 const warnSpy = spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -118,15 +129,12 @@ describe('buildAceCommands()', () => {
 });
 
 describe('AceSyncManager', () => {
-	const groupsListSpy = spyOn(repo.groups, 'list');
-	const adminsListSpy = spyOn(repo.admins, 'listForAceSync');
-
-	let aceSync: AceSyncManager;
+	let aceSync: AceSyncManagerInstance;
 	let sent: string[];
 	let sender: { sendCommand: ReturnType<typeof mock> };
 
 	beforeEach(() => {
-		groupsListSpy.mockReset().mockReturnValue([
+		mockGroupsList.mockReset().mockReturnValue([
 			{
 				id: 1,
 				name: 'Mods',
@@ -137,7 +145,7 @@ describe('AceSyncManager', () => {
 				memberCount: 1,
 			},
 		]);
-		adminsListSpy.mockReset().mockReturnValue([
+		mockListForAceSync.mockReset().mockReturnValue([
 			{
 				id: 5,
 				username: 'mod',
@@ -154,11 +162,6 @@ describe('AceSyncManager', () => {
 				sent.push(command);
 			}),
 		};
-	});
-
-	afterAll(() => {
-		groupsListSpy.mockRestore();
-		adminsListSpy.mockRestore();
 	});
 
 	it('apply() should push the built commands to the server', () => {
@@ -180,7 +183,7 @@ describe('AceSyncManager', () => {
 	});
 
 	it('resync() should move the principal when a linked admin changes group', () => {
-		groupsListSpy.mockReturnValue([
+		mockGroupsList.mockReturnValue([
 			{
 				id: 1,
 				name: 'Mods',
@@ -203,7 +206,7 @@ describe('AceSyncManager', () => {
 		aceSync.apply(sender); // admin 5 linked to group 1 (has kick)
 		sent.length = 0;
 
-		adminsListSpy.mockReturnValue([
+		mockListForAceSync.mockReturnValue([
 			{ id: 5, username: 'mod', permissions: 0, groupId: 2, license: 'license:abc' },
 		]);
 		aceSync.resync(sender);
@@ -218,7 +221,7 @@ describe('AceSyncManager', () => {
 		aceSync.apply(sender);
 		sent.length = 0;
 
-		adminsListSpy.mockReturnValue([]);
+		mockListForAceSync.mockReturnValue([]);
 		aceSync.resync(sender);
 
 		expect(sent).toContain(
@@ -230,7 +233,7 @@ describe('AceSyncManager', () => {
 		aceSync.apply(sender);
 		sent.length = 0;
 
-		groupsListSpy.mockReturnValue([
+		mockGroupsList.mockReturnValue([
 			{
 				id: 1,
 				name: 'Mods',
@@ -266,7 +269,7 @@ describe('AceSyncManager', () => {
 		aceSync.apply(sender);
 		sent.length = 0;
 
-		adminsListSpy.mockReturnValue([
+		mockListForAceSync.mockReturnValue([
 			{
 				id: 5,
 				username: 'mod',
@@ -293,7 +296,7 @@ describe('AceSyncManager', () => {
 	it('should clear tracked state when the server is unavailable', () => {
 		aceSync.apply(sender);
 
-		groupsListSpy.mockReturnValue([
+		mockGroupsList.mockReturnValue([
 			{
 				id: 1,
 				name: 'Mods',
