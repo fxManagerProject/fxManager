@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Server } from 'lucide-react';
 import { cn } from '@fxmanager/ui/lib/utils';
 
