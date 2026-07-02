@@ -14,6 +14,9 @@ import { createAuthRepository } from './repositories/auth';
 import { createAdminsRepository } from './repositories/admins';
 import { createWhitelistRepository } from './repositories/whitelist';
 import { createMigrateRepository } from './repositories/migrate';
+import { createDisconnectsRepository } from './repositories/disconnects';
+import { createServerSessionsRepository } from './repositories/server-sessions';
+import { createPerfSnapshotsRepository } from './repositories/perf-snapshots';
 
 export type { Migration } from './migrations/types';
 export type { ImportSummary } from './import/txadmin.importer';
@@ -80,4 +83,7 @@ export const repo = {
 	admins: createAdminsRepository(db),
 	whitelist: createWhitelistRepository(db),
 	migrate: createMigrateRepository(db),
+	serverSessions: createServerSessionsRepository(db),
+	disconnects: createDisconnectsRepository(db),
+	perfSnapshots: createPerfSnapshotsRepository(db),
 };

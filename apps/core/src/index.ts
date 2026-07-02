@@ -10,10 +10,11 @@ import { isFxManagerSetup, isProduction } from './common/utils';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
-import { ProcessManager } from './modules/process/manager';
-import { GameManager } from './modules/game/manager';
+import { processManager } from './modules/process/manager';
+import { gameManager } from './modules/game/manager';
 import { ConfigManager } from './modules/config/manager';
 import { perfManager } from './modules/perf/manager';
+import { sessionManager } from './modules/session/manager';
 import { restartScheduler } from './modules/schedule/manager';
 import { applyMigrations } from '@fxmanager/database';
 import { MIGRATE_WORKER_FLAG, runMigrateWorker } from './migrate-worker';
@@ -77,10 +78,11 @@ fastify.get('/api/health', async () => {
 	return { status: 'ok' };
 });
 
-const pm = new ProcessManager();
-const gm = new GameManager();
+const pm = processManager;
+const gm = gameManager;
 
 perfManager.start();
+sessionManager.init();
 restartScheduler.start(pm);
 
 fastify.register(apiRoutes, { prefix: '/api', pm, gm });

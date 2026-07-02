@@ -1,3 +1,4 @@
+import { repo } from '@fxmanager/database';
 import {
 	PERF_WINDOW_MS,
 	type PerfSnapshot,
@@ -5,6 +6,7 @@ import {
 } from '@fxmanager/shared/types';
 import { diffPerfs, didPerfReset, parseRawPerf } from './parser';
 import { wsManager } from '../ws/manager';
+import { sessionManager } from '../session/manager';
 import { getServerNetEndpoint } from '../../common/fxserver-endpoint';
 
 const SAMPLE_INTERVAL_MS = 30_000;
@@ -61,11 +63,30 @@ class PerfManager {
 			return;
 		}
 
+		const players = sessionManager.getPlayerCount();
 		const snapshot: PerfSnapshot = {
 			ts: Date.now(),
+			players,
 			threads: diffPerfs(raw, this.lastRaw),
 		};
 		this.lastRaw = raw;
+
+		const sessionId = sessionManager.getCurrentId();
+		if (sessionId !== null) {
+			try {
+				repo.perfSnapshots.insert({
+					sessionId,
+					ts: snapshot.ts,
+					players,
+					perf: snapshot.threads,
+				});
+			} catch (err) {
+				console.error(
+					'[perf] failed to persist snapshot:',
+					(err as Error).message,
+				);
+			}
+		}
 
 		const cutoff = Date.now() - PERF_WINDOW_MS;
 		this.recent = [...this.recent, snapshot].filter((s) => s.ts >= cutoff);

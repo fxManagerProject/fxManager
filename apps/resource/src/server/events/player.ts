@@ -115,21 +115,24 @@ on('playerJoining', async () => {
 	}
 });
 
-on('playerDropped', async () => {
-	const src = source;
+on(
+	'playerDropped',
+	async (reason: string, resourceName: string, category: number) => {
+		const src = source;
 
-	playerManager.removePlayer(src);
+		playerManager.removePlayer(src);
 
-	try {
-		QueryManager<{ ack: true }>({
-			endpoint: '/players/drop',
-			method: 'POST',
-			body: { serverId: src },
-		});
-	} catch (err) {
-		console.error(
-			`[API Error] Failed to process drop for ID ${src}:`,
-			(err as Error).message,
-		);
-	}
-});
+		try {
+			await QueryManager<{ ack: true }>({
+				endpoint: '/players/drop',
+				method: 'POST',
+				body: { serverId: src, reason, resourceName, category },
+			});
+		} catch (err) {
+			console.error(
+				`[API Error] Failed to process drop for ID ${src}:`,
+				(err as Error).message,
+			);
+		}
+	},
+);

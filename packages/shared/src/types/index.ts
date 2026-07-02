@@ -11,4 +11,6 @@ export * from './settings';
 export * from './txadmin';
 export * from './websockets';
 export * from './perf';
+export * from './disconnect';
+export * from './session';
 export * from './whitelist';

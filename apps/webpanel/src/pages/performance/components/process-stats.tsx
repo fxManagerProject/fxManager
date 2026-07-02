@@ -4,38 +4,42 @@ import {
 	type PerfThread,
 } from '@fxmanager/shared/types';
 import { bandLabel } from './perf-buckets';
+import { aggregateBuckets, type PerfInspect } from './perf-series';
 
-export function PerfStatsGrid({ samples }: { samples: PerfSnapshot[] }) {
-	const latestSample = samples[samples.length - 1];
+export function PerfStatsGrid({
+	samples,
+	inspect,
+}: {
+	samples: PerfSnapshot[];
+	inspect?: PerfInspect | null;
+}) {
+	const pool: PerfSnapshot[] =
+		inspect?.kind === 'point'
+			? [inspect.snapshot]
+			: inspect?.kind === 'range'
+				? inspect.snapshots
+				: samples.length
+					? [samples[samples.length - 1]]
+					: [];
 
 	const getDominantBucket = (thread: PerfThread) => {
-		if (!latestSample || !latestSample.threads[thread]) return null;
+		const agg = aggregateBuckets(pool, thread);
+		if (!agg) return null;
 
-		const currentThread = latestSample.threads[thread];
-		const totalCount = currentThread.count;
-
-		if (totalCount === 0) return null;
-
-		let maxPct = 0;
+		let maxFrac = 0;
 		let dominantLabel = '';
-
-		let previousCount = 0;
-		currentThread.buckets.forEach((cumulativeCount, idx) => {
-			const bucketCount = cumulativeCount - previousCount;
-			const pct = (bucketCount / totalCount) * 100;
-
-			if (pct > maxPct) {
-				maxPct = pct;
+		agg.frac.forEach((frac, idx) => {
+			if (frac > maxFrac) {
+				maxFrac = frac;
 				dominantLabel = bandLabel(idx);
 			}
-			previousCount = cumulativeCount;
 		});
 
-		return { label: dominantLabel, percentage: maxPct };
+		return { label: dominantLabel, percentage: maxFrac * 100 };
 	};
 
 	return (
-		<div className="grid gap-4 md:grid-cols-3">
+		<div className="grid gap-4 sm:grid-cols-3">
 			{PERF_THREADS.map((thread) => {
 				const dominant = getDominantBucket(thread);
 

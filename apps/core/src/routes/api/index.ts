@@ -8,6 +8,8 @@ import WsModule from './sockets';
 import SettingsModule from './settings';
 import ResourcesModule from './resources';
 import MigrateModule from './migrate';
+import DisconnectsModule from './disconnects';
+import PerfModule from './perf';
 import ConfigModule from './config';
 
 const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
@@ -53,6 +55,16 @@ const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(MigrateModule.handler, {
 		...options,
 		prefix: MigrateModule.prefix,
+	});
+
+	fastify.register(DisconnectsModule.handler, {
+		...options,
+		prefix: DisconnectsModule.prefix,
+	});
+
+	fastify.register(PerfModule.handler, {
+		...options,
+		prefix: PerfModule.prefix,
 	});
 
 	fastify.register(ConfigModule.handler, {
