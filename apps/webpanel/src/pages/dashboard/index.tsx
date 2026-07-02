@@ -1,8 +1,9 @@
-import { Activity, Clock, InfoIcon, LayoutDashboard, Shield, User } from 'lucide-react';
+import { Activity, Clock, Flag, LayoutDashboard, Shield, User } from 'lucide-react';
 import { formatRemaining, formatUptime } from '@/lib/utils';
 import { STATUS_VARIANT } from '@/static/server-state';
 import { PageHeader } from '@/components/page-header';
 import { usePlayerlistSocket, useServerStateSocket } from '@/hooks/ws-channels';
+import { usePerfSocket } from '@/hooks/ws-channels/use-perf';
 import { Badge } from '@fxmanager/ui/components/badge';
 import {
 	Card,
@@ -25,34 +26,12 @@ import {
   type ChartConfig,
 	type TooltipContentProps,
 } from "@fxmanager/ui/components/chart";
-import { Alert, AlertDescription, AlertTitle } from '@fxmanager/ui/components/alert';
 
-const MOCK_CHART_DATA = [
-	{ time: "00:00", players: 145 },
-	{ time: "01:00", players: 110 },
-	{ time: "02:00", players: 78  },
-	{ time: "03:00", players: 45  },
-	{ time: "04:00", players: 28  },
-	{ time: "05:00", players: 15  },
-	{ time: "06:00", players: 22  },
-	{ time: "07:00", players: 38  },
-	{ time: "08:00", players: 55  },
-	{ time: "09:00", players: null}, // no players
-	{ time: "10:00", players: 90  },
-	{ time: "11:00", players: 115 },
-	{ time: "12:00", players: 140 },
-	{ time: "13:00", players: 155 },
-	{ time: "14:00", players: 138 },
-	{ time: "15:00", players: 160 },
-	{ time: "16:00", players: 195 },
-	{ time: "17:00", players: 230 },
-	{ time: "18:00", players: 265 },
-	{ time: "19:00", players: 290 },
-	{ time: "20:00", players: 312 },
-	{ time: "21:00", players: 285 },
-	{ time: "22:00", players: 240 },
-	{ time: "23:00", players: 190 },
-];
+const clockFmt = new Intl.DateTimeFormat([], {
+	hour: '2-digit',
+	minute: '2-digit',
+});
+
 const chartConfig = {
   players: {
     color: "var(--chart-2)",
@@ -85,6 +64,7 @@ export default function DashboardPage() {
 	const { state: serverState } = useServerStateSocket();
 	const { status: schedule } = useSchedule();
 	const { players: rawPlayers } = usePlayerlistSocket();
+	const { samples } = usePerfSocket();
 
 	const status = serverState?.status ?? 'stopped';
 	const nextRestartMs = schedule?.nextRestart
@@ -98,6 +78,12 @@ export default function DashboardPage() {
 			count: connectedStaff.length,
 		};
 	}, [rawPlayers]);
+
+	const chartData = useMemo(
+		() =>
+			samples.map((s) => ({ time: clockFmt.format(s.ts), players: s.players })),
+		[samples],
+	);
 
 	const stats = [
 		{
@@ -168,64 +154,65 @@ export default function DashboardPage() {
 				<div className="lg:col-span-2 space-y-6">
 					<Card className="bg-card/50 min-h-[350px] w-full">
 						<CardHeader>
-							<CardTitle>Players over the last 24h</CardTitle>
+							<CardTitle>Player List</CardTitle>
 						</CardHeader>
-						<CardContent className="pb-4 space-y-4">
-							<ChartContainer config={chartConfig} className="h-[30em] w-full">
-								<AreaChart
-									accessibilityLayer
-									data={MOCK_CHART_DATA}
-									margin={{
-										top: 10
-									}}
-								>
-									<CartesianGrid vertical={false} className="stroke-muted/30" />
-									<XAxis
-										dataKey="time"
-										tickLine={false}
-										axisLine={false}
-										tickMargin={8}
-										interval={3}
-									/>
-									<YAxis
-										dataKey="players"
-										tickLine={false}
-										axisLine={false}
-									/>
-									<ChartTooltip cursor={false} content={PlayerTooltip} />
-									<defs>
-										<linearGradient id="fillPlayers" x1="0" y1="0" x2="0" y2="1">
-											<stop
-												offset="5%"
-												stopColor="var(--color-players)"
-												stopOpacity={0.4}
-											/>
-											<stop
-												offset="95%"
-												stopColor="var(--color-players)"
-												stopOpacity={0.0}
-											/>
-										</linearGradient>
-									</defs>
-									<Area
-										dataKey="players"
-										type="monotone"
-										fill="url(#fillPlayers)"
-										stroke="var(--color-players)"
-										strokeWidth={2}
-										stackId="a"
-									/>
-								</AreaChart>
-							</ChartContainer>
-							<Alert>
-								<AlertTitle className="flex items-center gap-2 text-base font-semibold tracking-tight text-amber-600 dark:text-amber-500">
-									<InfoIcon className="size-4 shrink-0" />
-									<span>Under Development</span>
-								</AlertTitle>
-								<AlertDescription className="text-sm leading-relaxed">
-									This chart is currently only a placeholder, statistic measuring is coming soon.
-								</AlertDescription>
-							</Alert>
+						<CardContent className="pb-4">
+							{chartData.length === 0 ? (
+								<div className="flex h-[30em] items-center justify-center text-sm text-muted-foreground">
+									{status === 'running'
+										? 'Collecting player samples…'
+										: 'No player data — server is offline'}
+								</div>
+							) : (
+								<ChartContainer config={chartConfig} className="h-[30em] w-full">
+									<AreaChart
+										accessibilityLayer
+										data={chartData}
+										margin={{
+											top: 10
+										}}
+									>
+										<CartesianGrid vertical={false} className="stroke-muted/30" />
+										<XAxis
+											dataKey="time"
+											tickLine={false}
+											axisLine={false}
+											tickMargin={8}
+											interval="preserveStartEnd"
+											minTickGap={40}
+										/>
+										<YAxis
+											dataKey="players"
+											tickLine={false}
+											axisLine={false}
+											allowDecimals={false}
+										/>
+										<ChartTooltip cursor={false} content={PlayerTooltip} />
+										<defs>
+											<linearGradient id="fillPlayers" x1="0" y1="0" x2="0" y2="1">
+												<stop
+													offset="5%"
+													stopColor="var(--color-players)"
+													stopOpacity={0.4}
+												/>
+												<stop
+													offset="95%"
+													stopColor="var(--color-players)"
+													stopOpacity={0.0}
+												/>
+											</linearGradient>
+										</defs>
+										<Area
+											dataKey="players"
+											type="monotone"
+											fill="url(#fillPlayers)"
+											stroke="var(--color-players)"
+											strokeWidth={2}
+											stackId="a"
+										/>
+									</AreaChart>
+								</ChartContainer>
+							)}
 						</CardContent>
 					</Card>
 				</div>
@@ -277,6 +264,33 @@ export default function DashboardPage() {
 					</Card>
 				</div>
 			</div>
+
+			<Card className="bg-card/50">
+				<CardHeader>
+					<CardTitle className="text-sm font-semibold tracking-tight flex items-center gap-2">
+						<Flag className="h-4 w-4 text-primary" />
+						Active Reports
+						<Badge variant="outline" className="ml-1 text-[10px] uppercase tracking-wide">
+							WIP
+						</Badge>
+					</CardTitle>
+					<CardDescription>
+						Live player reports awaiting staff review.
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+						<Flag className="h-6 w-6 text-muted-foreground/40" />
+						<p className="text-sm font-medium text-muted-foreground">
+							Reports are coming in a future update
+						</p>
+						<p className="max-w-md text-xs text-muted-foreground/80 leading-relaxed">
+							The in-game reporting panel and staff review tools are planned for
+							a later release and are out of scope for v1.
+						</p>
+					</div>
+				</CardContent>
+			</Card>
 		</div>
 	);
 }
