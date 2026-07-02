@@ -27,8 +27,14 @@ import { usePlayerlistSocket, useServerStateSocket } from '@/hooks/ws-channels';
 import { useRecommendedArtifact } from '@/hooks/use-recommended-artifact';
 import { useSchedule } from '@/hooks/use-schedule';
 import { useEffect, useState } from 'react';
+import type { ProcessState } from '@fxmanager/shared/types';
 
 const TEMP_PRESETS = [5, 15, 30] as const;
+const SERVER_RUNNING_STATES: ProcessState[] = [
+	'running',
+	'starting',
+	'stopping',
+];
 
 interface ActionButtonProps {
 	Icon: LucideIcon;
@@ -119,7 +125,8 @@ export function ServerStatusCard() {
 					<div className="flex flex-row justify-between">
 						<p>Uptime</p>
 						<p>
-							{serverState?.startedAt
+							{serverState?.startedAt &&
+							SERVER_RUNNING_STATES.includes(serverState?.status)
 								? formatUptime(serverState.startedAt)
 								: 'N/A'}
 						</p>

@@ -508,11 +508,60 @@ describe('ProcessManager', () => {
 				expect.objectContaining({
 					line: expect.stringContaining('Dynamic Trace Event'),
 					source: 'stdout',
+					seq: expect.any(Number),
 				}),
 			);
 			expect(broadcastSpy).toHaveBeenCalledWith(
-				expect.objectContaining({ channel: 'console', event: 'line' }),
+				expect.objectContaining({
+					channel: 'console',
+					event: 'lines',
+					data: expect.arrayContaining([
+						expect.objectContaining({
+							line: expect.stringContaining('Dynamic Trace Event'),
+						}),
+					]),
+				}),
 			);
+		});
+	});
+
+	describe('Console output batching', () => {
+		// stray flush timers from other tests' instances can fire mid-test
+		const batchesWithMarker = (marker: string) =>
+			broadcastSpy.mock.calls
+				.map((call) => call[0] as any)
+				.filter(
+					(msg) =>
+						msg.channel === 'console' &&
+						msg.event === 'lines' &&
+						msg.data.some((l: any) => l.line.includes(marker)),
+				);
+
+		it('broadcasts the first line immediately and coalesces the rest of the burst into one batch', async () => {
+			processManager.injectConsoleLine({ value: 'burst-one', noPrint: true });
+			processManager.injectConsoleLine({ value: 'burst-two', noPrint: true });
+			processManager.injectConsoleLine({ value: 'burst-three', noPrint: true });
+
+			expect(batchesWithMarker('burst-')).toHaveLength(1);
+			expect(batchesWithMarker('burst-')[0].data).toHaveLength(1);
+
+			await Bun.sleep(100);
+
+			const batches = batchesWithMarker('burst-');
+			expect(batches).toHaveLength(2);
+			expect(batches[1].data).toHaveLength(2);
+		});
+
+		it('stamps strictly increasing seq values on every emitted line', async () => {
+			processManager.injectConsoleLine({ value: 'seq-a', noPrint: true });
+			processManager.injectConsoleLine({ value: 'seq-b', noPrint: true });
+			processManager.injectConsoleLine({ value: 'seq-c', noPrint: true });
+			await Bun.sleep(100);
+
+			const seqs = batchesWithMarker('seq-')
+				.flatMap((msg) => msg.data)
+				.map((line: any) => line.seq);
+			expect(seqs).toEqual([0, 1, 2]);
 		});
 	});
 });

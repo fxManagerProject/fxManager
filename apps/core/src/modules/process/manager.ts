@@ -15,8 +15,10 @@ import { txAdminCompat } from '../txadmin/compat';
 const STARTUP_STALL_MS = 90_000;
 const KILL_GRACE_MS = 5_000;
 const SHUTDOWN_EVENT_GRACE_MS = 10_000;
+const CONSOLE_FLUSH_MS = 50;
 
 type ShutdownOpts = { author?: string; message?: string };
+type RawOutputLine = Omit<ProcessOutputLine, 'seq'>;
 
 export class ProcessManager {
 	private state: ServerState = {
@@ -28,6 +30,9 @@ export class ProcessManager {
 	private buffer = new LogBuffer<ProcessOutputLine>();
 	private config = ConfigManager.getInstance();
 	private startupTimer: ReturnType<typeof setTimeout> | null = null;
+	private lineSeq = 0;
+	private pendingLines: ProcessOutputLine[] = [];
+	private flushTimer: ReturnType<typeof setTimeout> | null = null;
 	private readonly startupStallMs: number;
 	private readonly shutdownGraceMs: number;
 
@@ -76,7 +81,7 @@ export class ProcessManager {
 					'\x1b[1m\x1b[32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
 				ts: Date.now(),
 				source: 'stdout',
-			} satisfies ProcessOutputLine,
+			} satisfies RawOutputLine,
 		});
 
 		try {
@@ -134,7 +139,7 @@ export class ProcessManager {
 					'\x1b[1m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
 				ts: Date.now(),
 				source: 'stdout',
-			} satisfies ProcessOutputLine,
+			} satisfies RawOutputLine,
 		});
 
 		if (wasRunning) await this.announceShutdown(opts);
@@ -152,7 +157,7 @@ export class ProcessManager {
 					'\x1b[2m\x1b[37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
 				ts: Date.now(),
 				source: 'stdout',
-			} satisfies ProcessOutputLine,
+			} satisfies RawOutputLine,
 		});
 
 		return true;
@@ -200,7 +205,7 @@ export class ProcessManager {
 	}
 
 	injectConsoleLine(params: {
-		payload?: ProcessOutputLine;
+		payload?: RawOutputLine;
 		process?: string;
 		value?: string;
 		color?: string;
@@ -230,18 +235,41 @@ export class ProcessManager {
 				line: `${ansiColor}[${paddedProcess}] ${value}\x1b[0m`,
 				ts: Date.now(),
 				source: 'stdout',
-			} satisfies ProcessOutputLine;
+			} satisfies RawOutputLine;
 		}
 
 		if (!noPrint) {
 			console.log(payload.line);
 		}
 
-		this.buffer.push(payload);
+		this.emitLine(payload);
+	}
+
+	private emitLine(raw: RawOutputLine) {
+		const line = { ...raw, seq: this.lineSeq++ } satisfies ProcessOutputLine;
+		this.buffer.push(line);
+		this.pendingLines.push(line);
+		this.scheduleFlush();
+	}
+
+	private scheduleFlush() {
+		if (this.flushTimer) return;
+		this.flushLines();
+		this.flushTimer = setTimeout(() => {
+			this.flushTimer = null;
+			if (this.pendingLines.length > 0) this.scheduleFlush();
+		}, CONSOLE_FLUSH_MS);
+		this.flushTimer.unref?.();
+	}
+
+	private flushLines() {
+		if (this.pendingLines.length === 0) return;
+		const batch = this.pendingLines;
+		this.pendingLines = [];
 		wsManager.broadcast({
 			channel: 'console',
-			event: 'line',
-			data: payload,
+			event: 'lines',
+			data: batch,
 		});
 	}
 
@@ -410,7 +438,7 @@ export class ProcessManager {
 					line: value,
 					source,
 					ts: Date.now(),
-				} satisfies ProcessOutputLine;
+				} satisfies RawOutputLine;
 
 				if (this.state.status === 'starting') {
 					if (value.includes('Authenticated with cfx.re Nucleus')) {
@@ -423,12 +451,7 @@ export class ProcessManager {
 
 				console.log(value);
 
-				this.buffer.push(event);
-				wsManager.broadcast({
-					channel: 'console',
-					event: 'line',
-					data: event,
-				});
+				this.emitLine(event);
 			}
 		} catch (err) {
 			console.error(`Stream error:`, err);

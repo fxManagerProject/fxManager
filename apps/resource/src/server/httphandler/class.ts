@@ -191,7 +191,6 @@ export class HttpServer {
 
 		try {
 			const response = await route.handler(req);
-			console.log('resposne to request:', response);
 			this.sendResponse(rawRes, response);
 		} catch (err) {
 			console.error(

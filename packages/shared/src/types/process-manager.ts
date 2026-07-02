@@ -15,4 +15,5 @@ export interface ProcessOutputLine {
 	line: string;
 	source: 'stdout' | 'stderr';
 	ts: number;
+	seq: number;
 }

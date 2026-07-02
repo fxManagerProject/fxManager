@@ -27,7 +27,6 @@ api.post(
 );
 
 api.get('/resources/load', () => {
-	console.log('Received request on /resources/load');
 	return {
 		status: 200,
 		body: { success: true, data: getResourcesData() },
