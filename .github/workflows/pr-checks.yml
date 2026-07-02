@@ -3,6 +3,12 @@ name: PR Code Verification
 on:
   pull_request:
     branches: [main]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "package.json"
+      - "bun.lockb"
+      - "scripts/build.ts"
 
 jobs:
   test:
