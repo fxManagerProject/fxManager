@@ -80,6 +80,32 @@ describe('AuthRepository', () => {
 			expect(standardUser.permissions & UserPermissions.MASTER).toBe(0);
 			expect(standardUser.permissions & UserPermissions.BAN).not.toBe(0);
 		});
+
+		it('should link the given player in the same insert', async () => {
+			const player = testDb
+				.insert(schema.players)
+				.values({ name: 'LinkedInGame' })
+				.returning()
+				.get();
+
+			const user = await authRepo.createUser(
+				'linked_admin',
+				'pass',
+				UserPermissions.KICK,
+				false,
+				player.id,
+			);
+
+			expect(user.playerId).toBe(player.id);
+		});
+
+		it('should not create an orphan account when the linked player does not exist', async () => {
+			expect(
+				authRepo.createUser('ghost_link', 'pass', 0, false, 9999),
+			).rejects.toThrow(/FOREIGN KEY/);
+
+			expect(authRepo.findUserByUsername('ghost_link')).toBeUndefined();
+		});
 	});
 
 	describe('deleteUser()', () => {

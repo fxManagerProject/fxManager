@@ -56,7 +56,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 
 			if (!allowed) throw new Error('Unauthorized');
 
-			const { username, permissions, groupId } =
+			const { username, permissions, groupId, playerId } =
 				request.body as CreateAdminForm;
 			const password = generatePassword(20);
 
@@ -73,16 +73,20 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 					password,
 					storedPermissions,
 					false,
+					playerId ?? null,
 				);
 
 				if (groupId != null) {
 					await repo.admins.assignGroup(profile.id, groupId);
 				}
 
+				// a linked+privileged admin needs its ace principal pushed now
+				if (groupId != null || playerId != null) aceSync.resync(pm);
+
 				repo.audit.log({
 					adminId: admin.id,
 					action: 'admin.create',
-					metadata: { username, permissions: storedPermissions, groupId },
+					metadata: { username, permissions: storedPermissions, groupId, playerId },
 				});
 
 				return {
@@ -94,12 +98,11 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 				};
 			} catch (err) {
 				const message = (err as Error).message;
-				return {
-					success: false,
-					error: message.includes('UNIQUE constraint failed')
-						? 'Username is already taken'
-						: message,
-				};
+				if (message.includes('UNIQUE constraint failed'))
+					return { success: false, error: 'Username is already taken' };
+				if (message.includes('FOREIGN KEY constraint failed'))
+					return { success: false, error: 'Selected player not found' };
+				return { success: false, error: message };
 			}
 		},
 	);

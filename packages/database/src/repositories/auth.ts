@@ -27,6 +27,7 @@ class AuthRepository {
 		password: string,
 		permissions: number = 0,
 		updateLoggedIn: boolean = false,
+		playerId: number | null = null,
 	) {
 		const passwordHash = await Bun.password.hash(password, {
 			algorithm: 'bcrypt',
@@ -38,6 +39,8 @@ class AuthRepository {
 				? permissions
 				: permissions & ~UserPermissions.MASTER;
 
+		// linking in the same insert keeps it atomic: an invalid playerId trips
+		// the FK and no orphan account is left behind
 		return this.db
 			.insert(adminUsers)
 			.values({
@@ -46,6 +49,7 @@ class AuthRepository {
 				createdAt: new Date(),
 				lastLoginAt: updateLoggedIn ? new Date() : null,
 				permissions: sanitizedPerms,
+				playerId,
 			})
 			.returning()
 			.get();
