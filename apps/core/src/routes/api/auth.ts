@@ -68,7 +68,16 @@ const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
 		return {
 			username: result.user.username,
 			id: result.user.id,
-			permissions: result.user.permissions,
+			permissions: result.effectivePermissions,
+			group: result.group
+				? {
+						id: result.group.id,
+						name: result.group.name,
+						permissions: result.group.permissions,
+						colour: result.group.colour,
+						icon: result.group.icon,
+					}
+				: null,
 		};
 	});
 };

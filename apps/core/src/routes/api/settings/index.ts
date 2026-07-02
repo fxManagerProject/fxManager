@@ -1,6 +1,7 @@
 import type { AuthedRequest, RouteModule } from '../../../types';
 import { sessionAuth } from '../../../middleware/session';
 import AdminManagementModule from './admins';
+import GroupManagementModule from './groups';
 import AuditLogModule from './audit';
 import type {
 	ApiResponse,
@@ -93,6 +94,12 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 
 	fastify.register(AdminManagementModule.handler, {
 		prefix: AdminManagementModule.prefix,
+		pm,
+		gm,
+	});
+
+	fastify.register(GroupManagementModule.handler, {
+		prefix: GroupManagementModule.prefix,
 		pm,
 		gm,
 	});
