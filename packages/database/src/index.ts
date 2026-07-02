@@ -12,6 +12,7 @@ import { createSettingsRepository } from './repositories/settings';
 import { createApiTokensRepository } from './repositories/api-tokens';
 import { createAuthRepository } from './repositories/auth';
 import { createAdminsRepository } from './repositories/admins';
+import { createGroupsRepository } from './repositories/groups';
 import { createWhitelistRepository } from './repositories/whitelist';
 import { createMigrateRepository } from './repositories/migrate';
 import { createDisconnectsRepository } from './repositories/disconnects';
@@ -81,6 +82,7 @@ export const repo = {
 	apiTokens: createApiTokensRepository(db),
 	auth: createAuthRepository(db),
 	admins: createAdminsRepository(db),
+	groups: createGroupsRepository(db),
 	whitelist: createWhitelistRepository(db),
 	migrate: createMigrateRepository(db),
 	serverSessions: createServerSessionsRepository(db),
