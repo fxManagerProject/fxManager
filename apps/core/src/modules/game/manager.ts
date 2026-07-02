@@ -165,7 +165,6 @@ export class GameManager {
 	}) {
 		const player = await repo.players.upsert(name, identifiers);
 
-		// a linked admin may have had no license row until this join
 		if (player.isStaff) aceSync.refresh();
 
 		const playerPayload = {

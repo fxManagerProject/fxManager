@@ -211,8 +211,6 @@ class AdminsRepository {
 
 		const result = await this.db
 			.update(adminUsers)
-			// the group fully defines a member's permissions, keeping stale
-			// personal bits would silently retain revoked powers
 			.set({ groupId, ...(groupId !== null && { permissions: 0 }) })
 			.where(eq(adminUsers.id, adminId))
 			.returning();

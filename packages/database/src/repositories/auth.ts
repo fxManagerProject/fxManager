@@ -39,8 +39,6 @@ class AuthRepository {
 				? permissions
 				: permissions & ~UserPermissions.MASTER;
 
-		// linking in the same insert keeps it atomic: an invalid playerId trips
-		// the FK and no orphan account is left behind
 		return this.db
 			.insert(adminUsers)
 			.values({

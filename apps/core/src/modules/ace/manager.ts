@@ -20,7 +20,6 @@ interface AceAdmin {
 	license: string | null;
 }
 
-// full identifier as stored by the resource, e.g. `license:0f3a...`
 const IDENTIFIER_RE = /^[a-z0-9]+:[a-zA-Z0-9]+$/;
 
 function pushBitAces(commands: string[], principal: string, bitfield: number) {
@@ -95,9 +94,7 @@ export class AceSyncManager {
 		this.push(sender, this.buildFromRepo());
 	}
 
-	/** push only the difference against the previous state — used after
-	 * admin/group mutations. additions go first so an unchanged or renamed
-	 * permission never has a window where it does not resolve */
+	/** push only the difference against the previous state */
 	resync(sender: CommandSender) {
 		const next = this.buildFromRepo();
 		const appliedSet = new Set(this.applied);
@@ -115,8 +112,7 @@ export class AceSyncManager {
 		this.applied = next;
 	}
 
-	/** resync against the last known server, e.g. when a staff member's
-	 * license identifier is first recorded after the initial apply */
+	/** resync against the last known server */
 	refresh() {
 		if (this.sender) this.resync(this.sender);
 	}

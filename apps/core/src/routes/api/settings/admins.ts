@@ -60,8 +60,6 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 				request.body as CreateAdminForm;
 			const password = generatePassword(20);
 
-			// validate before createUser, a failed assignGroup afterwards would
-			// leave an orphaned account whose generated password was never shown
 			if (groupId != null && !repo.groups.get(groupId))
 				return { success: false, error: 'Group not found' };
 
@@ -80,7 +78,6 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 					await repo.admins.assignGroup(profile.id, groupId);
 				}
 
-				// a linked+privileged admin needs its ace principal pushed now
 				if (groupId != null || playerId != null) aceSync.resync(pm);
 
 				repo.audit.log({
@@ -172,14 +169,17 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 			} catch (err) {
 				const msg = (err as Error).message;
 
-				if (msg === 'not_found')
-					return { success: false, error: 'Admin not found' };
-				else if (msg === 'admin_is_master')
-					return {
-						success: false,
-						error: 'Can not change permissions of master account',
-					};
-				else throw err;
+				switch (msg) {
+					case 'not_found':
+						return { success: false, error: 'Admin not found' };
+					case 'admin_is_master':
+						return {
+							success: false,
+							error: 'Can not change permissions of master account',
+						};
+					default:
+						throw err;
+				}
 			}
 		},
 	);
@@ -230,14 +230,17 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 			} catch (err) {
 				const msg = (err as Error).message;
 
-				if (msg === 'not_found')
-					return { success: false, error: 'Admin not found' };
-				else if (msg === 'admin_is_master')
-					return {
-						success: false,
-						error: 'Can not change permissions of master account',
-					};
-				else throw err;
+				switch (msg) {
+					case 'not_found':
+						return { success: false, error: 'Admin not found' };
+					case 'admin_is_master':
+						return {
+							success: false,
+							error: 'Can not change permissions of master account',
+						};
+					default:
+						throw err;
+				}
 			}
 		},
 	);
@@ -280,16 +283,19 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 			} catch (err) {
 				const msg = (err as Error).message;
 
-				if (msg === 'not_found')
-					return { success: false, error: 'Admin not found' };
-				else if (msg === 'group_not_found')
-					return { success: false, error: 'Group not found' };
-				else if (msg === 'admin_is_master')
-					return {
-						success: false,
-						error: 'Can not change permissions of master account',
-					};
-				else throw err;
+				switch (msg) {
+					case 'not_found':
+						return { success: false, error: 'Admin not found' };
+					case 'group_not_found':
+						return { success: false, error: 'Group not found' };
+					case 'admin_is_master':
+						return {
+							success: false,
+							error: 'Can not change permissions of master account',
+						};
+					default:
+						throw err;
+				}
 			}
 		},
 	);
@@ -327,14 +333,14 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 		} catch (err) {
 			const msg = (err as Error).message;
 
-			if (msg === 'not_found')
-				return { success: false, error: 'Admin not found' };
-			else if (msg === 'admin_is_master')
-				return {
-					success: false,
-					error: 'Cannot delete master account',
-				};
-			else throw err;
+			switch (msg) {
+				case 'not_found':
+					return { success: false, error: 'Admin not found' };
+				case 'admin_is_master':
+					return { success: false, error: 'Cannot delete master account' };
+				default:
+					throw err;
+			}
 		}
 	});
 };

@@ -92,8 +92,6 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 
 			if (customGroups.length > 0) {
 				try {
-					// staged groups replace the seeded defaults, nothing can be
-					// assigned to a group before setup has completed
 					for (const group of repo.groups.list()) {
 						if (group.memberCount === 0) repo.groups.delete(group.id);
 					}

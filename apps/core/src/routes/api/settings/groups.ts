@@ -144,15 +144,17 @@ const GroupManagementEndpoints: RouteModule['handler'] = async (
 		} catch (err) {
 			const message = (err as Error).message;
 
-			if (message === 'not_found')
-				return { success: false, error: 'Group not found' };
-			if (message === 'group_in_use')
-				return {
-					success: false,
-					error: 'Group still has members, reassign them first',
-				};
-
-			throw err;
+			switch (message) {
+				case 'not_found':
+					return { success: false, error: 'Group not found' };
+				case 'group_in_use':
+					return {
+						success: false,
+						error: 'Group still has members, reassign them first',
+					};
+				default:
+					throw err;
+			}
 		}
 	});
 };
