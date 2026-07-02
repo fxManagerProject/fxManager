@@ -399,6 +399,20 @@ describe('AdminsRepository', () => {
 			expect(cleared.newGroupId).toBeNull();
 		});
 
+		it('assignGroup() should clear stale personal permissions when joining a group', async () => {
+			const group = insertGroup('TestTrial', UserPermissions.KICK);
+			const admin = insertAdmin(
+				'demoted',
+				UserPermissions.BAN | UserPermissions.KICK,
+			);
+
+			const assigned = await adminsRepo.assignGroup(admin.id, group.id);
+
+			expect(assigned.permissions).toBe(0);
+			const profile = await adminsRepo.getProfile(admin.id);
+			expect(profile?.effectivePermissions).toBe(UserPermissions.KICK);
+		});
+
 		it('assignGroup() should refuse master accounts and unknown groups', async () => {
 			const group = insertGroup('TestGhosts', 0);
 			const master = insertAdmin('the_master', UserPermissions.MASTER);

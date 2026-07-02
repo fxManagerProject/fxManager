@@ -7,12 +7,12 @@ import {
 
 type CommandSender = { sendCommand(command: string): void };
 
-export interface AceGroup {
+interface AceGroup {
 	id: number;
 	permissions: number;
 }
 
-export interface AceAdmin {
+interface AceAdmin {
 	id: number;
 	username: string;
 	permissions: number;
@@ -85,27 +85,44 @@ export function buildAceCommands(
 
 export class AceSyncManager {
 	private applied: string[] = [];
+	private sender: CommandSender | null = null;
 
 	/** full push, used when the server just reached 'running' */
 	apply(sender: CommandSender) {
+		this.sender = sender;
 		this.applied = [];
 
-		const groups = repo.groups.list();
-		const admins = repo.admins.listForAceSync();
-
-		this.push(sender, buildAceCommands(groups, admins));
+		this.push(sender, this.buildFromRepo());
 	}
 
-	/** undo the previous push, then re-apply — used after admin/group mutations */
+	/** push only the difference against the previous state — used after
+	 * admin/group mutations. additions go first so an unchanged or renamed
+	 * permission never has a window where it does not resolve */
 	resync(sender: CommandSender) {
-		const removals = this.applied.map((cmd) => cmd.replace(/^add_/, 'remove_'));
-		this.applied = [];
+		const next = this.buildFromRepo();
+		const appliedSet = new Set(this.applied);
+		const nextSet = new Set(next);
 
-		for (const command of removals) {
+		const additions = next.filter((cmd) => !appliedSet.has(cmd));
+		const removals = this.applied
+			.filter((cmd) => !nextSet.has(cmd))
+			.map((cmd) => cmd.replace(/^add_/, 'remove_'));
+
+		for (const command of [...additions, ...removals]) {
 			if (!this.trySend(sender, command)) return;
 		}
 
-		this.apply(sender);
+		this.applied = next;
+	}
+
+	/** resync against the last known server, e.g. when a staff member's
+	 * license identifier is first recorded after the initial apply */
+	refresh() {
+		if (this.sender) this.resync(this.sender);
+	}
+
+	private buildFromRepo(): string[] {
+		return buildAceCommands(repo.groups.list(), repo.admins.listForAceSync());
 	}
 
 	private push(sender: CommandSender, commands: string[]) {

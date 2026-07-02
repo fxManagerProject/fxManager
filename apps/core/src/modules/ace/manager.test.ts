@@ -170,17 +170,36 @@ describe('AceSyncManager', () => {
 		]);
 	});
 
-	it('resync() should remove previously applied entries before re-adding', () => {
+	it('resync() should send nothing when nothing changed', () => {
 		aceSync.apply(sender);
 		sent.length = 0;
 
 		aceSync.resync(sender);
 
+		expect(sent).toEqual([]);
+	});
+
+	it('resync() should only send the delta, additions first', () => {
+		aceSync.apply(sender);
+		sent.length = 0;
+
+		groupsListSpy.mockReturnValue([
+			{
+				id: 1,
+				name: 'Mods',
+				permissions: UserPermissions.BAN,
+				colour: '#fff',
+				icon: null,
+				createdAt: new Date(),
+				memberCount: 1,
+			},
+		]);
+
+		aceSync.resync(sender);
+
 		expect(sent).toEqual([
+			'add_ace fxmanager.group.1 fxmanager.players.ban allow',
 			'remove_ace fxmanager.group.1 fxmanager.players.kick allow',
-			'remove_principal identifier.license:abc fxmanager.group.1',
-			'add_ace fxmanager.group.1 fxmanager.players.kick allow',
-			'add_principal identifier.license:abc fxmanager.group.1',
 		]);
 	});
 
@@ -193,9 +212,51 @@ describe('AceSyncManager', () => {
 		]);
 	});
 
+	it('refresh() should no-op before apply and delta-sync after', () => {
+		aceSync.refresh();
+		expect(sent).toEqual([]);
+
+		aceSync.apply(sender);
+		sent.length = 0;
+
+		adminsListSpy.mockReturnValue([
+			{
+				id: 5,
+				username: 'mod',
+				permissions: 0,
+				groupId: 1,
+				license: 'license:abc',
+			},
+			{
+				id: 6,
+				username: 'fresh',
+				permissions: 0,
+				groupId: 1,
+				license: 'license:def',
+			},
+		]);
+
+		aceSync.refresh();
+
+		expect(sent).toEqual([
+			'add_principal identifier.license:def fxmanager.group.1',
+		]);
+	});
+
 	it('should clear tracked state when the server is unavailable', () => {
 		aceSync.apply(sender);
 
+		groupsListSpy.mockReturnValue([
+			{
+				id: 1,
+				name: 'Mods',
+				permissions: UserPermissions.BAN,
+				colour: '#fff',
+				icon: null,
+				createdAt: new Date(),
+				memberCount: 1,
+			},
+		]);
 		const offline = {
 			sendCommand: mock(() => {
 				throw new Error('Server stdin not available');
@@ -206,6 +267,7 @@ describe('AceSyncManager', () => {
 		// server restarted meanwhile — nothing stale should be removed
 		sent.length = 0;
 		aceSync.apply(sender);
+		expect(sent.length).toBeGreaterThan(0);
 		expect(sent.every((cmd) => cmd.startsWith('add_'))).toBe(true);
 	});
 });

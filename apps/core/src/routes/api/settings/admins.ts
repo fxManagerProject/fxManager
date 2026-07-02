@@ -60,11 +60,18 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 				request.body as CreateAdminForm;
 			const password = generatePassword(20);
 
+			// validate before createUser, a failed assignGroup afterwards would
+			// leave an orphaned account whose generated password was never shown
+			if (groupId != null && !repo.groups.get(groupId))
+				return { success: false, error: 'Group not found' };
+
+			const storedPermissions = groupId != null ? 0 : permissions;
+
 			try {
 				const profile = await repo.auth.createUser(
 					username,
 					password,
-					groupId != null ? 0 : permissions,
+					storedPermissions,
 					false,
 				);
 
@@ -75,7 +82,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 				repo.audit.log({
 					adminId: admin.id,
 					action: 'admin.create',
-					metadata: { username, permissions, groupId },
+					metadata: { username, permissions: storedPermissions, groupId },
 				});
 
 				return {

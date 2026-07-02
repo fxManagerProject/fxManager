@@ -189,8 +189,7 @@ function GroupDialog({
 
 export default function GroupManagement() {
 	const { groups, loading, refresh } = useGroups();
-	const [editing, setEditing] = useState<AdminGroupEntry | null>(null);
-	const [creating, setCreating] = useState(false);
+	const [dialog, setDialog] = useState<AdminGroupEntry | 'new' | null>(null);
 
 	async function handleDelete(group: AdminGroupEntry) {
 		try {
@@ -221,7 +220,7 @@ export default function GroupManagement() {
 			/>
 
 			<div className="flex flex-row justify-end">
-				<Button onClick={() => setCreating(true)}>
+				<Button onClick={() => setDialog('new')}>
 					<Plus />
 					<span className="hidden lg:block">Create Group</span>
 				</Button>
@@ -289,7 +288,7 @@ export default function GroupManagement() {
 													size="sm"
 													variant="outline"
 													className="h-7"
-													onClick={() => setEditing(group)}
+													onClick={() => setDialog(group)}
 												>
 													<Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
 												</Button>
@@ -339,15 +338,11 @@ export default function GroupManagement() {
 			</Card>
 
 			<GroupDialog
-				group={creating ? null : editing}
-				open={creating || editing !== null}
-				onClose={() => {
-					setCreating(false);
-					setEditing(null);
-				}}
+				group={dialog === 'new' ? null : dialog}
+				open={dialog !== null}
+				onClose={() => setDialog(null)}
 				onSaved={() => {
-					setCreating(false);
-					setEditing(null);
+					setDialog(null);
 					void refresh();
 				}}
 			/>

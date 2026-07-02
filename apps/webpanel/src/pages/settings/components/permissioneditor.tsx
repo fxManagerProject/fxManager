@@ -27,7 +27,6 @@ type PermissionEditorProps =
 			value: number;
 			group: AdminGroup | null;
 			skipServerSave?: false;
-			hideReset?: boolean;
 			updatePerms: (perms: number) => void;
 			updateGroup: (group: AdminGroup | null) => void;
 	  }
@@ -37,20 +36,13 @@ type PermissionEditorProps =
 			group: AdminGroup | null;
 			updatePerms: (perms: number) => void;
 			updateGroup: (group: AdminGroup | null) => void;
-			hideReset?: boolean;
 			adminId?: never;
 			editable?: never;
 	  };
 
 export default function PermissionEditor(props: PermissionEditorProps) {
-	const {
-		value,
-		group,
-		updatePerms,
-		updateGroup,
-		skipServerSave = false,
-		hideReset = false,
-	} = props;
+	const { value, group, updatePerms, updateGroup, skipServerSave = false } =
+		props;
 
 	const { groups } = useGroups();
 	const [bitfield, setBitField] = useState<number>(value ?? 0);
@@ -214,17 +206,15 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 							Clear
 						</button>
 
-						{!hideReset && (
-							<button
-								type="button"
-								onClick={() => setBitField(value)}
-								disabled={bitfield === value}
-								className="flex items-center gap-2 px-3 py-2 text-xs font-medium enabled:hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
-							>
-								<RotateCcw className="h-4 w-4" />
-								Reset
-							</button>
-						)}
+						<button
+							type="button"
+							onClick={() => setBitField(value)}
+							disabled={bitfield === value}
+							className="flex items-center gap-2 px-3 py-2 text-xs font-medium enabled:hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+						>
+							<RotateCcw className="h-4 w-4" />
+							Reset
+						</button>
 
 						{!skipServerSave && (
 							<button

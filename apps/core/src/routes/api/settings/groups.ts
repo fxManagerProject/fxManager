@@ -85,6 +85,9 @@ const GroupManagementEndpoints: RouteModule['handler'] = async (
 			const groupId = parseInt(groupIdRaw, 10);
 			const { name, permissions, colour, icon } = request.body as GroupBody;
 
+			if (name !== undefined && !name.trim())
+				return { success: false, error: 'Group name is required' };
+
 			try {
 				const previous = repo.groups.get(groupId);
 				const group = repo.groups.update(groupId, {

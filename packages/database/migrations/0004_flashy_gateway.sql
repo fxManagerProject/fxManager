@@ -37,4 +37,4 @@ CREATE TABLE `server_sessions` (
 );
 --> statement-breakpoint
 CREATE INDEX `server_session_started_idx` ON `server_sessions` (`started_at`);--> statement-breakpoint
-ALTER TABLE `admin_users` ADD `group_id` integer REFERENCES admin_groups(id);
+ALTER TABLE `admin_users` ADD `group_id` integer REFERENCES admin_groups(id) ON DELETE SET NULL;

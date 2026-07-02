@@ -3,15 +3,9 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import type * as schema from '../schema';
 import { adminGroups, adminUsers } from '../schema';
 import { UserPermissions } from '@fxmanager/shared/constants';
+import type { AdminGroupForm } from '@fxmanager/shared/types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
-
-export interface AdminGroupForm {
-	name: string;
-	permissions: number;
-	colour: string;
-	icon?: string | null;
-}
 
 class GroupsRepository {
 	private static instance: GroupsRepository;

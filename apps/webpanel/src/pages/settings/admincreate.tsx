@@ -105,7 +105,11 @@ export default function AdminCreate() {
 							}
 							updateGroup={(newGroup) => {
 								setGroup(newGroup);
-								setFormData({ ...formData, groupId: newGroup?.id ?? null });
+								setFormData({
+									...formData,
+									groupId: newGroup?.id ?? null,
+									permissions: newGroup ? 0 : formData.permissions,
+								});
 							}}
 						/>
 					</div>

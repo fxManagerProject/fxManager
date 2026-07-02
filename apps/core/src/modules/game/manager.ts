@@ -11,6 +11,7 @@ import type {
 import { wsManager } from '../ws/manager';
 import { discordManager } from '../discord/manager';
 import { ConfigManager } from '../config/manager';
+import { aceSync } from '../ace/manager';
 import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
 import { getServerNetEndpoint } from '../../common/fxserver-endpoint';
@@ -163,6 +164,9 @@ export class GameManager {
 		serverId: number;
 	}) {
 		const player = await repo.players.upsert(name, identifiers);
+
+		// a linked admin may have had no license row until this join
+		if (player.isStaff) aceSync.refresh();
 
 		const playerPayload = {
 			serverId,
