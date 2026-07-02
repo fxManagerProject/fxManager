@@ -196,7 +196,7 @@ class AdminsRepository {
 		});
 
 		if (!admin) throw new Error('not_found');
-		if (admin.permissions & UserPermissions.MASTER)
+		if (PermissionManager.isMaster(admin.permissions))
 			throw new Error('admin_is_master');
 
 		if (groupId !== null) {
@@ -251,7 +251,7 @@ class AdminsRepository {
 		});
 
 		if (!admin) throw new Error('not_found');
-		if (admin.permissions & UserPermissions.MASTER)
+		if (PermissionManager.isMaster(admin.permissions))
 			throw new Error('admin_is_master');
 
 		// failsafe final check, don't set master permission
@@ -285,7 +285,7 @@ class AdminsRepository {
 		});
 
 		if (!admin) throw new Error('not_found');
-		if (admin.permissions & UserPermissions.MASTER && !isMaster)
+		if (PermissionManager.isMaster(admin.permissions) && !isMaster)
 			throw new Error('admin_is_master');
 
 		const result = await this.db

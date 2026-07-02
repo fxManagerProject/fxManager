@@ -4,6 +4,7 @@ import {
 	PERMISSION_ACE_KEYS,
 	UserPermissions,
 } from '@fxmanager/shared/constants';
+import { PermissionManager } from '@fxmanager/shared/utils';
 
 type CommandSender = { sendCommand(command: string): void };
 
@@ -51,7 +52,7 @@ export function buildAceCommands(
 		return true;
 	});
 
-	if (linked.some((admin) => admin.permissions & UserPermissions.MASTER)) {
+	if (linked.some((admin) => PermissionManager.isMaster(admin.permissions))) {
 		// the bare prefix ace covers the entire fxmanager.* tree
 		commands.push(`add_ace ${ACE_PREFIX}.master ${ACE_PREFIX} allow`);
 	}
@@ -59,7 +60,7 @@ export function buildAceCommands(
 	for (const admin of linked) {
 		const identity = `identifier.${admin.license}`;
 
-		if (admin.permissions & UserPermissions.MASTER) {
+		if (PermissionManager.isMaster(admin.permissions)) {
 			commands.push(`add_principal ${identity} ${ACE_PREFIX}.master`);
 			continue;
 		}

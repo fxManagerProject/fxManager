@@ -91,6 +91,17 @@ describe('PermissionManager Unit Tests', () => {
 		});
 	});
 
+	describe('isMaster()', () => {
+		it('should return true only when the MASTER bit is set', () => {
+			expect(PermissionManager.isMaster(UserPermissions.MASTER)).toBe(true);
+			expect(
+				PermissionManager.isMaster(UserPermissions.MASTER | UserPermissions.KICK),
+			).toBe(true);
+			expect(PermissionManager.isMaster(UserPermissions.KICK)).toBe(false);
+			expect(PermissionManager.isMaster(0)).toBe(false);
+		});
+	});
+
 	describe('effective() Group Composition', () => {
 		it('should union personal and group bitfields', () => {
 			const result = PermissionManager.effective(

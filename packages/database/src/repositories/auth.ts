@@ -64,8 +64,7 @@ class AuthRepository {
 				throw new Error('not_found');
 			}
 
-			const isMaster = (admin.permissions & UserPermissions.MASTER) !== 0;
-			if (isMaster) {
+			if (PermissionManager.isMaster(admin.permissions)) {
 				throw new Error('admin_is_master');
 			}
 

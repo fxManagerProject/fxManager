@@ -2,14 +2,18 @@ import type { UserPermissionsType } from '@fxmanager/shared/types';
 import { UserPermissions } from '@fxmanager/shared/constants';
 
 export const PermissionManager = {
+	isMaster(userBitfield: number): boolean {
+		return (userBitfield & UserPermissions.MASTER) !== 0;
+	},
+
 	has(userBitfield: number, required: UserPermissionsType): boolean {
-		if (userBitfield & UserPermissions.MASTER) return true;
+		if (PermissionManager.isMaster(userBitfield)) return true;
 
 		return (userBitfield & required) === required;
 	},
 
 	hasAll(userBitfield: number, required: UserPermissionsType[]): boolean {
-		if (userBitfield & UserPermissions.MASTER) return true;
+		if (PermissionManager.isMaster(userBitfield)) return true;
 
 		const combined = required.reduce((acc, p) => acc | p, 0);
 
