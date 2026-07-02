@@ -47,6 +47,7 @@ import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import type { AdminProfile } from '@fxmanager/database/types';
 import PermissionEditor from './components/permissioneditor';
 import { UserPermissions } from '@fxmanager/shared/constants';
+import { PermissionManager } from '@fxmanager/shared/utils';
 import {
 	Alert,
 	AlertDescription,
@@ -229,7 +230,7 @@ export default function AdminView() {
 		);
 	}
 
-	const isMaster = adminData.permissions & UserPermissions.MASTER;
+	const isMaster = PermissionManager.isMaster(adminData.permissions);
 
 	return (
 		<div>

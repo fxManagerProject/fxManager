@@ -17,7 +17,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '@fxmanager/ui/components/alert-dialog';
-import { Badge } from '@fxmanager/ui/components/badge';
+import { GroupBadge } from '@/components/group-badge';
 import { Button } from '@fxmanager/ui/components/button';
 import { Card } from '@fxmanager/ui/components/card';
 import {
@@ -267,15 +267,7 @@ export default function GroupManagement() {
 									groups.map((group) => (
 										<TableRow key={group.id} className="flex w-full items-center">
 											<TableCell className="font-medium pl-4 flex-1 flex items-center gap-2 truncate">
-												<Badge
-													style={{ backgroundColor: group.colour }}
-													className="text-white"
-												>
-													{group.icon && (
-														<DynamicIcon name={group.icon as LucidIconName} />
-													)}
-													{group.name}
-												</Badge>
+												<GroupBadge group={group} />
 											</TableCell>
 											<TableCell className="flex-1 flex items-center text-sm text-muted-foreground">
 												{group.memberCount}
