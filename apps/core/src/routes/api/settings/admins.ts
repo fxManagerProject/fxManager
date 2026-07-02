@@ -267,8 +267,8 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 				repo.audit.log({
 					adminId: admin.id,
 					action: 'admin.update',
-					target: username,
 					metadata: {
+						target: username,
 						previous_groupId: previousGroupId,
 						new_groupId: newGroupId,
 					},
