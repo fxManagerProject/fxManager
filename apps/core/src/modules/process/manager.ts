@@ -10,6 +10,9 @@ import { LogBuffer } from '../buffer/manager';
 import { ConfigManager } from '../config/manager';
 import { wsManager } from '../ws/manager';
 import { resourceManager } from '../resource/manager';
+import { disconnectManager } from '../disconnect/manager';
+import { sessionManager } from '../session/manager';
+import { gameManager } from '../game/manager';
 import { txAdminCompat } from '../txadmin/compat';
 
 const STARTUP_STALL_MS = 90_000;
@@ -294,9 +297,20 @@ export class ProcessManager {
 
 		if (status === 'running') {
 			resourceManager.loadResources();
+			gameManager.resetPlayerlist();
+			const session = sessionManager.openSession();
+			disconnectManager.onSessionOpen(session);
 			void this.fetchServerVersion();
 		} else if (status === 'crashed' || status === 'stopping') {
 			resourceManager.stoppingServer();
+		}
+
+		if (status === 'stopped' || status === 'crashed') {
+			gameManager.resetPlayerlist();
+			const closed = sessionManager.closeSession(
+				status === 'crashed' ? 'crashed' : null,
+			);
+			disconnectManager.onSessionClose(closed);
 		}
 	}
 
@@ -483,3 +497,5 @@ export class ProcessManager {
 		}
 	}
 }
+
+export const processManager = new ProcessManager();

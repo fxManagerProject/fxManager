@@ -1,10 +1,13 @@
 import { randomUUID } from 'node:crypto';
+import { repo } from '@fxmanager/database';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type {
+	DisconnectSession,
 	OnlinePlayer,
 	PerfSnapshot,
 	ProcessOutputLine,
 	ResourceInitialData,
+	ServerSession,
 	ServerState,
 } from '@fxmanager/shared/types';
 import { PermissionManager } from '@fxmanager/shared/utils';
@@ -13,6 +16,7 @@ import { wsManager } from '../../modules/ws/manager';
 import type { AuthedRequest, RouteModule } from '../../types';
 import { resourceManager } from '../../modules/resource/manager';
 import { perfManager } from '../../modules/perf/manager';
+import { disconnectManager } from '../../modules/disconnect/manager';
 
 wsManager.addCheck('console', (admin) => {
 	return PermissionManager.has(
@@ -101,6 +105,14 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 	// backfill new clients with the last 30 min of samples
 	wsManager.setInitialData<PerfSnapshot[]>('perf', () => {
 		return perfManager.getRecent();
+	});
+
+	wsManager.setInitialData<ServerSession[]>('sessions', () => {
+		return repo.serverSessions.listRecent(50);
+	});
+
+	wsManager.setInitialData<DisconnectSession | null>('disconnects', () => {
+		return disconnectManager.getLiveSession();
 	});
 };
 

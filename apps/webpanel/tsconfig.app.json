@@ -29,5 +29,6 @@
 			"@fxmanager/ui/*": ["../../packages/ui/src/*"]
 		}
 	},
-	"include": ["src"]
+	"include": ["src"],
+	"exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
