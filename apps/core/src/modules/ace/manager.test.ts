@@ -179,6 +179,53 @@ describe('AceSyncManager', () => {
 		expect(sent).toEqual([]);
 	});
 
+	it('resync() should move the principal when a linked admin changes group', () => {
+		groupsListSpy.mockReturnValue([
+			{
+				id: 1,
+				name: 'Mods',
+				permissions: UserPermissions.KICK,
+				colour: '#fff',
+				icon: null,
+				createdAt: new Date(),
+				memberCount: 1,
+			},
+			{
+				id: 2,
+				name: 'Devs',
+				permissions: UserPermissions.CONSOLE_VIEW,
+				colour: '#fff',
+				icon: null,
+				createdAt: new Date(),
+				memberCount: 0,
+			},
+		]);
+		aceSync.apply(sender); // admin 5 linked to group 1 (has kick)
+		sent.length = 0;
+
+		adminsListSpy.mockReturnValue([
+			{ id: 5, username: 'mod', permissions: 0, groupId: 2, license: 'license:abc' },
+		]);
+		aceSync.resync(sender);
+
+		expect(sent).toContain('add_principal identifier.license:abc fxmanager.group.2');
+		expect(sent).toContain(
+			'remove_principal identifier.license:abc fxmanager.group.1',
+		);
+	});
+
+	it('resync() should remove the principal when a linked admin is deleted', () => {
+		aceSync.apply(sender);
+		sent.length = 0;
+
+		adminsListSpy.mockReturnValue([]);
+		aceSync.resync(sender);
+
+		expect(sent).toContain(
+			'remove_principal identifier.license:abc fxmanager.group.1',
+		);
+	});
+
 	it('resync() should only send the delta, additions first', () => {
 		aceSync.apply(sender);
 		sent.length = 0;
