@@ -65,6 +65,14 @@ export function pickConnectEndpoint(endpoints: EndpointMap): string | null {
 	return both.replace(WILDCARD_RE, '127.0.0.1');
 }
 
+export function forceLoopbackHost(endpoint: string): string {
+	const portIdx = endpoint.lastIndexOf(':');
+
+	if (portIdx === -1) return endpoint;
+
+	return `127.0.0.1:${endpoint.slice(portIdx + 1)}`;
+}
+
 export async function resolveCfgEndpoint(
 	entryCfgPath: string,
 	opts: { dataDir?: string; readFile?: ReadFile } = {},
@@ -121,5 +129,5 @@ export async function getServerNetEndpoint(
 		dataDir,
 		readFile: opts.readFile,
 	});
-	return resolved ?? DEFAULT_NET_ENDPOINT;
+	return resolved ? forceLoopbackHost(resolved) : DEFAULT_NET_ENDPOINT;
 }

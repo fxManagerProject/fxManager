@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import {
 	DEFAULT_NET_ENDPOINT,
+	forceLoopbackHost,
 	getServerNetEndpoint,
 	parseEndpointCommands,
 	pickConnectEndpoint,
@@ -144,6 +145,20 @@ describe('resolveCfgEndpoint', () => {
 	});
 });
 
+describe('forceLoopbackHost', () => {
+	it('rewrites an explicit IPv4 bind to loopback, keeping the port', () => {
+		expect(forceLoopbackHost('192.168.1.5:30120')).toBe('127.0.0.1:30120');
+	});
+
+	it('rewrites an explicit IPv6 bind to loopback, keeping the port', () => {
+		expect(forceLoopbackHost('[fe80::1]:30120')).toBe('127.0.0.1:30120');
+	});
+
+	it('leaves an already-loopback endpoint unchanged', () => {
+		expect(forceLoopbackHost('127.0.0.1:30120')).toBe('127.0.0.1:30120');
+	});
+});
+
 describe('getServerNetEndpoint', () => {
 	it('returns the resolved endpoint when the cfg is resolvable', async () => {
 		const endpoint = await getServerNetEndpoint({
@@ -152,6 +167,18 @@ describe('getServerNetEndpoint', () => {
 			readFile: async () => `
 				endpoint_add_tcp "0.0.0.0:30120"
 				endpoint_add_udp "0.0.0.0:30120"
+			`,
+		});
+		expect(endpoint).toBe('127.0.0.1:30120');
+	});
+
+	it('forces an explicit non-loopback bind onto loopback so the token never leaves the host', async () => {
+		const endpoint = await getServerNetEndpoint({
+			cfgPath: '/srv/server.cfg',
+			dataDir: '/srv',
+			readFile: async () => `
+				endpoint_add_tcp "192.168.1.5:30120"
+				endpoint_add_udp "192.168.1.5:30120"
 			`,
 		});
 		expect(endpoint).toBe('127.0.0.1:30120');
