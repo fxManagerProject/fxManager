@@ -3,9 +3,11 @@ import './common/env';
 import path, { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import Fastify from 'fastify';
+import open from 'open';
 import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import fastifyCookie from '@fastify/cookie';
+import { applyMigrations } from '@fxmanager/database';
 import { getIp, isFxManagerSetup, isProduction } from './common/utils';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
@@ -17,7 +19,6 @@ import { perfManager } from './modules/perf/manager';
 import { sessionManager } from './modules/session/manager';
 import { restartScheduler } from './modules/schedule/manager';
 import { setupTokenManager } from './modules/setup/token';
-import { applyMigrations } from '@fxmanager/database';
 import { MIGRATE_WORKER_FLAG, runMigrateWorker } from './migrate-worker';
 
 const ip = getIp();
@@ -38,12 +39,16 @@ const { cookieSecret, webServerPort } = cm.getSystemValues();
 if (!isFxManagerSetup()) {
 	const setupToken = setupTokenManager.ensure();
 
+	const localhostUrl = `http://localhost:${isProduction ? webServerPort : 5173}/setup?token=${setupToken}`;
+
 	console.log('[core] First-run setup required.');
 	console.log(
 		`[core] Open:\n` +
 			`\thttp://${ip}:${webServerPort}/setup?token=${setupToken}\n` +
-			`\thttp://127.0.0.1:${webServerPort}/setup?token=${setupToken}`,
+			`\t${localhostUrl}`,
 	);
+
+	open(localhostUrl);
 }
 const fastify = Fastify({ logger: !isProduction, forceCloseConnections: true });
 
