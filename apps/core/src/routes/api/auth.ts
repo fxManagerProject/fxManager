@@ -3,6 +3,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { repo } from '@fxmanager/database';
 
 import { COOKIE_NAME, isProduction } from '../../common/utils';
+import { loginRateLimiter } from '../../modules/auth/rate-limiter';
 import type { RouteModule } from '../../types';
 
 const LoginBody = Type.Object({
@@ -19,12 +20,24 @@ const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
 			schema: { body: LoginBody },
 		},
 		async (request, reply) => {
+			const rateKey = request.ip;
+			const limit = loginRateLimiter.check(rateKey);
+			if (!limit.allowed) {
+				return reply
+					.code(429)
+					.header('Retry-After', Math.ceil(limit.retryAfterMs / 1000))
+					.send({ error: 'Too many login attempts. Try again later.' });
+			}
+
 			const { username, password } = request.body as LoginBodyType;
 
 			const user = await repo.auth.verifyPassword(username, password);
 			if (!user) {
+				loginRateLimiter.recordFailure(rateKey);
 				return reply.code(401).send({ error: 'Invalid credentials' });
 			}
+
+			loginRateLimiter.recordSuccess(rateKey);
 
 			const session = repo.auth.createSession(user.id);
 
