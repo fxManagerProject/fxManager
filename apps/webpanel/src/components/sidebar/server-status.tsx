@@ -7,7 +7,7 @@ import {
 import { Card, CardContent } from '@fxmanager/ui/components/card';
 import { Badge } from '@fxmanager/ui/components/badge';
 import { STATUS_VARIANT } from '@/static/server-state';
-import { formatRemaining, formatUptime } from '@/lib/utils';
+import { formatDuration, formatRemaining, isServerRunning } from '@/lib/utils';
 import { Button } from '@fxmanager/ui/components/button';
 import {
 	ExternalLink,
@@ -27,14 +27,8 @@ import { usePlayerlistSocket, useServerStateSocket } from '@/hooks/ws-channels';
 import { useRecommendedArtifact } from '@/hooks/use-recommended-artifact';
 import { useSchedule } from '@/hooks/use-schedule';
 import { useEffect, useState } from 'react';
-import type { ProcessState } from '@fxmanager/shared/types';
 
 const TEMP_PRESETS = [5, 15, 30] as const;
-const SERVER_RUNNING_STATES: ProcessState[] = [
-	'running',
-	'starting',
-	'stopping',
-];
 
 interface ActionButtonProps {
 	Icon: LucideIcon;
@@ -96,6 +90,10 @@ export function ServerStatusCard() {
 	const nextRestartMs = schedule?.nextRestart
 		? new Date(schedule.nextRestart).getTime() - now
 		: null;
+	const uptimeMs =
+		isServerRunning(serverState.status) && serverState.startedAt
+			? now - new Date(serverState.startedAt).getTime()
+			: null;
 	const hasUpcomingRestart = nextRestartMs !== null;
 
 	if (isCollapsed) {
@@ -126,8 +124,9 @@ export function ServerStatusCard() {
 						<p>Uptime</p>
 						<p>
 							{serverState?.startedAt &&
-							SERVER_RUNNING_STATES.includes(serverState?.status)
-								? formatUptime(serverState.startedAt)
+							isServerRunning(serverState?.status) &&
+							uptimeMs
+								? formatDuration(uptimeMs)
 								: 'N/A'}
 						</p>
 					</div>

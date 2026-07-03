@@ -6,7 +6,7 @@ import {
 	Shield,
 	User,
 } from 'lucide-react';
-import { formatRemaining, formatUptime } from '@/lib/utils';
+import { formatDuration, formatRemaining, isServerRunning } from '@/lib/utils';
 import { STATUS_VARIANT } from '@/static/server-state';
 import { PageHeader } from '@/components/page-header';
 import { usePlayerlistSocket, useServerStateSocket } from '@/hooks/ws-channels';
@@ -20,7 +20,7 @@ import {
 	CardTitle,
 } from '@fxmanager/ui/components/card';
 import { useSchedule } from '@/hooks/use-schedule';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
 import {
 	Area,
@@ -73,10 +73,20 @@ export default function DashboardPage() {
 	const { players: rawPlayers } = usePlayerlistSocket();
 	const { samples } = usePerfSocket();
 
+	const [now, setNow] = useState(() => Date.now());
+	useEffect(() => {
+		const id = setInterval(() => setNow(Date.now()), 1000);
+		return () => clearInterval(id);
+	}, []);
+
 	const status = serverState?.status ?? 'stopped';
 	const nextRestartMs = schedule?.nextRestart
-		? new Date(schedule.nextRestart).getTime() - Date.now()
+		? new Date(schedule.nextRestart).getTime() - now
 		: null;
+	const uptimeMs =
+		isServerRunning(status) && serverState.startedAt
+			? now - new Date(serverState.startedAt).getTime()
+			: null;
 
 	const staffData = useMemo(() => {
 		const connectedStaff = rawPlayers.filter((p) => p.isStaff);
@@ -102,7 +112,7 @@ export default function DashboardPage() {
 		},
 		{
 			label: 'Uptime',
-			value: serverState?.startedAt ? formatUptime(serverState.startedAt) : '—',
+			value: uptimeMs ? formatDuration(uptimeMs, true) : '—',
 			icon: Clock,
 		},
 		{

@@ -1,3 +1,4 @@
+import type { ProcessState } from '@fxmanager/shared/types';
 import { toast } from 'sonner';
 
 export function formatDuration(
@@ -22,13 +23,6 @@ export function formatDuration(
 export function formatRemaining(ms: number, prefix?: string): string {
 	if (ms <= 0) return 'now';
 	return prefix ? `${prefix} ${formatDuration(ms)}` : formatDuration(ms);
-}
-
-export function formatUptime(startedAt: Date | string | number): string {
-	const initialDate =
-		startedAt instanceof Date ? startedAt : new Date(startedAt);
-
-	return formatDuration(Date.now() - initialDate.getTime(), false);
 }
 
 export function formatDate(date: Date | string | null | undefined): string {
@@ -72,4 +66,13 @@ export async function copyToClipboard(
 		console.error('Failed to copy!', err);
 		toast.error('Failed to copy to clipboard.', { richColors: true });
 	}
+}
+const SERVER_RUNNING_STATES: ProcessState[] = [
+	'running',
+	'starting',
+	'stopping',
+];
+
+export function isServerRunning(status?: ProcessState): boolean {
+	return status ? SERVER_RUNNING_STATES.includes(status) : false;
 }
