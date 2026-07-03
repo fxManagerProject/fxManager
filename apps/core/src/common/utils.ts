@@ -24,16 +24,16 @@ export function generatePassword(length: number = 20): string {
 }
 
 export function getIp(): string {
-  const interfaces = os.networkInterfaces();
-  for (const interfaceName in interfaces) {
-    const addresses = interfaces[interfaceName];
-    if (!addresses) continue;
+	const interfaces = os.networkInterfaces();
+	for (const interfaceName in interfaces) {
+		const addresses = interfaces[interfaceName];
+		if (!addresses) continue;
 
-    for (const addr of addresses) {
-      if (addr.family === 'IPv4' && !addr.internal) {
-        return addr.address;
-      }
-    }
-  }
-  return '127.0.0.1';
+		for (const addr of addresses) {
+			if (addr.family === 'IPv4' && !addr.internal) {
+				return addr.address;
+			}
+		}
+	}
+	return '127.0.0.1';
 }
