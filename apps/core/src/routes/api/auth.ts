@@ -41,7 +41,7 @@ const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
 	);
 
 	fastify.post('/logout', (request, reply) => {
-		const sessionId = request.cookies.session_id;
+		const sessionId = request.cookies[COOKIE_NAME];
 
 		if (sessionId) {
 			repo.auth.deleteSession(sessionId);
