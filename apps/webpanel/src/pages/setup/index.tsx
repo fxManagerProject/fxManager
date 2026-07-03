@@ -24,6 +24,7 @@ export function SetupApp() {
 		adminGroups: [],
 	});
 
+	const [isExiting, setIsExiting] = useState(false);
 	const [loading, setLoading] = useState(false);
 
 	function setError(message: string) {
@@ -90,8 +91,19 @@ export function SetupApp() {
 			setLoading(false);
 		}
 	}
+
+	function handleExit() {
+		setIsExiting(true);
+		setTimeout(() => {
+			window.location.href = '/';
+		}, 0);
+	}
+
 	useEffect(() => {
 		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			if (isExiting && step === 'import') {
+				return;
+			}
 			event.preventDefault();
 		};
 
@@ -100,7 +112,8 @@ export function SetupApp() {
 		return () => {
 			window.removeEventListener('beforeunload', handleBeforeUnload);
 		};
-	}, []);
+	}, [step]);
+
 	return (
 		<div className="flex min-h-screen items-center justify-center p-4 md:p-8 bg-background">
 			<div className="w-full max-w-7xl border p-6 md:p-8 rounded-2xl bg-card shadow-lg">
@@ -202,7 +215,7 @@ export function SetupApp() {
 					)}
 
 					{step === 'import' && (
-						<ImportStep onFinish={() => (window.location.href = '/')} />
+						<ImportStep onFinish={handleExit} />
 					)}
 				</div>
 			</div>
