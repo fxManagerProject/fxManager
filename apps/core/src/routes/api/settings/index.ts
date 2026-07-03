@@ -8,7 +8,7 @@ import type {
 	SettingsKey,
 	SettingsScope,
 } from '@fxmanager/shared/types';
-import { PermissionManager } from '@fxmanager/shared/utils';
+import { PermissionManager, canWriteSetting } from '@fxmanager/shared/utils';
 import {
 	SETTINGS_KEYS,
 	SETTINGS_SCOPES,
@@ -74,6 +74,10 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 
 		if (!settingsKeys.includes(key as SettingsKey)) {
 			throw new Error(`Invalid settings key: ${key}`);
+		}
+
+		if (!canWriteSetting(key as SettingsKey, admin.permissions)) {
+			throw new Error('Unauthorized');
 		}
 
 		repo.settings.set(key, value);

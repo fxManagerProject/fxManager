@@ -1,5 +1,6 @@
 import { ApiError } from '@fxmanager/shared/types';
 import { toast } from 'sonner';
+import { notifyUnauthorized } from './session-expiry';
 
 const IS_SECURE = window.location.protocol === 'https:';
 
@@ -36,6 +37,8 @@ export async function QueryService<T>(
 		const response = await fetch(url, options);
 
 		if (!response.ok) {
+			if (response.status === 401) notifyUnauthorized();
+
 			let errorData: { message: string };
 			try {
 				errorData = await response.json();

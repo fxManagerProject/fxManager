@@ -1,6 +1,7 @@
 import { Loading } from '@/components/loading';
 import { AuthContext } from '@/hooks/use-auth';
 import { QueryService } from '@/lib/query';
+import { setUnauthorizedHandler } from '@/lib/session-expiry';
 import type { AuthUser } from '@/types/auth';
 import type {
 	ApiResponse,
@@ -8,7 +9,7 @@ import type {
 	UserPermissionsType,
 } from '@fxmanager/shared/types';
 import { PermissionManager } from '@fxmanager/shared/utils';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -16,6 +17,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const navigate = useNavigate();
 	const [user, setUser] = useState<AuthUser | null>(null);
 	const [loading, setLoading] = useState(true);
+
+	const userRef = useRef<AuthUser | null>(null);
+	const expiredRef = useRef(false);
+
+	useEffect(() => {
+		userRef.current = user;
+	}, [user]);
+
+	useEffect(() => {
+		setUnauthorizedHandler(() => {
+			if (!userRef.current || expiredRef.current) return;
+			expiredRef.current = true;
+			setUser(null);
+			toast.error('Session expired', {
+				description: 'Please sign in again.',
+			});
+			navigate('/login', { replace: true });
+		});
+		return () => setUnauthorizedHandler(null);
+	}, [navigate]);
 
 	useEffect(() => {
 		async function init() {
@@ -51,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				endpoint: '/auth/me',
 				method: 'GET',
 			});
+			expiredRef.current = false;
 			setUser(me);
 			navigate('/dashboard');
 		},

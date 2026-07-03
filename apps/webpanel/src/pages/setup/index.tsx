@@ -10,6 +10,7 @@ import { ImportStep } from './ImportStep';
 import { QueryService } from '@/lib/query';
 import { toast } from 'sonner';
 import type { ApiError } from '@fxmanager/shared/types';
+import { getSetupToken } from './setup-token';
 
 export function SetupApp() {
 	const [step, setStep] = useState<SetupSteps>('account');
@@ -23,6 +24,7 @@ export function SetupApp() {
 		adminGroups: [],
 	});
 
+	const [isExiting, setIsExiting] = useState(false);
 	const [loading, setLoading] = useState(false);
 
 	function setError(message: string) {
@@ -62,6 +64,7 @@ export function SetupApp() {
 			const result = await QueryService<{ success: boolean }>({
 				endpoint: '/setup',
 				method: 'POST',
+				headers: { 'x-setup-token': getSetupToken() },
 				body: {
 					username: formData.username,
 					password: formData.password,
@@ -88,8 +91,19 @@ export function SetupApp() {
 			setLoading(false);
 		}
 	}
+
+	function handleExit() {
+		setIsExiting(true);
+		setTimeout(() => {
+			window.location.href = '/';
+		}, 0);
+	}
+
 	useEffect(() => {
 		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			if (isExiting && step === 'import') {
+				return;
+			}
 			event.preventDefault();
 		};
 
@@ -98,7 +112,8 @@ export function SetupApp() {
 		return () => {
 			window.removeEventListener('beforeunload', handleBeforeUnload);
 		};
-	}, []);
+	}, [step]);
+
 	return (
 		<div className="flex min-h-screen items-center justify-center p-4 md:p-8 bg-background">
 			<div className="w-full max-w-7xl border p-6 md:p-8 rounded-2xl bg-card shadow-lg">
@@ -199,9 +214,7 @@ export function SetupApp() {
 						/>
 					)}
 
-					{step === 'import' && (
-						<ImportStep onFinish={() => (window.location.href = '/')} />
-					)}
+					{step === 'import' && <ImportStep onFinish={handleExit} />}
 				</div>
 			</div>
 		</div>

@@ -1,8 +1,8 @@
 import { useAuth } from '@/hooks/use-auth';
 import { WSContext } from '@/hooks/ws-channels/use-ws-core';
-import { WSUrl } from '@/lib/query';
+import { QueryService, WSUrl } from '@/lib/query';
 import type { MessageHandler } from '@/types/ws';
-import type { Channel, WSMessage } from '@fxmanager/shared/types';
+import type { ApiError, Channel, WSMessage } from '@fxmanager/shared/types';
 import {
 	useEffect,
 	useRef,
@@ -47,7 +47,7 @@ export function WSProvider({ children }: { children: ReactNode }) {
 				if (socketRef.current === ws) socketRef.current = null;
 				if (disposed) return;
 				setConnected(false);
-				retryTimer = setTimeout(connect, retryDelay);
+				retryTimer = setTimeout(attemptReconnect, retryDelay);
 				retryDelay = Math.min(retryDelay * 2, RECONNECT_MAX_MS);
 			};
 
@@ -60,6 +60,16 @@ export function WSProvider({ children }: { children: ReactNode }) {
 					});
 				} catch {}
 			};
+		};
+
+		const attemptReconnect = async () => {
+			if (disposed) return;
+			try {
+				await QueryService({ endpoint: '/auth/me', method: 'GET' });
+			} catch (err) {
+				if ((err as ApiError)?.status === 401) return;
+			}
+			if (!disposed) connect();
 		};
 
 		connect();

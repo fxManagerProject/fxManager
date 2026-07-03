@@ -121,6 +121,8 @@ class PlayersRepository {
 					.where(eq(players.id, playerId))
 					.returning();
 
+				if (!updatedPlayer) throw new Error('Failed to update player');
+
 				if (identifierRows.length > 0) {
 					await tx
 						.insert(playerIdentifiers)
@@ -135,6 +137,8 @@ class PlayersRepository {
 					.insert(players)
 					.values({ name, firstSeen: now, lastSeen: now })
 					.returning();
+
+				if (!newPlayer) throw new Error('Failed to insert player');
 
 				await tx
 					.insert(playerIdentifiers)
@@ -341,6 +345,8 @@ class PlayersRepository {
 						.where(eq(playerNotes.id, existingNote.id))
 						.returning();
 
+					if (!updated) throw new Error('Failed to update note');
+
 					finalNote = updated;
 				} else {
 					tx.delete(playerNotes)
@@ -359,6 +365,8 @@ class PlayersRepository {
 						issuedAt: now,
 					})
 					.returning();
+
+				if (!inserted) throw new Error('Failed to insert note');
 
 				finalNote = inserted;
 			} else {

@@ -11,6 +11,7 @@ import {
 	isProduction,
 } from '../../common/utils';
 import { ConfigManager } from '../../modules/config/manager';
+import { setupTokenManager } from '../../modules/setup/token';
 import type { RouteModule } from '../../types';
 
 interface DetectResult {
@@ -50,9 +51,15 @@ const SetupBody = Type.Object({
 type SetupBodyType = Static<typeof SetupBody>;
 
 const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
-	fastify.get('/detect', async (_request, reply) => {
+	fastify.get('/detect', async (request, reply) => {
 		if (isFxManagerSetup()) {
 			return reply.code(403).send({ success: false, error: 'Already set up' });
+		}
+
+		if (!setupTokenManager.validate(request.headers['x-setup-token'])) {
+			return reply
+				.code(401)
+				.send({ success: false, error: 'Invalid setup token' });
 		}
 
 		const cfg = ConfigManager.getInstance().getFxServerValues();
@@ -61,7 +68,7 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 			: path.join(cfg.serverDataPath, cfg.serverConfigFile);
 
 		const [executable, dataPath, cfgFound] = await Promise.all([
-			fileExists(cfg.executable),
+			fileExists(cfg.executablePath),
 			fileExists(cfg.serverDataPath),
 			fileExists(cfgPath),
 		]);
@@ -69,7 +76,7 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 		return {
 			success: true,
 			data: {
-				executable: cfg.executable,
+				executable: cfg.executablePath,
 				dataPath: cfg.serverDataPath,
 				cfgPath,
 				found: { executable, dataPath, cfg: cfgFound },
@@ -85,10 +92,14 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 				return reply.code(403).send({ error: 'Already set up' });
 			}
 
+			if (!setupTokenManager.validate(request.headers['x-setup-token'])) {
+				return reply.code(401).send({ error: 'Invalid setup token' });
+			}
+
 			const { username, password, server, customGroups } = request.body;
 
-			repo.settings.set('executable', server.fxserverPath);
-			repo.settings.set('serverDataPath', server.resourcePath);
+			repo.settings.set('fxserver.executablePath', server.fxserverPath);
+			repo.settings.set('fxserver.serverDataPath', server.resourcePath);
 
 			if (customGroups.length > 0) {
 				try {
@@ -119,6 +130,8 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 			);
 
 			const session = repo.auth.createSession(user.id);
+
+			setupTokenManager.clear();
 
 			return reply
 				.setCookie(COOKIE_NAME, session.id, {

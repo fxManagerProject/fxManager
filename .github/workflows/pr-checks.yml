@@ -7,8 +7,9 @@ on:
       - "apps/**"
       - "packages/**"
       - "package.json"
-      - "bun.lockb"
+      - "bun.lock"
       - "scripts/build.ts"
+      - ".github/workflows/**"
 
 jobs:
   test:
@@ -30,10 +31,29 @@ jobs:
       - name: Execute Test Runner
         run: bun test
 
+  typecheck:
+    name: Verify Types
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun Environment
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Type Checker
+        run: bun run typecheck
+
   build:
     name: Verify Build System (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    needs: test
+    needs: [test, typecheck]
     if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false

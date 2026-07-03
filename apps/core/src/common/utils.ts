@@ -1,5 +1,6 @@
-import { repo } from '@fxmanager/database';
+import os from 'os';
 import { randomBytes } from 'node:crypto';
+import { repo } from '@fxmanager/database';
 
 export const isProduction = process.env.NODE_ENV === 'production';
 export const COOKIE_NAME = 'fxm_session';
@@ -20,4 +21,19 @@ export function generatePassword(length: number = 20): string {
 	}
 
 	return password;
+}
+
+export function getIp(): string {
+	const interfaces = os.networkInterfaces();
+	for (const interfaceName in interfaces) {
+		const addresses = interfaces[interfaceName];
+		if (!addresses) continue;
+
+		for (const addr of addresses) {
+			if (addr.family === 'IPv4' && !addr.internal) {
+				return addr.address;
+			}
+		}
+	}
+	return '127.0.0.1';
 }

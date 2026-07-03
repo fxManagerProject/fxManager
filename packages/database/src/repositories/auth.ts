@@ -9,6 +9,16 @@ type DB = BunSQLiteDatabase<typeof schema>;
 
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
+let dummyHashPromise: Promise<string> | null = null;
+function getDummyHash(): Promise<string> {
+	if (!dummyHashPromise) {
+		dummyHashPromise = Bun.password.hash('fxmanager-timing-guard', {
+			algorithm: 'bcrypt',
+		});
+	}
+	return dummyHashPromise;
+}
+
 class AuthRepository {
 	private static instance: AuthRepository;
 
@@ -96,7 +106,10 @@ class AuthRepository {
 			.where(eq(adminUsers.username, username))
 			.get();
 
-		if (!user) return null;
+		if (!user) {
+			await Bun.password.verify(password, await getDummyHash());
+			return null;
+		}
 
 		const valid = await Bun.password.verify(password, user.passwordHash);
 

@@ -12,6 +12,7 @@ import { Button } from '@fxmanager/ui/components/button';
 import { Alert, AlertDescription } from '@fxmanager/ui/components/alert';
 import { Spinner } from '@fxmanager/ui/components/spinner';
 import type { SetupFormData } from './types';
+import { getSetupToken } from './setup-token';
 
 interface ServerStepProps {
 	formData: SetupFormData;
@@ -67,7 +68,10 @@ export function ServerStep({ formData, onChange, onNext }: ServerStepProps) {
 		setDetecting(true);
 		setDetectError(null);
 		try {
-			const res = await fetch('/api/setup/detect', { credentials: 'include' });
+			const res = await fetch('/api/setup/detect', {
+				credentials: 'include',
+				headers: { 'x-setup-token': getSetupToken() },
+			});
 			const payload = (await res.json().catch(() => null)) as
 				| { success: true; data: DetectData }
 				| { success: false; error: string }

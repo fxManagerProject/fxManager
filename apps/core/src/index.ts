@@ -3,10 +3,12 @@ import './common/env';
 import path, { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import Fastify from 'fastify';
+import open from 'open';
 import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import fastifyCookie from '@fastify/cookie';
-import { isFxManagerSetup, isProduction } from './common/utils';
+import { applyMigrations } from '@fxmanager/database';
+import { getIp, isFxManagerSetup, isProduction } from './common/utils';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
@@ -16,8 +18,10 @@ import { ConfigManager } from './modules/config/manager';
 import { perfManager } from './modules/perf/manager';
 import { sessionManager } from './modules/session/manager';
 import { restartScheduler } from './modules/schedule/manager';
-import { applyMigrations } from '@fxmanager/database';
+import { setupTokenManager } from './modules/setup/token';
 import { MIGRATE_WORKER_FLAG, runMigrateWorker } from './migrate-worker';
+
+const ip = getIp();
 
 // when re-exec'd as a migrate worker, run the import and exit before any
 // server/port/migration bootstrapping happens
@@ -31,6 +35,21 @@ checkVersion('dev-build');
 
 const cm = ConfigManager.getInstance();
 const { cookieSecret, webServerPort } = cm.getSystemValues();
+
+if (!isFxManagerSetup()) {
+	const setupToken = setupTokenManager.ensure();
+
+	const localhostUrl = `http://localhost:${isProduction ? webServerPort : 5173}/setup?token=${setupToken}`;
+
+	console.log('[core] First-run setup required.');
+	console.log(
+		`[core] Open:\n` +
+			`\thttp://${ip}:${webServerPort}/setup?token=${setupToken}\n` +
+			`\t${localhostUrl}`,
+	);
+
+	open(localhostUrl);
+}
 const fastify = Fastify({ logger: !isProduction, forceCloseConnections: true });
 
 fastify.register(fastifyCookie, {
@@ -90,14 +109,14 @@ fastify.register(internalRoutes, { prefix: '/internal', pm, gm });
 if (!isProduction) {
 	const devUrl = 'http://localhost:5173';
 	const commonStyles = `
-    background: #121212; 
-    color: #e0e0e0; 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    margin: 0; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    justify-content: center; 
+    background: #121212;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     height: 100vh;
   `;
 
@@ -134,7 +153,7 @@ if (!isProduction) {
               <div style="font-size: 3rem; margin-bottom: 1rem;">🚀</div>
               <h2 style="margin: 0; color: #fff;">Development Mode</h2>
               <p style="color: #888; margin: 1rem 0 2rem 0;">Redirecting to Vite Frontend...</p>
-              
+
               <a href="${devUrl}" style="display: inline-block; background: #4fc1ff; color: #121212; padding: 0.8rem 1.5rem; border-radius: 6px; font-weight: bold; text-decoration: none; transition: opacity 0.2s;">
                 Launch App Now
               </a>
@@ -160,7 +179,9 @@ const start = async () => {
 	try {
 		await fastify.listen({ port: webServerPort, host: '0.0.0.0' });
 		console.log(
-			`[core] Fastify server listening on http://localhost:${webServerPort}`,
+			`[core] Fastify server listening on\n` +
+				`\thttp://localhost:${webServerPort}\n` +
+				`\thttp://${ip}:${webServerPort}`,
 		);
 	} catch (err) {
 		fastify.log.error(err);

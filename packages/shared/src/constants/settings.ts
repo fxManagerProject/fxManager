@@ -27,3 +27,9 @@ export const SETTINGS_DEFAULTS = {
 export const SETTINGS_SENSITIVE_KEYS: SettingsKey[] = [
 	'whitelist.discordBotToken',
 ];
+
+export const SETTINGS_MASTER_ONLY_KEYS: SettingsKey[] = [
+	'fxserver.executablePath',
+	'fxserver.serverDataPath',
+	'fxserver.serverConfigPath',
+];

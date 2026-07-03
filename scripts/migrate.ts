@@ -1,6 +1,7 @@
 import { join } from 'path';
 import drizzleConfig from '../drizzle.config';
 import { migrations } from '../packages/database/src/migrations';
+import { planJournalMigrations } from '../packages/database/src/migrations/journal-plan';
 import { createInterface } from 'readline/promises';
 
 if (!drizzleConfig.out) {
@@ -20,19 +21,37 @@ interface Journal {
 }
 
 const journal = (await journalFile.json()) as Journal;
-const existingVersions = new Set(migrations.map((m) => m.version));
 
-const pendingEntries = journal.entries
-	.map(({ tag }) => ({
-		tag,
-		version: parseInt(tag.substring(0, 4), 10),
-	}))
-	.filter(({ version }) => !existingVersions.has(version));
+const journalEntries = journal.entries.map(({ tag }) => ({
+	tag,
+	version: parseInt(tag.substring(0, 4), 10),
+}));
 
-if (pendingEntries.length === 0) {
+const plan = planJournalMigrations(
+	journalEntries.map((e) => e.version),
+	migrations.map((m) => m.version),
+);
+
+if (plan.action === 'error') {
+	console.error(
+		`Migration tooling is out of sync: the TS registry has version(s) ` +
+			`${plan.orphanRegistryVersions.join(', ')} with no drizzle journal entry.\n` +
+			`Running 'drizzle-kit generate' in this state produces colliding version ` +
+			`numbers that would be silently dropped. Realign the drizzle journal and ` +
+			`snapshots with the registry before generating new migrations.`,
+	);
+	process.exit(1);
+}
+
+if (plan.action === 'up-to-date') {
 	console.log('Local migrations are up to date.');
 	process.exit(0);
 }
+
+const pendingVersions = new Set(plan.pending);
+const pendingEntries = journalEntries.filter((e) =>
+	pendingVersions.has(e.version),
+);
 
 function sanitizeSql(sql: string): string[] {
 	return sql

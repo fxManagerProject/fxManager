@@ -7,7 +7,8 @@
 		"dev": "bun --watch src/index.ts",
 		"start": "bun src/index.ts",
 		"lint": "biome lint ./src",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
@@ -24,6 +25,7 @@
 		"@fxmanager/shared": "workspace:*",
 		"@sinclair/typebox": "^0.34.49",
 		"discord.js": "^14.26.3",
-		"fastify": "^5.8.4"
+		"fastify": "^5.8.4",
+		"open": "^11.0.0"
 	}
 }

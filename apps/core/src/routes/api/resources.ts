@@ -1,6 +1,9 @@
 import type { AuthedRequest, RouteModule } from '../../types';
 import { sessionAuth } from '../../middleware/session';
-import { PermissionManager } from '@fxmanager/shared/utils';
+import {
+	PermissionManager,
+	isValidResourceName,
+} from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import { resourceManager } from '../../modules/resource/manager';
 
@@ -28,6 +31,10 @@ const ResourceEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		const body = request.body as { action: 'start' | 'stop'; resource: string };
 
+		if (!isValidResourceName(body.resource)) {
+			return reply.code(400).send({ error: 'Invalid resource name' });
+		}
+
 		pm.injectConsoleLine({
 			process: `cmd:${admin.username}`,
 			value: `\x1b[37m> ensure ${body.resource}\x1b[0m`,
@@ -54,6 +61,10 @@ const ResourceEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		}
 
 		const body = request.body as { resource: string };
+
+		if (!isValidResourceName(body.resource)) {
+			return reply.code(400).send({ error: 'Invalid resource name' });
+		}
 
 		pm.injectConsoleLine({
 			process: `cmd:${admin.username}`,
