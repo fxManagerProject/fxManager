@@ -1,5 +1,8 @@
 import { repo } from '@fxmanager/database';
-import { PermissionManager, isValidResourceName } from '@fxmanager/shared/utils';
+import {
+	PermissionManager,
+	isValidResourceName,
+} from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type { AuthedRequest, RouteModule } from '../../types';
 import { sessionAuth } from '../../middleware/session';

@@ -25,10 +25,7 @@ class DisconnectsRepository {
 
 	/** Record one drop with its timestamp — the single source of truth. */
 	recordEvent(sessionId: number, ts: number, category: DropCategory): void {
-		this.db
-			.insert(disconnectEvents)
-			.values({ sessionId, ts, category })
-			.run();
+		this.db.insert(disconnectEvents).values({ sessionId, ts, category }).run();
 	}
 
 	private tally(where: SQL | undefined): DisconnectCounts {

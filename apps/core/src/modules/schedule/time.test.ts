@@ -27,12 +27,16 @@ describe('parseTimes', () => {
 describe('computeNextRestart', () => {
 	it('picks the next time later today', () => {
 		const now = new Date(2026, 0, 1, 2, 0, 0);
-		expect(computeNextRestart([180], now)).toEqual(new Date(2026, 0, 1, 3, 0, 0));
+		expect(computeNextRestart([180], now)).toEqual(
+			new Date(2026, 0, 1, 3, 0, 0),
+		);
 	});
 
 	it('rolls to tomorrow when every time today has passed', () => {
 		const now = new Date(2026, 0, 1, 4, 0, 0);
-		expect(computeNextRestart([180], now)).toEqual(new Date(2026, 0, 2, 3, 0, 0));
+		expect(computeNextRestart([180], now)).toEqual(
+			new Date(2026, 0, 2, 3, 0, 0),
+		);
 	});
 
 	it('chooses the earliest upcoming among several times', () => {
@@ -45,7 +49,9 @@ describe('computeNextRestart', () => {
 
 	it('treats an exact match as passed (advances)', () => {
 		const now = new Date(2026, 0, 1, 3, 0, 0);
-		expect(computeNextRestart([180], now)).toEqual(new Date(2026, 0, 2, 3, 0, 0));
+		expect(computeNextRestart([180], now)).toEqual(
+			new Date(2026, 0, 2, 3, 0, 0),
+		);
 	});
 
 	it('returns null with no times', () => {
@@ -68,6 +74,8 @@ describe('formatCountdown', () => {
 
 describe('WARNING_THRESHOLDS', () => {
 	it('matches txAdmin marks: [30,15,10,5,4,3,2,1] minutes in seconds', () => {
-		expect(WARNING_THRESHOLDS).toEqual([1800, 900, 600, 300, 240, 180, 120, 60]);
+		expect(WARNING_THRESHOLDS).toEqual([
+			1800, 900, 600, 300, 240, 180, 120, 60,
+		]);
 	});
 });

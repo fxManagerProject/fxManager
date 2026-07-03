@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as RechartsPrimitive from 'recharts';
 import type { TooltipValueType } from 'recharts';
 
-export * from "recharts";
+export * from 'recharts';
 
 import { cn } from '@fxmanager/ui/lib/utils';
 

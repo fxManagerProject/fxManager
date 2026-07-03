@@ -22,7 +22,11 @@ const PerfEndpoints: RouteModule['handler'] = async (fastify) => {
 
 	fastify.get('/sessions/:id', (request) => {
 		const { id } = request.params as { id: string };
-		const query = request.query as { from?: string; to?: string; limit?: string };
+		const query = request.query as {
+			from?: string;
+			to?: string;
+			limit?: string;
+		};
 		const sessionId = parseInt(id, 10);
 		if (Number.isNaN(sessionId)) {
 			return { sessionId: -1, snapshots: [] } satisfies PerfSeriesResponse;

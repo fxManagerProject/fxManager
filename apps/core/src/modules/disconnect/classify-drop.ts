@@ -67,7 +67,8 @@ const timeoutRules = [
 	`timed out after 60 seconds`,
 ];
 
-const isCrash = (reason: string) => crashRulesIntl.some((r) => reason.includes(r));
+const isCrash = (reason: string) =>
+	crashRulesIntl.some((r) => reason.includes(r));
 
 /** String-only fallback for fxserver builds that don't pass a numeric category. */
 function guessFromReason(reason: string): DropCategory | null {

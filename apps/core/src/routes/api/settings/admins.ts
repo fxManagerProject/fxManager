@@ -83,7 +83,12 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 				repo.audit.log({
 					adminId: admin.id,
 					action: 'admin.create',
-					metadata: { username, permissions: storedPermissions, groupId, playerId },
+					metadata: {
+						username,
+						permissions: storedPermissions,
+						groupId,
+						playerId,
+					},
 				});
 
 				return {

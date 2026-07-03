@@ -54,7 +54,8 @@ export function useSchedule() {
 				endpoint: '/server/schedule/skip',
 				method: 'POST',
 			});
-			if (res.success && res.data.skipped) toast.success('Next restart cancelled.');
+			if (res.success && res.data.skipped)
+				toast.success('Next restart cancelled.');
 			else toast.info('No upcoming restart to cancel.');
 			await refresh();
 		} catch {

@@ -16,9 +16,9 @@ describe('identifiersToTxIds', () => {
 	});
 
 	it('drops empty and missing identifiers', () => {
-		expect(
-			identifiersToTxIds({ license: 'license:abc', steam: '' }),
-		).toEqual(['license:abc']);
+		expect(identifiersToTxIds({ license: 'license:abc', steam: '' })).toEqual([
+			'license:abc',
+		]);
 	});
 
 	it('returns an empty array when no identifiers are known', () => {

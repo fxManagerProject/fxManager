@@ -45,7 +45,10 @@ function expiresCell(ban: BanDataCard, now: number): string {
 }
 
 /** Builds the styled HTML card shown to a banned player on the FiveM connection screen. */
-export function renderBanCard(ban: BanDataCard, now: number = Date.now()): string {
+export function renderBanCard(
+	ban: BanDataCard,
+	now: number = Date.now(),
+): string {
 	const reason = escapeHtml(ban.reason?.trim() || 'No reason provided');
 	const bannedOn = formatDateTime(ban.createdAt);
 

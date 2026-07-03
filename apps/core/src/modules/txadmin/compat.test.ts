@@ -73,7 +73,8 @@ describe('txAdminCompat.emit', () => {
 
 	it('does not throw when the resource responds non-ok', async () => {
 		global.fetch = mock(
-			async () => ({ ok: false, status: 401, statusText: 'Unauthorized' }) as Response,
+			async () =>
+				({ ok: false, status: 401, statusText: 'Unauthorized' }) as Response,
 		) as any;
 
 		await expect(

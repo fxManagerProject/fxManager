@@ -214,9 +214,7 @@ export function SetupApp() {
 						/>
 					)}
 
-					{step === 'import' && (
-						<ImportStep onFinish={handleExit} />
-					)}
+					{step === 'import' && <ImportStep onFinish={handleExit} />}
 				</div>
 			</div>
 		</div>

@@ -23,7 +23,7 @@ createRoot(document.getElementById('root')!).render(
 		<BrowserRouter>
 			<ThemeProvider>
 				<TooltipProvider>
-					{window.__SETUP_REQUIRED__ ? (
+					{!window.__SETUP_REQUIRED__ ? (
 						<SetupApp />
 					) : (
 						<AuthProvider>

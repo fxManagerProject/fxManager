@@ -106,7 +106,10 @@ export function PermissionsStep({
 							editable={true}
 							onToggle={(bit) => {
 								if (bit === UserPermissions.MASTER) return;
-								setNewGroup((p) => ({ ...p, permissions: p.permissions ^ bit }));
+								setNewGroup((p) => ({
+									...p,
+									permissions: p.permissions ^ bit,
+								}));
 							}}
 						/>
 					</div>

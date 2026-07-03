@@ -184,16 +184,21 @@ const ConfigEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		}
 
 		if (await fileExists(target.abs)) {
-			return reply
-				.code(409)
-				.send({ success: false, error: 'A file with that name already exists' });
+			return reply.code(409).send({
+				success: false,
+				error: 'A file with that name already exists',
+			});
 		}
 
 		try {
 			await mkdir(path.dirname(target.abs), { recursive: true });
 			await writeFile(target.abs, '', 'utf8');
 
-			await appendFile(entryCfgPath, `\nexec "${target.displayPath}"\n`, 'utf8');
+			await appendFile(
+				entryCfgPath,
+				`\nexec "${target.displayPath}"\n`,
+				'utf8',
+			);
 		} catch (err) {
 			return reply.code(500).send({
 				success: false,

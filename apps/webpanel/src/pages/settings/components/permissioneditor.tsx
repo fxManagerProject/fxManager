@@ -15,7 +15,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@fxmanager/ui/components/select';
-import { Blend, Hash, Layers, Loader2, RotateCcw, Save, Trash2 } from 'lucide-react';
+import {
+	Blend,
+	Hash,
+	Layers,
+	Loader2,
+	RotateCcw,
+	Save,
+	Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { PermissionGrid } from './permissiongrid';
@@ -41,8 +49,13 @@ type PermissionEditorProps =
 	  };
 
 export default function PermissionEditor(props: PermissionEditorProps) {
-	const { value, group, updatePerms, updateGroup, skipServerSave = false } =
-		props;
+	const {
+		value,
+		group,
+		updatePerms,
+		updateGroup,
+		skipServerSave = false,
+	} = props;
 
 	const { groups } = useGroups();
 	const [bitfield, setBitField] = useState<number>(value ?? 0);

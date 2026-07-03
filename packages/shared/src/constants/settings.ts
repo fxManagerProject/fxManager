@@ -25,7 +25,7 @@ export const SETTINGS_DEFAULTS = {
 } satisfies Partial<Record<SettingsKey, string>>;
 
 export const SETTINGS_SENSITIVE_KEYS: SettingsKey[] = [
-	'whitelist.discordBotToken'
+	'whitelist.discordBotToken',
 ];
 
 export const SETTINGS_MASTER_ONLY_KEYS: SettingsKey[] = [
