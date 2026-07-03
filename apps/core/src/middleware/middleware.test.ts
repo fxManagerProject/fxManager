@@ -104,8 +104,10 @@ describe('Auth Middleware Suite', () => {
 				user: {
 					id: 42,
 					username: 'admin_root',
-					permissions: ['server.start', 'server.stop'],
+					permissions: 2,
 				},
+				group: { id: 1, permissions: 4 },
+				effectivePermissions: 6,
 			};
 
 			validateSessionSpy.mockReturnValue(mockAdminUser as any);
@@ -125,10 +127,11 @@ describe('Auth Middleware Suite', () => {
 			expect(reply.status).not.toHaveBeenCalled();
 
 			// Ensure contextual mutations successfully bind to Request payload
+			// permissions must be the group-aware effective bitfield
 			expect(req.admin).toEqual({
 				id: mockAdminUser.user.id,
 				username: mockAdminUser.user.username,
-				permissions: mockAdminUser.user.permissions,
+				permissions: mockAdminUser.effectivePermissions,
 			});
 		});
 

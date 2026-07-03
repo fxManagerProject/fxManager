@@ -171,6 +171,56 @@ describe('Database Migration Runner', () => {
 		});
 	});
 
+	describe('m0006 admin groups backfill', () => {
+		it('should assign groups on exact bitmask match, clear their bitmask and leave master/custom admins untouched', () => {
+			runMigrations(
+				testSqlite,
+				prodMigrations.filter((m) => m.version < 6),
+			);
+
+			testSqlite.run(
+				`INSERT INTO admin_users (username, password_hash, permissions, created_at) VALUES
+				('master', 'h', 1073741824, 0),
+				('mod', 'h', 1991, 0),
+				('mod_plus', 'h', ${1991 | 2048}, 0),
+				('nobody', 'h', 0, 0)`,
+			);
+
+			runMigrations(testSqlite, prodMigrations);
+
+			const admins = testSqlite
+				.query<
+					{ username: string; permissions: number; group_id: number | null },
+					[]
+				>('SELECT username, permissions, group_id FROM admin_users')
+				.all();
+			const byName = new Map(admins.map((a) => [a.username, a]));
+			const moderation = testSqlite
+				.query<{ id: number }, []>(
+					"SELECT id FROM admin_groups WHERE name = 'Moderation'",
+				)
+				.get();
+
+			expect(byName.get('master')).toMatchObject({
+				permissions: 1073741824,
+				group_id: null,
+			});
+			expect(byName.get('mod')).toMatchObject({
+				permissions: 0,
+				group_id: moderation?.id,
+			});
+			// customized bitmasks stay ungrouped so no permissions are lost
+			expect(byName.get('mod_plus')).toMatchObject({
+				permissions: 1991 | 2048,
+				group_id: null,
+			});
+			expect(byName.get('nobody')).toMatchObject({
+				permissions: 0,
+				group_id: null,
+			});
+		});
+	});
+
 	describe('Production Migration Registry Verification', () => {
 		it('should cleanly apply all active production migrations sequentially without encountering errors', () => {
 			// This validates that every SQL file currently written in packages/database/src/migrations/

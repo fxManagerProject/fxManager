@@ -9,13 +9,17 @@ import type {
 } from '@fxmanager/shared/types';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { generatePassword } from '../../../common/utils';
+import { aceSync } from '../../../modules/ace/manager';
 import type {
 	AuthedRequest,
 	RouteModule,
 	SearchQueryRequest,
 } from '../../../types';
 
-const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
+const AdminManagementEndpoints: RouteModule['handler'] = async (
+	fastify,
+	{ pm },
+) => {
 	fastify.get('/', (request): PaginatedResponse<BaseAdminUser> => {
 		const { admin } = request as AuthedRequest;
 
@@ -52,21 +56,34 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 
 			if (!allowed) throw new Error('Unauthorized');
 
-			const { username, permissions } = request.body as CreateAdminForm;
+			const { username, permissions, groupId, playerId } =
+				request.body as CreateAdminForm;
 			const password = generatePassword(20);
+
+			if (groupId != null && !repo.groups.get(groupId))
+				return { success: false, error: 'Group not found' };
+
+			const storedPermissions = groupId != null ? 0 : permissions;
 
 			try {
 				const profile = await repo.auth.createUser(
 					username,
 					password,
-					permissions,
+					storedPermissions,
 					false,
+					playerId ?? null,
 				);
+
+				if (groupId != null) {
+					await repo.admins.assignGroup(profile.id, groupId);
+				}
+
+				if (groupId != null || playerId != null) aceSync.resync(pm);
 
 				repo.audit.log({
 					adminId: admin.id,
 					action: 'admin.create',
-					metadata: { username, permissions },
+					metadata: { username, permissions: storedPermissions, groupId, playerId },
 				});
 
 				return {
@@ -78,12 +95,11 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 				};
 			} catch (err) {
 				const message = (err as Error).message;
-				return {
-					success: false,
-					error: message.includes('UNIQUE constraint failed')
-						? 'Username is already taken'
-						: message,
-				};
+				if (message.includes('UNIQUE constraint failed'))
+					return { success: false, error: 'Username is already taken' };
+				if (message.includes('FOREIGN KEY constraint failed'))
+					return { success: false, error: 'Selected player not found' };
+				return { success: false, error: message };
 			}
 		},
 	);
@@ -137,12 +153,14 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 				repo.audit.log({
 					adminId: admin.id,
 					action: 'admin.update',
-					target: username,
 					metadata: {
+						target: username,
 						previous_permissions: oldPermissions,
 						new_permissions: newPermissions,
 					},
 				});
+
+				aceSync.resync(pm);
 
 				return {
 					success: true,
@@ -151,14 +169,17 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 			} catch (err) {
 				const msg = (err as Error).message;
 
-				if (msg === 'not_found')
-					return { success: false, error: 'Admin not found' };
-				else if (msg === 'admin_is_master')
-					return {
-						success: false,
-						error: 'Can not change permissions of master account',
-					};
-				else throw err;
+				switch (msg) {
+					case 'not_found':
+						return { success: false, error: 'Admin not found' };
+					case 'admin_is_master':
+						return {
+							success: false,
+							error: 'Can not change permissions of master account',
+						};
+					default:
+						throw err;
+				}
 			}
 		},
 	);
@@ -193,12 +214,14 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 				repo.audit.log({
 					adminId: admin.id,
 					action: 'admin.update',
-					target: username,
 					metadata: {
+						target: username,
 						previous_playerId: newPlayerId,
 						new_playerId: previousPlayerId,
 					},
 				});
+
+				aceSync.resync(pm);
 
 				return {
 					success: true,
@@ -207,14 +230,72 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 			} catch (err) {
 				const msg = (err as Error).message;
 
-				if (msg === 'not_found')
-					return { success: false, error: 'Admin not found' };
-				else if (msg === 'admin_is_master')
-					return {
-						success: false,
-						error: 'Can not change permissions of master account',
-					};
-				else throw err;
+				switch (msg) {
+					case 'not_found':
+						return { success: false, error: 'Admin not found' };
+					case 'admin_is_master':
+						return {
+							success: false,
+							error: 'Can not change permissions of master account',
+						};
+					default:
+						throw err;
+				}
+			}
+		},
+	);
+
+	fastify.post(
+		'/:adminId/group',
+		async (request): Promise<ApiResponse<{ newGroupId: number | null }>> => {
+			const { admin } = request as AuthedRequest;
+			const { adminId: adminIdRaw } = request.params as { adminId: string };
+			const { groupId } = request.body as { groupId: number | null };
+			const adminId = parseInt(adminIdRaw, 10);
+
+			const allowed = PermissionManager.has(
+				admin.permissions,
+				UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+			);
+
+			if (!allowed) throw new Error('Unauthorized');
+
+			try {
+				const { username, previousGroupId, newGroupId } =
+					await repo.admins.assignGroup(adminId, groupId ?? null);
+
+				repo.audit.log({
+					adminId: admin.id,
+					action: 'admin.update',
+					metadata: {
+						target: username,
+						previous_groupId: previousGroupId,
+						new_groupId: newGroupId,
+					},
+				});
+
+				aceSync.resync(pm);
+
+				return {
+					success: true,
+					data: { newGroupId },
+				};
+			} catch (err) {
+				const msg = (err as Error).message;
+
+				switch (msg) {
+					case 'not_found':
+						return { success: false, error: 'Admin not found' };
+					case 'group_not_found':
+						return { success: false, error: 'Group not found' };
+					case 'admin_is_master':
+						return {
+							success: false,
+							error: 'Can not change permissions of master account',
+						};
+					default:
+						throw err;
+				}
 			}
 		},
 	);
@@ -239,9 +320,10 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 			repo.audit.log({
 				adminId: admin.id,
 				action: 'admin.delete',
-				target: deletedUser.username,
-				metadata: { id: deletedUser.id },
+				metadata: { target: deletedUser.username, id: deletedUser.id },
 			});
+
+			aceSync.resync(pm);
 
 			return {
 				success: true,
@@ -250,14 +332,14 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (fastify) => {
 		} catch (err) {
 			const msg = (err as Error).message;
 
-			if (msg === 'not_found')
-				return { success: false, error: 'Admin not found' };
-			else if (msg === 'admin_is_master')
-				return {
-					success: false,
-					error: 'Cannot delete master account',
-				};
-			else throw err;
+			switch (msg) {
+				case 'not_found':
+					return { success: false, error: 'Admin not found' };
+				case 'admin_is_master':
+					return { success: false, error: 'Cannot delete master account' };
+				default:
+					throw err;
+			}
 		}
 	});
 };

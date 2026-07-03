@@ -1,20 +1,19 @@
-import type { AdminGroup, UserPermissionsType } from '@fxmanager/shared/types';
-import {
-	PERMISSION_GROUPS,
-	UserPermissions,
-} from '@fxmanager/shared/constants';
+import type { UserPermissionsType } from '@fxmanager/shared/types';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 export const PermissionManager = {
-	groups: PERMISSION_GROUPS,
+	isMaster(userBitfield: number): boolean {
+		return (userBitfield & UserPermissions.MASTER) !== 0;
+	},
 
 	has(userBitfield: number, required: UserPermissionsType): boolean {
-		if (userBitfield & UserPermissions.MASTER) return true;
+		if (PermissionManager.isMaster(userBitfield)) return true;
 
 		return (userBitfield & required) === required;
 	},
 
 	hasAll(userBitfield: number, required: UserPermissionsType[]): boolean {
-		if (userBitfield & UserPermissions.MASTER) return true;
+		if (PermissionManager.isMaster(userBitfield)) return true;
 
 		const combined = required.reduce((acc, p) => acc | p, 0);
 
@@ -29,16 +28,7 @@ export const PermissionManager = {
 		return userBitfield & ~toRemove;
 	},
 
-	loadGroups(groups: AdminGroup[]) {
-		PermissionManager.groups = groups;
-	},
-
-	getGroup(permission: number): AdminGroup | null {
-		const group =
-			PermissionManager.groups.find(
-				(group) => (permission & group.permissions) === group.permissions,
-			) ?? null;
-
-		return group;
+	effective(userBitfield: number, groupBitfield?: number | null): number {
+		return userBitfield | (groupBitfield ?? 0);
 	},
 };

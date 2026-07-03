@@ -25,5 +25,11 @@ export type RawPerf = Record<PerfThread, PerfThreadCounts>;
 /** A single stored/broadcast performance sample. */
 export interface PerfSnapshot {
 	ts: number;
+	players: number;
 	threads: RawPerf;
+}
+
+export interface PerfSeriesResponse {
+	sessionId: number;
+	snapshots: PerfSnapshot[];
 }

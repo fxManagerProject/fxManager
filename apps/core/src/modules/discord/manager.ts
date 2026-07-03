@@ -1,4 +1,5 @@
 import { Client, Events, GatewayIntentBits, type Guild } from 'discord.js';
+import { repo } from '@fxmanager/database';
 import type { DiscordManagerConfig } from '@fxmanager/shared/types';
 
 class DiscordManager {
@@ -7,18 +8,33 @@ class DiscordManager {
 	});
 	private connectionState: boolean = false;
 
-	private botToken: string;
-	private config: Omit<DiscordManagerConfig, 'token'>;
+	private botToken = '';
+	private config: Omit<DiscordManagerConfig, 'token'> = {
+		guildId: '',
+		whitelistedRoles: [],
+	};
 
 	private guild: Guild | null = null;
 
-	constructor({ token, ...config }: DiscordManagerConfig) {
-		this.botToken = token;
-		this.config = config;
+	private syncSettings() {
+		this.botToken = repo.settings.get('whitelist.discordBotToken') ?? '';
+		this.config.guildId = repo.settings.get('whitelist.discordGuildId') ?? '';
+		this.config.whitelistedRoles =
+			repo.settings.get('whitelist.discordRoleIds')?.split(',') ?? [];
 	}
 
 	async connect() {
 		try {
+			this.syncSettings();
+
+			if (!this.botToken) {
+				throw new Error('Discord bot token is not configured.');
+			}
+
+			if (!this.config.guildId) {
+				throw new Error('Discord guild ID is not configured.');
+			}
+
 			const readyPromise = new Promise<void>((resolve, reject) => {
 				this.client.once(Events.ClientReady, async (readyClient) => {
 					try {
@@ -71,6 +87,10 @@ class DiscordManager {
 		return this.connectionState;
 	}
 
+	private getRoles() {
+		return this.config.whitelistedRoles;
+	}
+
 	async checkWhitelist(discordId: string): Promise<boolean> {
 		if (!this.guild) {
 			throw new Error(`No guild was found for id: ${this.config.guildId}`);
@@ -87,18 +107,11 @@ class DiscordManager {
 
 			const { roles } = member;
 
-			return roles.cache.hasAny(...this.config.whitelistedRoles);
+			return roles.cache.hasAny(...this.getRoles());
 		} catch {
 			return false;
 		}
 	}
 }
 
-// NOTE / ToDo:
-// config settings for the bot will be migrated to settings db
-
-export const discordManager = new DiscordManager({
-	token: process.env.DISCORD_BOT_TOKEN ?? '',
-	guildId: process.env.DISCORD_GUILDID ?? '',
-	whitelistedRoles: (process.env.DISCORD_ROLE_IDS ?? '')?.split(','),
-});
+export const discordManager = new DiscordManager();

@@ -9,7 +9,7 @@ export interface CoreConfig {
 
 export interface ServerConfig {
 	onesync: 'on' | 'legacy' | 'off';
-	executable: string;
+	executablePath: string;
 	serverDataPath: string;
 	serverConfigFile: string;
 }

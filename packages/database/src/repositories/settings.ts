@@ -5,12 +5,7 @@ import type * as schema from '../schema';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
-export const EDITABLE_SETTINGS_KEYS = [
-	'executable',
-	'serverDataPath',
-	'serverConfigFile',
-	'onesync',
-] as const;
+export const UNEDITABLE_SETTINGS_KEYS = [] as const;
 
 class SettingsRepository {
 	private static instance: SettingsRepository;
@@ -56,9 +51,9 @@ class SettingsRepository {
 		);
 	}
 
-	set(key: (typeof EDITABLE_SETTINGS_KEYS)[number], value: unknown) {
-		if (!EDITABLE_SETTINGS_KEYS.includes(key)) {
-			throw new Error(`The setting "${key}" is not listed as editable.`);
+	set(key: string, value: unknown) {
+		if (UNEDITABLE_SETTINGS_KEYS.includes(key as never)) {
+			throw new Error(`The setting "${key}" is listed as uneditable.`);
 		}
 
 		return this.db

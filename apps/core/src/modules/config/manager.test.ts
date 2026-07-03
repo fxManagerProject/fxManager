@@ -1,14 +1,16 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: explicit any allows testing hidden state properties & mocking frames */
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 
-const mockGetMultiple = mock(() => ({}));
+const mockGetMultiple = mock<() => Record<string, unknown>>(() => ({}));
 const mockAll = mock<() => Array<{ key: string; value: any }>>(() => []);
+const mockSet = mock(() => {});
 
 mock.module('@fxmanager/database', () => ({
 	repo: {
 		settings: {
 			getMultiple: mockGetMultiple,
 			all: mockAll,
+			set: mockSet,
 		},
 		players: {},
 		whitelist: {},
@@ -105,41 +107,43 @@ describe('ConfigManager', () => {
 			const config = ConfigManager.getInstance();
 
 			const fxValues = config.getFxServerValues(false);
-			expect(fxValues.executable).toBe('./run.sh');
+			expect(fxValues.executablePath).toBe('./run.sh');
 			expect(fxValues.onesync).toBe('on');
 			expect(mockGetMultiple).not.toHaveBeenCalled();
 		});
 
 		it('merges values from database persistent layer when useDb is true', () => {
 			mockGetMultiple.mockReturnValue({
-				executable: './custom-FXServer',
-				onesync: 'off',
+				'fxserver.executablePath': './custom-FXServer',
+				'fxserver.onesync': 'off',
+				'fxserver.serverConfigPath': 'custom.cfg',
 			});
 
 			const config = ConfigManager.getInstance();
 			const fxValues = config.getFxServerValues(true);
 
 			expect(mockGetMultiple).toHaveBeenCalledWith([
-				'onesync',
-				'executable',
-				'serverDataPath',
-				'serverConfigFile',
+				'fxserver.onesync',
+				'fxserver.executablePath',
+				'fxserver.serverDataPath',
+				'fxserver.serverConfigPath',
 			]);
-			expect(fxValues.executable).toBe('./custom-FXServer');
-			expect(fxValues.onesync).toBe('off');
-			expect(fxValues.serverDataPath).toBe('./server-data'); // Kept fallback fallback
+			expect(fxValues.executablePath).toBe('./custom-FXServer');
+			expect(fxValues.onesync).toBe('off'); // onesync is read from the db
+			expect(fxValues.serverConfigFile).toBe('custom.cfg'); // serverConfigPath key maps to the serverConfigFile field
+			expect(fxValues.serverDataPath).toBe('./server-data'); // Kept fallback
 		});
 
 		it('ignores undefined database properties safely', () => {
 			mockGetMultiple.mockReturnValue({
-				executable: undefined,
-				onesync: 'on',
+				'fxserver.executablePath': undefined,
+				'fxserver.onesync': 'on',
 			});
 
 			const config = ConfigManager.getInstance();
 			const fxValues = config.getFxServerValues(true);
 
-			expect(fxValues.executable).toBe('./FXServer'); // Restores baseline fallback
+			expect(fxValues.executablePath).toBe('./FXServer'); // Restores baseline fallback
 			expect(fxValues.onesync).toBe('on');
 		});
 	});
@@ -152,7 +156,7 @@ describe('ConfigManager', () => {
 
 			const allValues = config.getAllValues(false);
 			expect(allValues.webServerPort).toBe(5000);
-			expect(allValues.executable).toBe('./FXServer');
+			expect(allValues.executablePath).toBe('./FXServer');
 			expect(mockAll).not.toHaveBeenCalled();
 		});
 

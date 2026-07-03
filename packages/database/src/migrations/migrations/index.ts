@@ -1,3 +1,6 @@
+import { m0006_admin_groups } from './0006_admin_groups';
+import { m0005_disconnect_events } from './0005_disconnect_events';
+import { m0004_disconnect_sessions } from './0004_disconnect_sessions';
 import { m0003_jittery_mystique } from './0003_jittery_mystique';
 import { m0002_dry_molten_man } from './0002_dry_molten_man';
 import { m0001_dapper_landau } from './0001_dapper_landau';
@@ -25,4 +28,7 @@ export const migrations: Migration[] = [
 	m0001_dapper_landau,
 	m0002_dry_molten_man,
 	m0003_jittery_mystique,
+	m0004_disconnect_sessions,
+	m0005_disconnect_events,
+	m0006_admin_groups,
 ];

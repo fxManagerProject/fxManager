@@ -1,17 +1,12 @@
 import { QueryService } from '@/lib/query';
-import {
-	PERMISSION_GROUPS,
-	PERMISSION_LABELS,
-	UserPermissions,
-} from '@fxmanager/shared/constants';
+import { useGroups } from '@/hooks/use-groups';
+import { UserPermissions } from '@fxmanager/shared/constants';
 import type { AdminGroup, ApiResponse } from '@fxmanager/shared/types';
-import { PermissionManager } from '@fxmanager/shared/utils';
 import {
 	DynamicIcon,
 	type LucidIconName,
 } from '@fxmanager/ui/components/dynamic-icon';
 import { Input } from '@fxmanager/ui/components/input';
-import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import {
 	Select,
 	SelectContent,
@@ -20,84 +15,106 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@fxmanager/ui/components/select';
-import {
-	Blend,
-	Hash,
-	Layers,
-	Loader2,
-	RotateCcw,
-	Save,
-	ShieldCheck,
-	Trash2,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Blend, Hash, Layers, Loader2, RotateCcw, Save, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { PermissionGrid } from './permissiongrid';
 
 type PermissionEditorProps =
 	| {
 			adminId: string;
 			editable: boolean;
 			value: number;
+			group: AdminGroup | null;
 			skipServerSave?: false;
-			hideGroup?: boolean;
-			hideReset?: boolean;
 			updatePerms: (perms: number) => void;
+			updateGroup: (group: AdminGroup | null) => void;
 	  }
 	| {
 			skipServerSave: true;
 			value: number;
+			group: AdminGroup | null;
 			updatePerms: (perms: number) => void;
-			hideGroup?: boolean;
-			hideReset?: boolean;
+			updateGroup: (group: AdminGroup | null) => void;
 			adminId?: never;
 			editable?: never;
 	  };
 
 export default function PermissionEditor(props: PermissionEditorProps) {
-	const {
-		value,
-		updatePerms,
-		skipServerSave = false,
-		hideGroup = false,
-		hideReset = false,
-	} = props;
+	const { value, group, updatePerms, updateGroup, skipServerSave = false } =
+		props;
 
+	const { groups } = useGroups();
 	const [bitfield, setBitField] = useState<number>(value ?? 0);
-	const [permissionGroup, setPermissionGroup] = useState<
-		AdminGroup | undefined
-	>(undefined);
 	const [isSaving, setIsSaving] = useState(false);
 
 	const canEdit = skipServerSave || props.editable;
+	const isGrouped = group !== null;
+	// a group fully defines the permissions of its members
+	const displayedBitfield = group ? group.permissions : bitfield;
 
 	const togglePermission = (bit: number) => {
-		if (!canEdit || bit === UserPermissions.MASTER) return;
+		if (!canEdit || isGrouped || bit === UserPermissions.MASTER) return;
 
 		const nextBitfield = bitfield ^ bit;
 		setBitField(nextBitfield);
 
 		if (skipServerSave) {
 			updatePerms(nextBitfield & ~UserPermissions.MASTER);
-			return;
 		}
 	};
 
-	const hasPermission = (bit: number) => (bitfield & bit) !== 0;
-
 	const handleBitFieldChange = ({
 		target,
-	}: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
-		const cleanValue = target.value.replace(/[^0-9]/g, '');
+	}: React.ChangeEvent<HTMLInputElement>) => {
+		if (isGrouped) return;
 
-		if (cleanValue === '') {
-			setBitField(0);
-		} else {
-			setBitField(parseInt(cleanValue, 10));
+		const cleanValue = target.value.replace(/[^0-9]/g, '');
+		const nextBitfield = cleanValue === '' ? 0 : parseInt(cleanValue, 10);
+		setBitField(nextBitfield);
+
+		if (skipServerSave) {
+			updatePerms(nextBitfield & ~UserPermissions.MASTER);
+		}
+	};
+
+	const handleGroupSelect = async (selected: string) => {
+		const nextGroup =
+			selected === 'custom'
+				? null
+				: (groups.find((g) => `${g.id}` === selected) ?? null);
+
+		if (skipServerSave) {
+			updateGroup(nextGroup);
+			return;
+		}
+
+		try {
+			const response = await QueryService<
+				ApiResponse<{ newGroupId: number | null }>
+			>({
+				endpoint: `/settings/admins/${props.adminId}/group`,
+				method: 'POST',
+				body: { groupId: nextGroup?.id ?? null },
+			});
+
+			if (response.success) {
+				updateGroup(nextGroup);
+				toast.success(
+					nextGroup
+						? `Assigned to ${nextGroup.name}`
+						: 'Group removed, using custom permissions',
+				);
+			} else {
+				toast.error(response.error);
+			}
+		} catch (err) {
+			toast.error('Sync failed', { description: (err as Error).message });
 		}
 	};
 
 	const handleSave = async () => {
-		if (skipServerSave) return;
+		if (skipServerSave || isGrouped) return;
 
 		setIsSaving(true);
 
@@ -121,10 +138,6 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 		}
 	};
 
-	useEffect(() => {
-		setPermissionGroup(PermissionManager.getGroup(bitfield) ?? undefined);
-	}, [bitfield]);
-
 	return (
 		<div className="flex flex-col flex-1 min-h-0 space-y-4">
 			<div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border bg-card shadow-sm shrink-0">
@@ -137,61 +150,51 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 							</span>
 							<Input
 								type="text"
-								value={bitfield}
-								disabled={!canEdit}
+								value={displayedBitfield}
+								disabled={!canEdit || isGrouped}
 								onChange={handleBitFieldChange}
 								className="bg-muted border-none rounded px-2 py-1 text-sm font-mono w-32 text-right"
 							/>
 						</div>
 					</div>
 
-					{!hideGroup && (
-						<div className="flex flex-row gap-2 items-center pl-3">
-							<Layers className="h-6 w-6 text-muted-foreground" />
-							<div className="flex flex-col items-start">
-								<span className="text-[10px] uppercase font-bold text-muted-foreground">
-									Permission Group
-								</span>
-								<Select
-									value={
-										permissionGroup !== undefined
-											? `${permissionGroup.permissions}`
-											: '0'
-									}
-									disabled={!canEdit}
-									onValueChange={(value) => setBitField(parseInt(value, 10))}
-								>
-									<SelectTrigger className="w-44 border-none bg-muted">
-										<SelectValue placeholder="Custom" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectGroup>
-											{PERMISSION_GROUPS.filter(
-												(g) => g.permissions !== UserPermissions.MASTER,
-											).map((g) => (
-												<SelectItem
-													key={`${g.permissions}`}
-													value={`${g.permissions}`}
-												>
-													<DynamicIcon
-														name={(g.icon as LucidIconName) ?? 'UserRound'}
-													/>
-													{g.label}
-												</SelectItem>
-											))}
-											<SelectItem value="0">
-												<Blend className="h-4 w-4" />
-												Custom
+					<div className="flex flex-row gap-2 items-center pl-3">
+						<Layers className="h-6 w-6 text-muted-foreground" />
+						<div className="flex flex-col items-start">
+							<span className="text-[10px] uppercase font-bold text-muted-foreground">
+								Permission Group
+							</span>
+							<Select
+								value={group ? `${group.id}` : 'custom'}
+								disabled={!canEdit}
+								onValueChange={handleGroupSelect}
+							>
+								<SelectTrigger className="w-44 border-none bg-muted">
+									<SelectValue placeholder="Custom" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectGroup>
+										{groups.map((g) => (
+											<SelectItem key={g.id} value={`${g.id}`}>
+												<DynamicIcon
+													name={(g.icon as LucidIconName) ?? 'UserRound'}
+													color={g.colour}
+												/>
+												{g.name}
 											</SelectItem>
-										</SelectGroup>
-									</SelectContent>
-								</Select>
-							</div>
+										))}
+										<SelectItem value="custom">
+											<Blend className="h-4 w-4" />
+											Custom
+										</SelectItem>
+									</SelectGroup>
+								</SelectContent>
+							</Select>
 						</div>
-					)}
+					</div>
 				</div>
 
-				{canEdit && (
+				{canEdit && !isGrouped && (
 					<div className="flex items-center gap-2">
 						<button
 							type="button"
@@ -203,17 +206,15 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 							Clear
 						</button>
 
-						{!hideReset && (
-							<button
-								type="button"
-								onClick={() => setBitField(value)}
-								disabled={bitfield === value}
-								className="flex items-center gap-2 px-3 py-2 text-xs font-medium enabled:hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
-							>
-								<RotateCcw className="h-4 w-4" />
-								Reset
-							</button>
-						)}
+						<button
+							type="button"
+							onClick={() => setBitField(value)}
+							disabled={bitfield === value}
+							className="flex items-center gap-2 px-3 py-2 text-xs font-medium enabled:hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+						>
+							<RotateCcw className="h-4 w-4" />
+							Reset
+						</button>
 
 						{!skipServerSave && (
 							<button
@@ -234,38 +235,11 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 				)}
 			</div>
 
-			<ScrollArea className="flex-1 border rounded-xl bg-muted/5 overflow-y-auto">
-				<div className="p-4 pr-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-					{Object.entries(PERMISSION_LABELS).map(([bitStr, info]) => {
-						const bit = parseInt(bitStr, 10);
-						const active = hasPermission(bit);
-
-						return (
-							<button
-								key={bit}
-								disabled={!canEdit}
-								onClick={() => togglePermission(bit)}
-								type="button"
-								className={`flex items-start gap-3 p-4 rounded-lg border-2 text-left transition-all ${
-									active
-										? 'border-primary bg-primary/5 ring-1 ring-primary'
-										: 'border-transparent bg-muted/40 hover:bg-muted disabled:hover:bg-muted/40'
-								}`}
-							>
-								<div
-									className={`mt-0.5 rounded-md p-1 ${active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-								>
-									<ShieldCheck className="h-4 w-4" />
-								</div>
-								<div>
-									<p className="text-sm font-bold">{info.label}</p>
-									<p className="text-xs text-muted-foreground">{info.desc}</p>
-								</div>
-							</button>
-						);
-					})}
-				</div>
-			</ScrollArea>
+			<PermissionGrid
+				bitfield={displayedBitfield}
+				editable={!!canEdit && !isGrouped}
+				onToggle={togglePermission}
+			/>
 		</div>
 	);
 }

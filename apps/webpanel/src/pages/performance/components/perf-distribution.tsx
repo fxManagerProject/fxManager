@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
 	PERF_WINDOW_MS,
 	type PerfSnapshot,
@@ -11,103 +11,61 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@fxmanager/ui/components/card';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@fxmanager/ui/components/select';
 import { BarChart3 } from 'lucide-react';
+import { format } from 'date-fns';
 import { BANDS, bandColor, bandLabel } from './perf-buckets';
+import { aggregateBuckets, type PerfInspect } from './perf-series';
 
-const THREADS: { value: PerfThread; label: string }[] = [
-	{ value: 'svMain', label: 'svMain' },
-	{ value: 'svNetwork', label: 'svNetwork' },
-	{ value: 'svSync', label: 'svSync' },
-];
-
-interface Aggregate {
-	frac: number[];
-	totalTicks: number;
-	windows: number;
-}
-
-function aggregate(
-	samples: PerfSnapshot[],
-	thread: PerfThread,
-): Aggregate | null {
+/** Live view: aggregate the last 30 min (fallback to the newest sample). */
+function liveAggregate(samples: PerfSnapshot[], thread: PerfThread) {
 	const cutoff = Date.now() - PERF_WINDOW_MS;
 	let pool = samples.filter((s) => s.ts >= cutoff && s.threads[thread]);
 	if (pool.length === 0) {
-		const all = samples.filter((s) => s.threads[thread]);
-		const last = all[all.length - 1];
+		const last = samples.filter((s) => s.threads[thread]).at(-1);
 		pool = last ? [last] : [];
 	}
-	if (pool.length === 0) return null;
-
-	const bucketTicks = new Array<number>(BANDS).fill(0);
-	let totalTicks = 0;
-	for (const sample of pool) {
-		const counts = sample.threads[thread];
-		if (!counts) continue;
-		let prev = 0;
-		for (let b = 0; b < BANDS; b++) {
-			const cumulative = counts.buckets[b] ?? prev;
-			bucketTicks[b] = (bucketTicks[b] ?? 0) + (cumulative - prev);
-			prev = cumulative;
-		}
-		totalTicks += counts.count || 0;
-	}
-	if (totalTicks <= 0) return null;
-
-	return {
-		frac: bucketTicks.map((t) => t / totalTicks),
-		totalTicks,
-		windows: pool.length,
-	};
+	return aggregateBuckets(pool, thread);
 }
 
-export function PerfDistribution({ samples }: { samples: PerfSnapshot[] }) {
-	const [thread, setThread] = useState<PerfThread>('svMain');
-
-	const data = useMemo(() => aggregate(samples, thread), [samples, thread]);
+export function PerfDistribution({
+	samples,
+	inspect,
+	thread,
+}: {
+	samples: PerfSnapshot[];
+	inspect?: PerfInspect | null;
+	thread: PerfThread;
+}) {
+	const data = useMemo(() => {
+		if (inspect?.kind === 'point')
+			return aggregateBuckets([inspect.snapshot], thread);
+		if (inspect?.kind === 'range')
+			return aggregateBuckets(inspect.snapshots, thread);
+		return liveAggregate(samples, thread);
+	}, [samples, thread, inspect]);
 
 	return (
 		<Card>
-			<CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
-				<div className="space-y-1.5">
-					<CardTitle className="flex items-center gap-2">
-						<BarChart3 className="h-4 w-4" />
-						{thread} performance
-					</CardTitle>
-					<CardDescription>
-						{data
-							? `Tick-time distribution over the last 30 min — ${data.totalTicks.toLocaleString()} ticks`
-							: 'No performance data yet'}
-					</CardDescription>
-				</div>
-				<Select
-					value={thread}
-					onValueChange={(v) => setThread(v as PerfThread)}
-				>
-					<SelectTrigger className="w-[130px]">
-						<SelectValue />
-					</SelectTrigger>
-					<SelectContent>
-						{THREADS.map(({ value, label }) => (
-							<SelectItem key={value} value={value}>
-								{label}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
+			<CardHeader className="space-y-1.5">
+				<CardTitle className="flex items-center gap-2">
+					<BarChart3 className="h-4 w-4" />
+					{thread} performance
+				</CardTitle>
+				<CardDescription>
+					{!data
+						? 'No performance data yet'
+						: inspect?.kind === 'point'
+							? `At ${format(new Date(inspect.snapshot.ts), 'HH:mm')} — ${data.totalTicks.toLocaleString()} ticks`
+							: inspect?.kind === 'range'
+								? `From ${format(new Date(inspect.start), 'HH:mm')} – ${format(new Date(inspect.end), 'HH:mm')} — ${data.totalTicks.toLocaleString()} ticks`
+								: `Tick-time distribution over the last 30 min — ${data.totalTicks.toLocaleString()} ticks`}
+				</CardDescription>
 			</CardHeader>
 			<CardContent>
 				{!data ? (
 					<div
 						style={{
-							height: `calc((${BANDS} * 16px) + ((${BANDS} - 1) * 6px))`,
+							height: `calc((${BANDS} * 10px) + ((${BANDS} - 1) * 4px))`,
 						}}
 						className="flex items-center justify-center text-center text-sm text-muted-foreground"
 					>
@@ -115,7 +73,7 @@ export function PerfDistribution({ samples }: { samples: PerfSnapshot[] }) {
 						starts.
 					</div>
 				) : (
-					<div className="space-y-1.5">
+					<div className="space-y-1">
 						{Array.from({ length: BANDS }, (_, idx) => {
 							// render slowest (+Inf) at the top, fastest (1ms) at the bottom
 							const i = BANDS - 1 - idx;
@@ -128,7 +86,7 @@ export function PerfDistribution({ samples }: { samples: PerfSnapshot[] }) {
 									<span className="w-11 shrink-0 text-right text-muted-foreground tabular-nums">
 										{bandLabel(i)}
 									</span>
-									<div className="relative h-4 flex-1 overflow-hidden rounded bg-muted/30">
+									<div className="relative h-2.5 flex-1 overflow-hidden rounded bg-muted/30">
 										<div
 											className="h-full rounded"
 											style={{

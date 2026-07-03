@@ -11,6 +11,10 @@ import type {
 import { wsManager } from '../ws/manager';
 import { discordManager } from '../discord/manager';
 import { ConfigManager } from '../config/manager';
+import { aceSync } from '../ace/manager';
+import { disconnectManager } from '../disconnect/manager';
+import { sessionManager } from '../session/manager';
+import { getServerNetEndpoint } from '../../common/fxserver-endpoint';
 
 export class GameManager {
 	private playerlist: OnlinePlayer[] = [];
@@ -29,6 +33,12 @@ export class GameManager {
 
 	getPlayer(id: number) {
 		return this.playerlist.find((p) => p.id === id);
+	}
+
+	/** Drop all tracked players when a server session opens or closes. */
+	resetPlayerlist() {
+		this.playerlist = [];
+		sessionManager.setPlayerCount(0);
 	}
 
 	// region receiving actions
@@ -153,13 +163,18 @@ export class GameManager {
 	}) {
 		const player = await repo.players.upsert(name, identifiers);
 
+		if (player.isStaff) aceSync.refresh();
+
 		const playerPayload = {
 			serverId,
 			health: -1,
 			...player,
 		} satisfies OnlinePlayer;
 
-		this.playerlist.push(playerPayload);
+		const existing = this.playerlist.findIndex((p) => p.serverId === serverId);
+		if (existing !== -1) this.playerlist[existing] = playerPayload;
+		else this.playerlist.push(playerPayload);
+		sessionManager.setPlayerCount(this.playerlist.length);
 		wsManager.broadcast<OnlinePlayer>({
 			channel: 'playerlist',
 			event: 'player_joined',
@@ -167,7 +182,10 @@ export class GameManager {
 		});
 	}
 
-	async playerDrop(serverId: number) {
+	async playerDrop(
+		serverId: number,
+		drop?: { reason?: unknown; resourceName?: string; category?: number },
+	) {
 		const index = this.playerlist.findIndex((p) => p.serverId === serverId);
 
 		if (index === -1) {
@@ -177,7 +195,16 @@ export class GameManager {
 			return;
 		}
 
+		if (drop) {
+			disconnectManager.recordDrop({
+				reason: drop.reason,
+				resourceName: drop.resourceName,
+				category: drop.category,
+			});
+		}
+
 		const [player] = this.playerlist.splice(index, 1);
+		sessionManager.setPlayerCount(this.playerlist.length);
 		if (!player) {
 			console.warn(
 				`[core] A player (${serverId}) disconnected but wasn't tracked!`,
@@ -221,7 +248,8 @@ export class GameManager {
 	async dropPlayer(serverId: number, reason: string): Promise<ApiResponse> {
 		try {
 			const resourceToken = await this.getApiToken();
-			const response = await fetch('http://localhost:30120/fxManager/drop', {
+			const endpoint = await getServerNetEndpoint();
+			const response = await fetch(`http://${endpoint}/fxManager/drop`, {
 				method: 'POST',
 				body: JSON.stringify({
 					serverId,
@@ -261,3 +289,5 @@ export class GameManager {
 		}
 	}
 }
+
+export const gameManager = new GameManager();

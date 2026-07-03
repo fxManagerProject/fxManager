@@ -12,15 +12,23 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
+		"@codemirror/commands": "^6.10.4",
+		"@codemirror/language": "^6.12.4",
+		"@codemirror/state": "^6.7.0",
+		"@codemirror/theme-one-dark": "^6.1.3",
+		"@codemirror/view": "^6.43.4",
 		"@fxmanager/shared": "workspace:*",
 		"@fxmanager/ui": "workspace:*",
+		"@lezer/highlight": "^1.2.3",
 		"ansi-to-react": "^6.2.6",
+		"codemirror": "^6.0.2",
 		"date-fns": "^4.2.1",
 		"lucide-react": "^1.0.1",
 		"react": "^19.2.4",
 		"react-day-picker": "^10.0.1",
 		"react-dom": "^19.2.4",
 		"react-router-dom": "^7.13.2",
+		"recharts": "3.8.0",
 		"sonner": "^2.0.7"
 	},
 	"devDependencies": {

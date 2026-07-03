@@ -35,7 +35,7 @@ export async function checkVersion(currentVersion: string) {
 
 	try {
 		const response = await fetch(
-			`https://api.github.com/repos/Maximus7474/fxManager/releases/latest`,
+			`https://api.github.com/repos/fxManagerProject/fxManager/releases/latest`,
 			{
 				headers: { 'User-Agent': 'fxManager-Updater' },
 			},

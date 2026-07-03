@@ -32,9 +32,18 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	});
 
 	fastify.post('/drop', (request) => {
-		const { body } = request;
+		const body = request.body as {
+			serverId: number;
+			reason?: string;
+			resourceName?: string;
+			category?: number;
+		};
 
-		gm.playerDrop((body as { serverId: number }).serverId);
+		gm.playerDrop(body.serverId, {
+			reason: body.reason,
+			resourceName: body.resourceName,
+			category: body.category,
+		});
 		return { ack: true };
 	});
 

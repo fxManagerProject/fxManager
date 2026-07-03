@@ -12,8 +12,12 @@ import { createSettingsRepository } from './repositories/settings';
 import { createApiTokensRepository } from './repositories/api-tokens';
 import { createAuthRepository } from './repositories/auth';
 import { createAdminsRepository } from './repositories/admins';
+import { createGroupsRepository } from './repositories/groups';
 import { createWhitelistRepository } from './repositories/whitelist';
 import { createMigrateRepository } from './repositories/migrate';
+import { createDisconnectsRepository } from './repositories/disconnects';
+import { createServerSessionsRepository } from './repositories/server-sessions';
+import { createPerfSnapshotsRepository } from './repositories/perf-snapshots';
 
 export type { Migration } from './migrations/types';
 export type { ImportSummary } from './import/txadmin.importer';
@@ -78,6 +82,10 @@ export const repo = {
 	apiTokens: createApiTokensRepository(db),
 	auth: createAuthRepository(db),
 	admins: createAdminsRepository(db),
+	groups: createGroupsRepository(db),
 	whitelist: createWhitelistRepository(db),
 	migrate: createMigrateRepository(db),
+	serverSessions: createServerSessionsRepository(db),
+	disconnects: createDisconnectsRepository(db),
+	perfSnapshots: createPerfSnapshotsRepository(db),
 };

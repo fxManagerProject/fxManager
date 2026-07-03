@@ -47,6 +47,7 @@ import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import type { AdminProfile } from '@fxmanager/database/types';
 import PermissionEditor from './components/permissioneditor';
 import { UserPermissions } from '@fxmanager/shared/constants';
+import { PermissionManager } from '@fxmanager/shared/utils';
 import {
 	Alert,
 	AlertDescription,
@@ -228,7 +229,7 @@ export default function AdminView() {
 		);
 	}
 
-	const isMaster = adminData.permissions & UserPermissions.MASTER;
+	const isMaster = PermissionManager.isMaster(adminData.permissions);
 
 	return (
 		<div>
@@ -340,7 +341,7 @@ export default function AdminView() {
 						}
 						className="hidden lg:block"
 						label={`Staff Group`}
-						value={adminData.group?.label ?? 'None'}
+						value={adminData.group?.name ?? 'Custom'}
 					/>
 				</div>
 
@@ -425,10 +426,17 @@ export default function AdminView() {
 										editable={adminData.id !== user?.id}
 										adminId={params.adminId}
 										value={adminData.permissions}
+										group={adminData.group}
 										updatePerms={(permissions) =>
 											setAdminData((prev) => {
 												if (!prev) return null;
 												return { ...prev, permissions };
+											})
+										}
+										updateGroup={(group) =>
+											setAdminData((prev) => {
+												if (!prev) return null;
+												return { ...prev, group };
 											})
 										}
 									/>

@@ -1,5 +1,6 @@
 export * from './api';
 export * from './audit';
+export * from './config';
 export * from './core';
 export * from './discord-manager';
 export * from './game';
@@ -7,6 +8,9 @@ export * from './process-manager';
 export * from './players';
 export * from './security';
 export * from './settings';
+export * from './txadmin';
 export * from './websockets';
 export * from './perf';
+export * from './disconnect';
+export * from './session';
 export * from './whitelist';

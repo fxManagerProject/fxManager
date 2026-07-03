@@ -31,10 +31,24 @@ mock.module('@fxmanager/database', () => ({
 		},
 		settings: { get: mockGetSetting },
 		whitelist: { isAnyIdentifierWhitelisted: mockIsAnyIdentifierWhitelisted },
+		disconnects: {
+			recordEvent: () => {},
+		},
+		serverSessions: {
+			open: () => ({ id: 1, startedAt: 0, endedAt: null, closeReason: null }),
+			close: () => null,
+			closeDangling: () => {},
+			prune: () => {},
+		},
 	},
 }));
 
+mock.module('../../common/fxserver-endpoint', () => ({
+	getServerNetEndpoint: async () => '127.0.0.1:30120',
+}));
+
 const GameManagerModule = await import('./manager');
+import { sessionManager } from '../session/manager';
 import type { PlayerIdentifiers } from '@fxmanager/shared/types';
 
 type GameManagerInstance = InstanceType<typeof GameManagerModule.GameManager>;
@@ -48,6 +62,7 @@ describe('GameManager', () => {
 	let discordConnectSpy: any;
 	let discordCheckWhitelistSpy: any;
 	let configSpy: any;
+	let setPlayerCountSpy: any;
 
 	const sampleIdentifiers: PlayerIdentifiers = {
 		license: 'license:11112222',
@@ -83,6 +98,11 @@ describe('GameManager', () => {
 			getSystemValues: () => ({ resourceApiToken: 'mock-token' }),
 		} as any);
 
+		setPlayerCountSpy = spyOn(
+			sessionManager,
+			'setPlayerCount',
+		).mockImplementation(() => {});
+
 		gameManager = new GameManagerModule.GameManager();
 	});
 
@@ -95,6 +115,7 @@ describe('GameManager', () => {
 		discordConnectSpy.mockRestore();
 		discordCheckWhitelistSpy.mockRestore();
 		configSpy.mockRestore();
+		setPlayerCountSpy.mockRestore();
 	});
 
 	describe('Player Handling Basics', () => {
@@ -337,6 +358,45 @@ describe('GameManager', () => {
 				event: 'player_joined',
 				data: expectedPayload,
 			});
+			expect(setPlayerCountSpy).toHaveBeenCalledWith(1);
+		});
+
+		it('should replace an existing entry with the same serverId on rejoin instead of duplicating it', async () => {
+			const dbPlayerPayload = {
+				id: 12,
+				name: 'Vader',
+				playtime: 4500,
+				identifiers: sampleIdentifiers,
+				isStaff: false,
+				firstSeen: new Date(),
+				lastSeen: new Date(),
+			};
+			mockUpsertPlayer.mockResolvedValue(dbPlayerPayload);
+
+			await gameManager.playerJoin({
+				name: 'Vader',
+				identifiers: sampleIdentifiers,
+				serverId: 4,
+			});
+			await gameManager.playerJoin({
+				name: 'Vader',
+				identifiers: sampleIdentifiers,
+				serverId: 4,
+			});
+
+			expect(gameManager.getPlayerList()).toHaveLength(1);
+			expect(setPlayerCountSpy).toHaveBeenLastCalledWith(1);
+		});
+	});
+
+	describe('resetPlayerlist()', () => {
+		it('should clear tracked players and push a zero player count', () => {
+			(gameManager as any).playerlist.push({ serverId: 1 }, { serverId: 2 });
+
+			gameManager.resetPlayerlist();
+
+			expect(gameManager.getPlayerList()).toEqual([]);
+			expect(setPlayerCountSpy).toHaveBeenCalledWith(0);
 		});
 	});
 
@@ -363,6 +423,7 @@ describe('GameManager', () => {
 
 			expect(gameManager.getPlayerList()).toHaveLength(0);
 			expect(mockUpdatePlaytime).toHaveBeenCalledWith(12, expect.any(Number));
+			expect(setPlayerCountSpy).toHaveBeenCalledWith(0);
 			expect(wsSpy).toHaveBeenCalledWith({
 				channel: 'playerlist',
 				event: 'player_left',
@@ -374,6 +435,48 @@ describe('GameManager', () => {
 			await gameManager.playerDrop(999);
 			expect(mockUpdatePlaytime).not.toHaveBeenCalled();
 			expect(wsSpy).not.toHaveBeenCalled();
+		});
+
+		it('playerDrop forwards drop details of tracked players to the disconnect manager', async () => {
+			const { disconnectManager } = await import('../disconnect/manager');
+			const recordSpy = spyOn(
+				disconnectManager,
+				'recordDrop',
+			).mockImplementation(() => {});
+			(gameManager as any).playerlist.push({
+				serverId: 42,
+				id: 12,
+				name: 'Vader',
+				playtime: 1000,
+				identifiers: sampleIdentifiers,
+				isStaff: false,
+				firstSeen: new Date(),
+				lastSeen: new Date(),
+				health: 100,
+				ping: 25,
+			});
+			await gameManager.playerDrop(42, {
+				reason: 'Exiting',
+				resourceName: 'x',
+				category: 2,
+			});
+			expect(recordSpy).toHaveBeenCalledWith({
+				reason: 'Exiting',
+				resourceName: 'x',
+				category: 2,
+			});
+			recordSpy.mockRestore();
+		});
+
+		it('playerDrop does not record disconnect stats for untracked players', async () => {
+			const { disconnectManager } = await import('../disconnect/manager');
+			const recordSpy = spyOn(
+				disconnectManager,
+				'recordDrop',
+			).mockImplementation(() => {});
+			await gameManager.playerDrop(999, { reason: 'Exiting', category: 2 });
+			expect(recordSpy).not.toHaveBeenCalled();
+			recordSpy.mockRestore();
 		});
 	});
 
@@ -415,7 +518,7 @@ describe('GameManager', () => {
 			const response = await gameManager.dropPlayer(2, 'Exploiting Loop holes');
 
 			expect(global.fetch).toHaveBeenCalledWith(
-				'http://localhost:30120/fxManager/drop',
+				'http://127.0.0.1:30120/fxManager/drop',
 				{
 					method: 'POST',
 					body: JSON.stringify({

@@ -11,6 +11,13 @@ type CoreSettings = CoreConfig &
 		[key: string]: any;
 	};
 
+const fxServerSettingsMap = {
+	'fxserver.onesync': 'onesync',
+	'fxserver.executablePath': 'executablePath',
+	'fxserver.serverDataPath': 'serverDataPath',
+	'fxserver.serverConfigPath': 'serverConfigFile',
+};
+
 export class ConfigManager {
 	private static instance: ConfigManager | null = null;
 
@@ -27,7 +34,7 @@ export class ConfigManager {
 
 	private fxServerValues: ServerConfig = {
 		onesync: 'on',
-		executable: process.env.FXSERVER_EXECUTABLE || './FXServer',
+		executablePath: process.env.FXSERVER_EXECUTABLE || './FXServer',
 		serverDataPath: process.env.FXSERVER_DATA_PATH || './server-data',
 		serverConfigFile: process.env.FXSERVER_CFG || 'server.cfg',
 	};
@@ -53,14 +60,32 @@ export class ConfigManager {
 	getFxServerValues(useDb: boolean = false) {
 		if (!useDb) return this.fxServerValues;
 
-		const dbValues = repo.settings.getMultiple(
-			Object.keys(this.fxServerValues),
-		);
+		const dbValues = repo.settings.getMultiple([
+			'fxserver.onesync',
+			'fxserver.executablePath',
+			'fxserver.serverDataPath',
+			'fxserver.serverConfigPath',
+		]);
+
+		const valuesToEnv = {
+			'fxserver.executablePath': 'FXSERVER_EXECUTABLE',
+			'fxserver.serverDataPath': 'FXSERVER_DATA_PATH',
+			'fxserver.serverConfigPath': 'FXSERVER_CFG',
+		};
+
+		Object.keys(valuesToEnv).forEach((key) => {
+			const envVar = valuesToEnv[key as keyof typeof valuesToEnv];
+			if (!dbValues[key as keyof typeof dbValues] && process.env[envVar]) {
+				repo.settings.set(key, process.env[envVar]);
+			}
+		});
 
 		const persistent = Object.entries(dbValues).reduce(
 			(acc, [key, value]) => {
 				if (value !== undefined) {
-					acc[key] = value;
+					const mappedKey =
+						fxServerSettingsMap[key as keyof typeof fxServerSettingsMap];
+					acc[mappedKey] = value;
 				}
 				return acc;
 			},

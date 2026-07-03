@@ -9,7 +9,9 @@ export const AUDIT_LOG_ACTIONS = {
 	],
 	WHITELIST: ['whitelist.add', 'whitelist.revoke'],
 	ADMIN: ['admin.create', 'admin.delete', 'admin.update'],
+	GROUP: ['group.create', 'group.delete', 'group.update'],
 	REPORT: ['report.close', 'report.join'],
 	SETTINGS: ['settings.update'],
+	CONFIG: ['config.update'],
 	MIGRATE: ['migrate.txadmin'],
 } as const;

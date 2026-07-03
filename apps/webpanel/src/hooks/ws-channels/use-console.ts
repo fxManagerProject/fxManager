@@ -4,7 +4,10 @@ import type { ProcessOutputLine } from '@fxmanager/shared/types';
 
 interface UseConsoleOptions {
 	maxLines?: number;
+	suspendTrim?: boolean;
 }
+
+const TRIM_OVERSHOOT = 1000;
 
 interface UseConsoleReturn {
 	lines: ProcessOutputLine[];
@@ -14,11 +17,17 @@ interface UseConsoleReturn {
 
 export function useConsoleSocket({
 	maxLines = 500,
+	suspendTrim = false,
 }: UseConsoleOptions = {}): UseConsoleReturn {
 	const { subscribe, unsubscribe, on, emit } = useWSBase();
 	const [lines, setLines] = useState<ProcessOutputLine[]>([]);
 	// Persist lines across re-mounts (page navigation) via a ref-backed cache
 	const cache = useRef<ProcessOutputLine[]>([]);
+	const suspendTrimRef = useRef(suspendTrim);
+
+	useEffect(() => {
+		suspendTrimRef.current = suspendTrim;
+	}, [suspendTrim]);
 
 	useEffect(() => {
 		// Restore cached lines on mount so navigating away and back doesn't lose history
@@ -26,7 +35,7 @@ export function useConsoleSocket({
 
 		subscribe('console');
 
-		// Server dumps last N lines on subscribe via a 'history' event
+		// Server dumps last N lines on subscribe via an 'initial' event
 		const offInitial = on<ProcessOutputLine[]>(
 			'console',
 			'initial',
@@ -39,16 +48,22 @@ export function useConsoleSocket({
 			},
 		);
 
-		const offLine = on<ProcessOutputLine>('console', 'line', ({ data }) => {
+		const offLines = on<ProcessOutputLine[]>('console', 'lines', ({ data }) => {
 			setLines((prev) => {
-				const next = [...prev, data].slice(-maxLines);
+				const lastSeq = prev.length > 0 ? prev[prev.length - 1].seq : -1;
+				const fresh = data.filter((l) => l.seq > lastSeq);
+				if (fresh.length === 0) return prev;
+				const cap = suspendTrimRef.current
+					? maxLines + TRIM_OVERSHOOT
+					: maxLines;
+				const next = [...prev, ...fresh].slice(-cap);
 				cache.current = next;
 				return next;
 			});
 		});
 
 		return () => {
-			offLine();
+			offLines();
 			offInitial();
 			unsubscribe('console');
 		};

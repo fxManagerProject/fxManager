@@ -1,7 +1,13 @@
-import { asc, desc, eq, inArray, like, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, like, sql } from 'drizzle-orm';
 import type { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
 import type * as schema from '../schema';
-import { adminUsers, auditLog, players } from '../schema';
+import {
+	adminGroups,
+	adminUsers,
+	auditLog,
+	playerIdentifiers,
+	players,
+} from '../schema';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import type { AdminProfile, AuditLog } from '../types';
@@ -60,8 +66,16 @@ class AdminsRepository {
 				playerId: adminUsers.playerId,
 				createdAt: adminUsers.createdAt,
 				lastLoginAt: adminUsers.lastLoginAt,
+				group: {
+					id: adminGroups.id,
+					name: adminGroups.name,
+					permissions: adminGroups.permissions,
+					colour: adminGroups.colour,
+					icon: adminGroups.icon,
+				},
 			})
 			.from(adminUsers)
+			.leftJoin(adminGroups, eq(adminUsers.groupId, adminGroups.id))
 			.where(filters)
 			.$dynamic();
 
@@ -74,7 +88,10 @@ class AdminsRepository {
 		return {
 			items: response.map((admin) => ({
 				...admin,
-				group: PermissionManager.getGroup(admin.permissions),
+				effectivePermissions: PermissionManager.effective(
+					admin.permissions,
+					admin.group?.permissions,
+				),
 			})),
 			total,
 			page,
@@ -96,6 +113,17 @@ class AdminsRepository {
 				playerId: true,
 				createdAt: true,
 				lastLoginAt: true,
+			},
+			with: {
+				group: {
+					columns: {
+						id: true,
+						name: true,
+						permissions: true,
+						colour: true,
+						icon: true,
+					},
+				},
 			},
 		});
 
@@ -153,8 +181,67 @@ class AdminsRepository {
 			...profile,
 			auditLogs,
 			playerName,
-			group: PermissionManager.getGroup(profile.permissions),
+			group: profile.group ?? null,
+			effectivePermissions: PermissionManager.effective(
+				profile.permissions,
+				profile.group?.permissions,
+			),
 		};
+	}
+
+	async assignGroup(adminId: number, groupId: number | null) {
+		const admin = await this.db.query.adminUsers.findFirst({
+			where: eq(adminUsers.id, adminId),
+			columns: { permissions: true, groupId: true },
+		});
+
+		if (!admin) throw new Error('not_found');
+		if (PermissionManager.isMaster(admin.permissions))
+			throw new Error('admin_is_master');
+
+		if (groupId !== null) {
+			const group = this.db
+				.select({ id: adminGroups.id })
+				.from(adminGroups)
+				.where(eq(adminGroups.id, groupId))
+				.get();
+
+			if (!group) throw new Error('group_not_found');
+		}
+
+		const result = await this.db
+			.update(adminUsers)
+			.set({ groupId, ...(groupId !== null && { permissions: 0 }) })
+			.where(eq(adminUsers.id, adminId))
+			.returning();
+
+		if (!result[0]) throw new Error('not_found');
+
+		return {
+			...result[0],
+			previousGroupId: admin.groupId,
+			newGroupId: groupId,
+		};
+	}
+
+	listForAceSync() {
+		return this.db
+			.select({
+				id: adminUsers.id,
+				username: adminUsers.username,
+				permissions: adminUsers.permissions,
+				groupId: adminUsers.groupId,
+				license: playerIdentifiers.value,
+			})
+			.from(adminUsers)
+			.leftJoin(
+				playerIdentifiers,
+				and(
+					eq(playerIdentifiers.playerId, adminUsers.playerId),
+					eq(playerIdentifiers.type, 'license'),
+				),
+			)
+			.all();
 	}
 
 	async updatePermissions(adminId: number, newPerms: number) {
@@ -164,7 +251,7 @@ class AdminsRepository {
 		});
 
 		if (!admin) throw new Error('not_found');
-		if (admin.permissions & UserPermissions.MASTER)
+		if (PermissionManager.isMaster(admin.permissions))
 			throw new Error('admin_is_master');
 
 		// failsafe final check, don't set master permission
@@ -198,7 +285,7 @@ class AdminsRepository {
 		});
 
 		if (!admin) throw new Error('not_found');
-		if (admin.permissions & UserPermissions.MASTER && !isMaster)
+		if (PermissionManager.isMaster(admin.permissions) && !isMaster)
 			throw new Error('admin_is_master');
 
 		const result = await this.db

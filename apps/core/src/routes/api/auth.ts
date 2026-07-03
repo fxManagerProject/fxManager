@@ -1,62 +1,25 @@
 import { Type, type Static } from '@sinclair/typebox';
 import type { FastifyPluginAsync } from 'fastify';
 import { repo } from '@fxmanager/database';
-import { UserPermissions } from '@fxmanager/shared/constants';
 
-import {
-	COOKIE_NAME,
-	isFxManagerSetup,
-	isProduction,
-} from '../../common/utils';
+import { COOKIE_NAME, isProduction } from '../../common/utils';
 import type { RouteModule } from '../../types';
 
-const SetupBody = Type.Object({
+const LoginBody = Type.Object({
 	username: Type.String(),
 	password: Type.String(),
 });
 
-type SetupBodyType = Static<typeof SetupBody>;
+type LoginBodyType = Static<typeof LoginBody>;
 
 const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
-	fastify.post<{ Body: SetupBodyType }>(
-		'/setup',
-		{ schema: { body: SetupBody } }, // validates + types the body
-		async (request, reply) => {
-			if (isFxManagerSetup()) {
-				return reply.code(403).send({ error: 'Already set up' });
-			}
-
-			const { username, password } = request.body;
-
-			const user = await repo.auth.createUser(
-				username,
-				password,
-				UserPermissions.MASTER,
-				true,
-			);
-
-			const session = repo.auth.createSession(user.id);
-
-			return reply
-				.setCookie(COOKIE_NAME, session.id, {
-					httpOnly: true, // not accessible from JS
-					secure: isProduction, // HTTPS only in prod
-					sameSite: 'lax',
-					path: '/',
-					maxAge: 60 * 60 * 24 * 7, // 1 week in seconds
-				})
-				.code(201)
-				.send({ success: true });
-		},
-	);
-
 	fastify.post(
 		'/login',
 		{
-			schema: { body: SetupBody },
+			schema: { body: LoginBody },
 		},
 		async (request, reply) => {
-			const { username, password } = request.body as SetupBodyType;
+			const { username, password } = request.body as LoginBodyType;
 
 			const user = await repo.auth.verifyPassword(username, password);
 			if (!user) {
@@ -105,7 +68,16 @@ const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
 		return {
 			username: result.user.username,
 			id: result.user.id,
-			permissions: result.user.permissions,
+			permissions: result.effectivePermissions,
+			group: result.group
+				? {
+						id: result.group.id,
+						name: result.group.name,
+						permissions: result.group.permissions,
+						colour: result.group.colour,
+						icon: result.group.icon,
+					}
+				: null,
 		};
 	});
 };

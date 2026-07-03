@@ -19,6 +19,6 @@ export async function sessionAuth(req: FastifyRequest, reply: FastifyReply) {
 	req.admin = {
 		id: result.user.id,
 		username: result.user.username,
-		permissions: result.user.permissions,
+		permissions: result.effectivePermissions,
 	};
 }

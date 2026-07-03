@@ -331,4 +331,145 @@ describe('AdminsRepository', () => {
 			expect(result.newPlayerId).toBe(player.id);
 		});
 	});
+
+	describe('groups', () => {
+		const insertGroup = (name: string, permissions: number) =>
+			testDb
+				.insert(schema.adminGroups)
+				.values({ name, permissions, colour: '#fff', createdAt: new Date() })
+				.returning()
+				.get();
+
+		const insertAdmin = (
+			username: string,
+			permissions = 0,
+			groupId: number | null = null,
+		) =>
+			testDb
+				.insert(adminUsers)
+				.values({
+					username,
+					passwordHash: 'hash',
+					permissions,
+					groupId,
+					createdAt: new Date(),
+				})
+				.returning()
+				.get();
+
+		it('list() should expose the assigned group and effective permissions', () => {
+			const group = insertGroup('TestMods', UserPermissions.KICK);
+			insertAdmin('grouped', 0, group.id);
+			insertAdmin('solo', UserPermissions.BAN);
+
+			const { items } = adminsRepo.list();
+			const byName = new Map(items.map((a) => [a.username, a]));
+
+			expect(byName.get('grouped')?.group?.name).toBe('TestMods');
+			expect(byName.get('grouped')?.effectivePermissions).toBe(
+				UserPermissions.KICK,
+			);
+			expect(byName.get('solo')?.group).toBeNull();
+			expect(byName.get('solo')?.effectivePermissions).toBe(
+				UserPermissions.BAN,
+			);
+		});
+
+		it('getProfile() should include the assigned group', async () => {
+			const group = insertGroup('TestDevs', UserPermissions.CONSOLE_VIEW);
+			const admin = insertAdmin('dev', UserPermissions.KICK, group.id);
+
+			const profile = await adminsRepo.getProfile(admin.id);
+
+			expect(profile?.group?.id).toBe(group.id);
+			expect(profile?.effectivePermissions).toBe(
+				UserPermissions.CONSOLE_VIEW | UserPermissions.KICK,
+			);
+		});
+
+		it('assignGroup() should set and clear the group', async () => {
+			const group = insertGroup('TestStaff', UserPermissions.WARN);
+			const admin = insertAdmin('joiner');
+
+			const assigned = await adminsRepo.assignGroup(admin.id, group.id);
+			expect(assigned.newGroupId).toBe(group.id);
+
+			const cleared = await adminsRepo.assignGroup(admin.id, null);
+			expect(cleared.previousGroupId).toBe(group.id);
+			expect(cleared.newGroupId).toBeNull();
+		});
+
+		it('assignGroup() should clear stale personal permissions when joining a group', async () => {
+			const group = insertGroup('TestTrial', UserPermissions.KICK);
+			const admin = insertAdmin(
+				'demoted',
+				UserPermissions.BAN | UserPermissions.KICK,
+			);
+
+			const assigned = await adminsRepo.assignGroup(admin.id, group.id);
+
+			expect(assigned.permissions).toBe(0);
+			const profile = await adminsRepo.getProfile(admin.id);
+			expect(profile?.effectivePermissions).toBe(UserPermissions.KICK);
+		});
+
+		it('assignGroup() should refuse master accounts and unknown groups', async () => {
+			const group = insertGroup('TestGhosts', 0);
+			const master = insertAdmin('the_master', UserPermissions.MASTER);
+			const admin = insertAdmin('pleb');
+
+			expect(adminsRepo.assignGroup(master.id, group.id)).rejects.toThrow(
+				'admin_is_master',
+			);
+			expect(adminsRepo.assignGroup(admin.id, 9999)).rejects.toThrow(
+				'group_not_found',
+			);
+			expect(adminsRepo.assignGroup(9999, group.id)).rejects.toThrow(
+				'not_found',
+			);
+		});
+
+		it('listForAceSync() should join group and license identifier', () => {
+			const group = insertGroup('TestAce', UserPermissions.KICK);
+			const player = testDb
+				.insert(schema.players)
+				.values({ name: 'InGame' })
+				.returning()
+				.get();
+			testDb
+				.insert(schema.playerIdentifiers)
+				.values({ playerId: player.id, type: 'license', value: 'abc123' })
+				.run();
+			testDb
+				.insert(schema.playerIdentifiers)
+				.values({ playerId: player.id, type: 'steam', value: 'steam:1' })
+				.run();
+
+			testDb
+				.insert(adminUsers)
+				.values({
+					username: 'linked',
+					passwordHash: 'hash',
+					permissions: 0,
+					groupId: group.id,
+					playerId: player.id,
+					createdAt: new Date(),
+				})
+				.run();
+			insertAdmin('unlinked', UserPermissions.BAN);
+
+			const rows = adminsRepo.listForAceSync();
+			const byName = new Map(rows.map((r) => [r.username, r]));
+
+			expect(byName.get('linked')).toMatchObject({
+				groupId: group.id,
+				license: 'abc123',
+			});
+			expect(byName.get('unlinked')).toMatchObject({
+				groupId: null,
+				license: null,
+				permissions: UserPermissions.BAN,
+			});
+		});
+	});
 });

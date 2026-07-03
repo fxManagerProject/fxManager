@@ -9,7 +9,7 @@ labels: security
 > **STOP! Do not post sensitive security vulnerabilities in a public issue.**
 > To keep our users safe, please report all security concerns through our private advisory channel.
 >
-> **[Submit a Security Advisory →](https://github.com/Maximus7474/fxManager/security/advisories/new)**
+> **[Submit a Security Advisory →](https://github.com/fxManagerProject/fxManager/security/advisories/new)**
 
 
 ---

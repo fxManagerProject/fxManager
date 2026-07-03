@@ -27,11 +27,7 @@ import { Button } from '@fxmanager/ui/components/button';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import PageSizeSelector from '@/components/page-size-selector';
 import PageSelector from '@/components/page-selector';
-import { Badge } from '@fxmanager/ui/components/badge';
-import {
-	DynamicIcon,
-	type LucidIconName,
-} from '@fxmanager/ui/components/dynamic-icon';
+import { GroupBadge } from '@/components/group-badge';
 
 type SortBy = 'createdAt' | 'lastLoginAt';
 type SortOrder = 'asc' | 'desc';
@@ -243,19 +239,7 @@ export default function AdminManagementList() {
 												<span>{a.username}</span>
 											</TableCell>
 											<TableCell className="flex-1 flex items-center gap-2 truncate">
-												{a.group && (
-													<Badge
-														style={{ backgroundColor: a.group.colour }}
-														className="text-white"
-													>
-														{a.group.icon && (
-															<DynamicIcon
-																name={a.group.icon as LucidIconName}
-															/>
-														)}
-														{a.group.label}
-													</Badge>
-												)}
+												{a.group && <GroupBadge group={a.group} />}
 											</TableCell>
 											<TableCell className="text-sm text-muted-foreground flex-1">
 												{new Date(a.createdAt).toLocaleDateString()}

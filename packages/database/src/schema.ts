@@ -59,6 +59,17 @@ export const whitelistedIdentifers = sqliteTable(
 
 // region Admins & Sessions
 
+export const adminGroups = sqliteTable('admin_groups', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	name: text('name').notNull().unique(),
+	permissions: integer('permissions').default(0).notNull(),
+	colour: text('colour').default('#ffffff').notNull(),
+	icon: text('icon'),
+	createdAt: integer('created_at', { mode: 'timestamp' })
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
 export const adminUsers = sqliteTable(
 	'admin_users',
 	{
@@ -69,6 +80,9 @@ export const adminUsers = sqliteTable(
 			onDelete: 'set null',
 		}),
 		permissions: integer('permissions').default(0).notNull(),
+		groupId: integer('group_id').references(() => adminGroups.id, {
+			onDelete: 'set null',
+		}),
 		createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 		lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
 	},
@@ -230,6 +244,46 @@ export const apiTokens = sqliteTable(
 	(t) => [index('tokens_token_idx').on(t.token)],
 );
 
+export const serverSessions = sqliteTable(
+	'server_sessions',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		startedAt: integer('started_at', { mode: 'timestamp' }).notNull(),
+		endedAt: integer('ended_at', { mode: 'timestamp' }),
+		closeReason: text('close_reason'),
+	},
+	(t) => [index('server_session_started_idx').on(t.startedAt)],
+);
+
+export const perfSnapshots = sqliteTable(
+	'perf_snapshots',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		sessionId: integer('session_id')
+			.notNull()
+			.references(() => serverSessions.id, { onDelete: 'cascade' }),
+		ts: integer('ts').notNull(),
+		players: integer('players').notNull().default(0),
+		fxsMemory: integer('fxs_memory'),
+		nodeMemory: integer('node_memory'),
+		perf: text('perf', { mode: 'json' }).notNull(),
+	},
+	(t) => [index('perf_snapshot_session_ts_idx').on(t.sessionId, t.ts)],
+);
+
+export const disconnectEvents = sqliteTable(
+	'disconnect_events',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		sessionId: integer('session_id')
+			.notNull()
+			.references(() => serverSessions.id, { onDelete: 'cascade' }),
+		ts: integer('ts').notNull(),
+		category: text('category').notNull(),
+	},
+	(t) => [index('disconnect_event_session_ts_idx').on(t.sessionId, t.ts)],
+);
+
 // region Relations
 
 export const playersRelations = relations(players, ({ many, one }) => ({
@@ -245,10 +299,18 @@ export const playersRelations = relations(players, ({ many, one }) => ({
 	}),
 }));
 
+export const adminGroupsRelations = relations(adminGroups, ({ many }) => ({
+	admins: many(adminUsers),
+}));
+
 export const adminUsersRelations = relations(adminUsers, ({ many, one }) => ({
 	player: one(players, {
 		fields: [adminUsers.playerId],
 		references: [players.id],
+	}),
+	group: one(adminGroups, {
+		fields: [adminUsers.groupId],
+		references: [adminGroups.id],
 	}),
 	bans: many(bans),
 	warns: many(warns),

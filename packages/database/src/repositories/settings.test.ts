@@ -8,7 +8,7 @@ import * as schema from '../schema';
 import { settings } from '../schema';
 import { migrations, runMigrations } from '../migrations';
 
-import { createSettingsRepository, EDITABLE_SETTINGS_KEYS } from './settings';
+import { createSettingsRepository } from './settings';
 
 describe('SettingsRepository', () => {
 	const logSpy = spyOn(console, 'log').mockImplementation(() => {});
@@ -91,7 +91,7 @@ describe('SettingsRepository', () => {
 
 	describe('set() Guarded Upsert Engine', () => {
 		it('should insert a new database row if an editable key is completely fresh', () => {
-			const targetKey = EDITABLE_SETTINGS_KEYS[0]; // 'executable'
+			const targetKey = 'fxserver.executablePath';
 
 			const result = settingsRepo.set(targetKey, 'alpine_server');
 
@@ -111,7 +111,7 @@ describe('SettingsRepository', () => {
 		});
 
 		it('should cleanly update the existing entry (upsert) when encountering conflict keys', () => {
-			const targetKey = EDITABLE_SETTINGS_KEYS[1]; // 'serverDataPath'
+			const targetKey = 'fxserver.serverDataPath';
 
 			// Inject primary initial seed row
 			testDb
@@ -136,13 +136,11 @@ describe('SettingsRepository', () => {
 			expect(databaseVerificationRow?.value).toBe('/home/fx/mutated');
 		});
 
-		it('should throw an evaluation validation error if the targeted key falls outside EDITABLE_SETTINGS_KEYS guidelines', () => {
-			expect(() => {
-				settingsRepo.set(
-					'unauthorized_internal_system_override_key' as any,
-					'malicious_injection',
-				);
-			}).toThrow('is not listed as editable.');
+		it('upserts arbitrary keys since editable-key validation now lives at the settings route rather than the repository', () => {
+			const result = settingsRepo.set('whitelist.discordGuildId', '1234567890');
+
+			expect(result?.key).toBe('whitelist.discordGuildId');
+			expect(result?.value).toBe('1234567890');
 		});
 	});
 

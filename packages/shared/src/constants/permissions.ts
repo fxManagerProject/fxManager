@@ -1,5 +1,3 @@
-import type { AdminGroup } from '../types';
-
 // acts like an enum
 export const UserPermissions = {
 	NONE: 0,
@@ -30,8 +28,37 @@ export const UserPermissions = {
 	AUDIT_LOG: 1 << 17, // 131072 - view audit logs
 	PERFORMANCE: 1 << 18, // 262144 - view perfomance data
 
+	CONFIG_EDITOR: 1 << 19, // 524288 - access & edit server.cfg files
+
 	MASTER: 1 << 30, // 1073741824
 } as const;
+
+export const ACE_PREFIX = 'fxmanager';
+
+// bit -> ace key, checked in-game as `fxmanager.<key>` (MASTER is granted the
+// bare `fxmanager` ace instead, which covers the whole tree)
+export const PERMISSION_ACE_KEYS: Record<number, string> = {
+	[UserPermissions.KICK]: 'players.kick',
+	[UserPermissions.BAN]: 'players.ban',
+	[UserPermissions.WARN]: 'players.warn',
+	[UserPermissions.REVOKE_KICK]: 'players.revoke_kick',
+	[UserPermissions.REVOKE_BAN]: 'players.revoke_ban',
+	[UserPermissions.REVOKE_WARN]: 'players.revoke_warn',
+	[UserPermissions.WHITELIST]: 'players.whitelist',
+	[UserPermissions.REVOKE_WHITELIST]: 'players.revoke_whitelist',
+	[UserPermissions.VIEW_REPORT]: 'reports.view',
+	[UserPermissions.SEND_REPORT]: 'reports.reply',
+	[UserPermissions.CLOSE_REPORT]: 'reports.close',
+	[UserPermissions.SERVER_ACTIONS]: 'control.server',
+	[UserPermissions.CONSOLE_VIEW]: 'console.view',
+	[UserPermissions.CONSOLE_ACCESS]: 'console.write',
+	[UserPermissions.SETTINGS_ACCESS]: 'settings.write',
+	[UserPermissions.SETTINGS_ADMIN_MANAGEMENT]: 'manage.admins',
+	[UserPermissions.RESOURCE_LIST]: 'commands.resources',
+	[UserPermissions.AUDIT_LOG]: 'system.audit_log',
+	[UserPermissions.PERFORMANCE]: 'system.performance',
+	[UserPermissions.CONFIG_EDITOR]: 'server.cfg_editor',
+};
 
 export const PERMISSION_LABELS: Record<
 	number,
@@ -131,37 +158,14 @@ export const PERMISSION_LABELS: Record<
 		desc: 'Modify global server configuration.',
 		category: 'Administration',
 	},
+	[UserPermissions.CONFIG_EDITOR]: {
+		label: 'Config Editor',
+		desc: 'Edit server.cfg and the files it includes.',
+		category: 'Administration',
+	},
 	[UserPermissions.SETTINGS_ADMIN_MANAGEMENT]: {
 		label: 'Manage Admins',
 		desc: 'Create, edit, and delete admin users.',
 		category: 'Administration',
 	},
 };
-
-// ToDo: move to dynamic loading from DB
-export const PERMISSION_GROUPS: AdminGroup[] = [
-	{
-		label: 'Master Account',
-		permissions: 1073741824,
-		colour: '#FF0000',
-		icon: 'Star',
-	},
-	{
-		label: 'Development',
-		permissions: 292864,
-		colour: '#00FF00',
-		icon: 'FileCode',
-	},
-	{
-		label: 'Management',
-		permissions: 167935,
-		colour: '#0000FF',
-		icon: 'UserRoundKey',
-	},
-	{
-		label: 'Moderation',
-		permissions: 1991,
-		colour: '#ff6600',
-		icon: 'Shield',
-	},
-];
