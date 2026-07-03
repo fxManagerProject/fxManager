@@ -2,7 +2,8 @@ import type { Migration } from '../types';
 
 export const m0005_disconnect_events: Migration = {
 	version: 5,
-	description: 'Add disconnect_events for per-drop timestamps (time-range stats)',
+	description:
+		'Add disconnect_events for per-drop timestamps (time-range stats)',
 	up: [
 		`CREATE TABLE \`disconnect_events\` (
 	\`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,

@@ -95,7 +95,9 @@ describe('PermissionManager Unit Tests', () => {
 		it('should return true only when the MASTER bit is set', () => {
 			expect(PermissionManager.isMaster(UserPermissions.MASTER)).toBe(true);
 			expect(
-				PermissionManager.isMaster(UserPermissions.MASTER | UserPermissions.KICK),
+				PermissionManager.isMaster(
+					UserPermissions.MASTER | UserPermissions.KICK,
+				),
 			).toBe(true);
 			expect(PermissionManager.isMaster(UserPermissions.KICK)).toBe(false);
 			expect(PermissionManager.isMaster(0)).toBe(false);

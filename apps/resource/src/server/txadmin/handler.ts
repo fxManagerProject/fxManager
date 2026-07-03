@@ -1,7 +1,4 @@
-import {
-	TX_EVENT_NAMES,
-	type TxEventPayloads,
-} from '@fxmanager/shared/types';
+import { TX_EVENT_NAMES, type TxEventPayloads } from '@fxmanager/shared/types';
 import { z } from 'zod';
 import type { HttpResponse } from '../types';
 import { emitTxEvent } from './emitter';

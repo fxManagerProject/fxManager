@@ -6,25 +6,38 @@ describe('classifyDrop — numeric category path', () => {
 		expect(classifyDrop({ reason: 'Exiting', category: 2 })).toBe('quit');
 	});
 	it('CLIENT with crash prefix → crash', () => {
-		expect(classifyDrop({ reason: 'Game crashed: ERR_MEM', category: 2 })).toBe('crash');
+		expect(classifyDrop({ reason: 'Game crashed: ERR_MEM', category: 2 })).toBe(
+			'crash',
+		);
 	});
 	it('CLIENT with translated crash prefix (pt) → crash', () => {
-		expect(classifyDrop({ reason: 'O jogo crashou: erro', category: 2 })).toBe('crash');
+		expect(classifyDrop({ reason: 'O jogo crashou: erro', category: 2 })).toBe(
+			'crash',
+		);
 	});
 	it('CLIENT_CONNECTION_TIMED_OUT → timeout', () => {
-		expect(classifyDrop({ reason: 'server->client connection timed out', category: 5 })).toBe('timeout');
+		expect(
+			classifyDrop({
+				reason: 'server->client connection timed out',
+				category: 5,
+			}),
+		).toBe('timeout');
 	});
 	it('ONE_SYNC_TOO_MANY_MISSED_FRAMES → timeout', () => {
 		expect(classifyDrop({ reason: 'onesync', category: 12 })).toBe('timeout');
 	});
 	it('RESOURCE kick → kick', () => {
-		expect(classifyDrop({ reason: 'You were banned', category: 1 })).toBe('kick');
+		expect(classifyDrop({ reason: 'You were banned', category: 1 })).toBe(
+			'kick',
+		);
 	});
 	it('SERVER-initiated → kick', () => {
 		expect(classifyDrop({ reason: 'kicked', category: 3 })).toBe('kick');
 	});
 	it('RESOURCE server_shutting_down → ignored (null)', () => {
-		expect(classifyDrop({ reason: 'server_shutting_down', category: 1 })).toBeNull();
+		expect(
+			classifyDrop({ reason: 'server_shutting_down', category: 1 }),
+		).toBeNull();
 	});
 	it('SERVER_SHUTDOWN → ignored (null)', () => {
 		expect(classifyDrop({ reason: 'whatever', category: 7 })).toBeNull();
@@ -33,7 +46,9 @@ describe('classifyDrop — numeric category path', () => {
 		expect(classifyDrop({ reason: 'replaced', category: 4 })).toBe('other');
 	});
 	it('rate-limit kick → other', () => {
-		expect(classifyDrop({ reason: 'net event overflow', category: 9 })).toBe('other');
+		expect(classifyDrop({ reason: 'net event overflow', category: 9 })).toBe(
+			'other',
+		);
 	});
 });
 
@@ -45,16 +60,24 @@ describe('classifyDrop — string fallback (no category)', () => {
 		expect(classifyDrop({ reason: 'Disconnected.' })).toBe('quit');
 	});
 	it('timeout string → timeout', () => {
-		expect(classifyDrop({ reason: 'server->client connection timed out' })).toBe('timeout');
+		expect(
+			classifyDrop({ reason: 'server->client connection timed out' }),
+		).toBe('timeout');
 	});
 	it('server shutting down → ignored (null)', () => {
-		expect(classifyDrop({ reason: 'Server shutting down: restart' })).toBeNull();
+		expect(
+			classifyDrop({ reason: 'Server shutting down: restart' }),
+		).toBeNull();
 	});
 	it('server-initiated kick → kick', () => {
-		expect(classifyDrop({ reason: 'Disconnected by server: rule break' })).toBe('kick');
+		expect(classifyDrop({ reason: 'Disconnected by server: rule break' })).toBe(
+			'kick',
+		);
 	});
 	it('security overflow → other', () => {
-		expect(classifyDrop({ reason: 'Reliable network event overflow' })).toBe('other');
+		expect(classifyDrop({ reason: 'Reliable network event overflow' })).toBe(
+			'other',
+		);
 	});
 	it('unknown reason → other', () => {
 		expect(classifyDrop({ reason: 'aliens' })).toBe('other');

@@ -7,9 +7,12 @@ function postChat(message: string): void {
 	});
 }
 
-on('txAdmin:events:scheduledRestart', (data: { translatedMessage?: string }) => {
-	if (data?.translatedMessage) postChat(data.translatedMessage);
-});
+on(
+	'txAdmin:events:scheduledRestart',
+	(data: { translatedMessage?: string }) => {
+		if (data?.translatedMessage) postChat(data.translatedMessage);
+	},
+);
 
 on('txAdmin:events:scheduledRestartSkipped', (data: { author?: string }) => {
 	const by = data?.author ? ` by ${data.author}` : '';

@@ -12,7 +12,10 @@ describe('PERMISSION_ACE_KEYS', () => {
 		for (const [name, bit] of Object.entries(UserPermissions)) {
 			if (bitsWithoutKey.includes(bit)) continue;
 
-			expect(PERMISSION_ACE_KEYS[bit], `missing ace key for ${name}`).toBeString();
+			expect(
+				PERMISSION_ACE_KEYS[bit],
+				`missing ace key for ${name}`,
+			).toBeString();
 		}
 	});
 

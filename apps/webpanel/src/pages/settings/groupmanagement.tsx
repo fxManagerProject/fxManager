@@ -123,7 +123,9 @@ function GroupDialog({
 		<Dialog open={open} onOpenChange={(next) => !next && onClose()}>
 			<DialogContent className="sm:max-w-4xl">
 				<DialogHeader>
-					<DialogTitle>{group ? `Edit ${group.name}` : 'Create Group'}</DialogTitle>
+					<DialogTitle>
+						{group ? `Edit ${group.name}` : 'Create Group'}
+					</DialogTitle>
 					<DialogDescription>
 						Members inherit exactly the permissions of their group, both on the
 						panel and in-game.
@@ -265,7 +267,10 @@ export default function GroupManagement() {
 									</TableRow>
 								) : (
 									groups.map((group) => (
-										<TableRow key={group.id} className="flex w-full items-center">
+										<TableRow
+											key={group.id}
+											className="flex w-full items-center"
+										>
 											<TableCell className="font-medium pl-4 flex-1 flex items-center gap-2 truncate">
 												<GroupBadge group={group} />
 											</TableCell>

@@ -2,11 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PerfSnapshot, PerfThread } from '@fxmanager/shared/types';
 import { format } from 'date-fns';
 import { BANDS, bandColor, bandLabel } from './perf-buckets';
-import {
-	bandFractions,
-	snapshotIdxAt,
-	type PerfInspect,
-} from './perf-series';
+import { bandFractions, snapshotIdxAt, type PerfInspect } from './perf-series';
 
 const MARGIN = { top: 8, right: 50, bottom: 22, left: 36 };
 const AXIS = '#a1a1aa';
@@ -121,7 +117,12 @@ export function PerfHeatmap({
 			const inRange = snapshots.filter(
 				(s) => s.ts >= zoom.start && s.ts <= zoom.end,
 			);
-			cb({ kind: 'range', snapshots: inRange, start: zoom.start, end: zoom.end });
+			cb({
+				kind: 'range',
+				snapshots: inRange,
+				start: zoom.start,
+				end: zoom.end,
+			});
 		} else {
 			cb(null);
 		}

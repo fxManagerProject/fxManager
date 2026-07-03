@@ -279,7 +279,6 @@ export default function Console() {
 								</SelectContent>
 							</Select>
 						</div>
-
 					</div>
 
 					<Button

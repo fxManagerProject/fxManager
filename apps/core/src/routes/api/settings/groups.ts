@@ -37,44 +37,41 @@ const GroupManagementEndpoints: RouteModule['handler'] = async (
 		return { success: true, data: repo.groups.list() };
 	});
 
-	fastify.post(
-		'/create',
-		async (request): Promise<ApiResponse<AdminGroup>> => {
-			const admin = requireManagement(request);
+	fastify.post('/create', async (request): Promise<ApiResponse<AdminGroup>> => {
+		const admin = requireManagement(request);
 
-			const { name, permissions, colour, icon } = request.body as GroupBody;
+		const { name, permissions, colour, icon } = request.body as GroupBody;
 
-			if (!name?.trim())
-				return { success: false, error: 'Group name is required' };
+		if (!name?.trim())
+			return { success: false, error: 'Group name is required' };
 
-			try {
-				const group = repo.groups.create({
-					name: name.trim(),
-					permissions: permissions ?? 0,
-					colour: colour ?? '#ffffff',
-					icon,
-				});
+		try {
+			const group = repo.groups.create({
+				name: name.trim(),
+				permissions: permissions ?? 0,
+				colour: colour ?? '#ffffff',
+				icon,
+			});
 
-				repo.audit.log({
-					adminId: admin.id,
-					action: 'group.create',
-					metadata: { name: group.name, permissions: group.permissions },
-				});
+			repo.audit.log({
+				adminId: admin.id,
+				action: 'group.create',
+				metadata: { name: group.name, permissions: group.permissions },
+			});
 
-				aceSync.resync(pm);
+			aceSync.resync(pm);
 
-				return { success: true, data: group };
-			} catch (err) {
-				const message = (err as Error).message;
-				return {
-					success: false,
-					error: message.includes('UNIQUE constraint failed')
-						? 'Group name is already taken'
-						: message,
-				};
-			}
-		},
-	);
+			return { success: true, data: group };
+		} catch (err) {
+			const message = (err as Error).message;
+			return {
+				success: false,
+				error: message.includes('UNIQUE constraint failed')
+					? 'Group name is already taken'
+					: message,
+			};
+		}
+	});
 
 	fastify.post(
 		'/:groupId/update',

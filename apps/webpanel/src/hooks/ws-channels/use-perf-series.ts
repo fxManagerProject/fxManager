@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
-import type {
-	PerfSeriesResponse,
-	PerfSnapshot,
-} from '@fxmanager/shared/types';
+import type { PerfSeriesResponse, PerfSnapshot } from '@fxmanager/shared/types';
 import { QueryService } from '@/lib/query';
 import { useWSBase } from './use-ws-core';
 import { mergeSnapshots, upsertSnapshot } from './perf-merge';

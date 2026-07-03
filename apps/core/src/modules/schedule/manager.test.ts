@@ -35,7 +35,10 @@ describe('RestartScheduler', () => {
 
 	beforeEach(() => {
 		restartMock = mock(async () => true);
-		pm = { getState: mock(() => ({ status: 'running' })), restart: restartMock };
+		pm = {
+			getState: mock(() => ({ status: 'running' })),
+			restart: restartMock,
+		};
 		emitSpy = spyOn(txAdminCompat, 'emit').mockResolvedValue(undefined);
 		mockGetMultiple.mockReturnValue({
 			'restarts.enabled': 'true',
@@ -136,14 +139,18 @@ describe('RestartScheduler', () => {
 
 			const status = scheduler.getStatus(at(2, 0, 0));
 			expect(status.temporary).toBe(true);
-			expect(status.nextRestart).toBe(new Date(2026, 0, 1, 2, 5, 0).toISOString());
+			expect(status.nextRestart).toBe(
+				new Date(2026, 0, 1, 2, 5, 0).toISOString(),
+			);
 		});
 
 		it('takes precedence over a later daily restart', () => {
 			// daily is 03:00 (1h away); temp +5 is sooner
 			scheduler.scheduleTemp(5, at(2, 0, 0));
 			const status = scheduler.getStatus(at(2, 0, 0));
-			expect(status.nextRestart).toBe(new Date(2026, 0, 1, 2, 5, 0).toISOString());
+			expect(status.nextRestart).toBe(
+				new Date(2026, 0, 1, 2, 5, 0).toISOString(),
+			);
 		});
 
 		it('works even when the daily schedule is disabled', () => {

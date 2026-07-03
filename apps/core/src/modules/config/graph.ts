@@ -1,4 +1,7 @@
-import { readFile as fsReadFile, realpath as fsRealpath } from 'node:fs/promises';
+import {
+	readFile as fsReadFile,
+	realpath as fsRealpath,
+} from 'node:fs/promises';
 import path from 'node:path';
 import { parseEndpointCommands } from '../../common/fxserver-endpoint';
 
@@ -85,7 +88,10 @@ export async function buildCfgGraph(
 		for (const exec of execs) {
 			if (exec.startsWith('@')) continue; // @resource/foo.cfg not supported
 			if (path.isAbsolute(exec)) continue; // no absolute include targets
-			const realChild = await safeRealpath(realpath, path.resolve(dataDir, exec));
+			const realChild = await safeRealpath(
+				realpath,
+				path.resolve(dataDir, exec),
+			);
 			if (!isWithin(realDataDir, realChild)) continue;
 			await walk(path.join(dataDir, exec), depth + 1);
 		}
@@ -109,8 +115,7 @@ export async function resolveNewCfgPath(
 	requestPath: string,
 	opts: { realpath?: RealPath } = {},
 ): Promise<
-	| { ok: true; abs: string; displayPath: string }
-	| { ok: false; error: string }
+	{ ok: true; abs: string; displayPath: string } | { ok: false; error: string }
 > {
 	const realpath = opts.realpath ?? fsRealpath;
 	const trimmed = requestPath.trim();

@@ -1,4 +1,12 @@
-import { afterAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
+import {
+	afterAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+	spyOn,
+} from 'bun:test';
 import { UserPermissions } from '@fxmanager/shared/constants';
 
 const mockGroupsList = mock<() => unknown[]>(() => []);
@@ -207,11 +215,19 @@ describe('AceSyncManager', () => {
 		sent.length = 0;
 
 		mockListForAceSync.mockReturnValue([
-			{ id: 5, username: 'mod', permissions: 0, groupId: 2, license: 'license:abc' },
+			{
+				id: 5,
+				username: 'mod',
+				permissions: 0,
+				groupId: 2,
+				license: 'license:abc',
+			},
 		]);
 		aceSync.resync(sender);
 
-		expect(sent).toContain('add_principal identifier.license:abc fxmanager.group.2');
+		expect(sent).toContain(
+			'add_principal identifier.license:abc fxmanager.group.2',
+		);
 		expect(sent).toContain(
 			'remove_principal identifier.license:abc fxmanager.group.1',
 		);

@@ -41,7 +41,10 @@ export class RestartScheduler {
 	start(pm: RestartablePm, opts?: { tickMs?: number }): void {
 		this.attach(pm);
 		this.reload();
-		this.timer = setInterval(() => this.tick(new Date()), opts?.tickMs ?? TICK_MS);
+		this.timer = setInterval(
+			() => this.tick(new Date()),
+			opts?.tickMs ?? TICK_MS,
+		);
 		this.timer.unref?.();
 	}
 
@@ -63,9 +66,7 @@ export class RestartScheduler {
 		this.firedThresholds.clear();
 	}
 
-	private effectiveTarget(
-		now: Date,
-	): { at: number; kind: TargetKind } | null {
+	private effectiveTarget(now: Date): { at: number; kind: TargetKind } | null {
 		const nowMs = now.getTime();
 		const candidates: { at: number; kind: TargetKind }[] = [];
 
@@ -153,10 +154,7 @@ export class RestartScheduler {
 		if (secondsRemaining <= 0) {
 			if (this.skippedTime === target) {
 				this.skippedTime = null;
-			} else if (
-				!this.restarting &&
-				this.pm?.getState().status === 'running'
-			) {
+			} else if (!this.restarting && this.pm?.getState().status === 'running') {
 				this.triggerRestart();
 			}
 			if (this.currentKind === 'temp') this.tempTarget = null;
@@ -167,7 +165,10 @@ export class RestartScheduler {
 		if (this.skippedTime === target) return;
 
 		for (const threshold of WARNING_THRESHOLDS) {
-			if (secondsRemaining <= threshold && !this.firedThresholds.has(threshold)) {
+			if (
+				secondsRemaining <= threshold &&
+				!this.firedThresholds.has(threshold)
+			) {
 				this.firedThresholds.add(threshold);
 				void txAdminCompat.emit('scheduledRestart', {
 					secondsRemaining: threshold,
