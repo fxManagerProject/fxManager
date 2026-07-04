@@ -191,7 +191,6 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 					expiresAt: expiresAt?.toISOString() ?? 'permanent',
 					source: 'ingame-api',
 					resource: body.resource ?? null,
-					author,
 				},
 			});
 
@@ -246,7 +245,6 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 				banId,
 				source: 'ingame-api',
 				resource: body.resource ?? null,
-				author: acting?.username ?? 'Ingame API',
 			},
 		});
 
@@ -291,7 +289,6 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 					reason: result.reason,
 					source: 'ingame-api',
 					resource: body.resource ?? null,
-					author,
 				},
 			});
 
@@ -348,7 +345,6 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 					reason: result.reason,
 					source: 'ingame-api',
 					resource: body.resource ?? null,
-					author,
 				},
 			});
 
@@ -410,7 +406,6 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 				metadata: {
 					source: 'ingame-api',
 					resource: body.resource ?? null,
-					author: acting.username,
 				},
 			});
 
@@ -453,7 +448,6 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 					value,
 					source: 'ingame-api',
 					resource: body.resource ?? null,
-					author: acting?.username ?? 'Ingame API',
 				},
 			});
 
@@ -489,7 +483,6 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 				value,
 				source: 'ingame-api',
 				resource: body.resource ?? null,
-				author: acting?.username ?? 'Ingame API',
 			},
 		});
 
@@ -513,7 +506,6 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 				success: result,
 				source: 'ingame-api',
 				resource: body.resource ?? null,
-				author,
 			},
 		});
 
