@@ -496,4 +496,28 @@ describe('AdminsRepository', () => {
 			expect(adminsRepo.findByPlayerId(999)).toBeNull();
 		});
 	});
+
+	describe('findById()', () => {
+		it('should return the admin matching the given id', () => {
+			const admin = testDb
+				.insert(adminUsers)
+				.values({
+					username: 'FjamZoo',
+					passwordHash: 'hash',
+					permissions: UserPermissions.BAN,
+					createdAt: new Date(),
+				})
+				.returning()
+				.get();
+
+			expect(adminsRepo.findById(admin.id)).toMatchObject({
+				id: admin.id,
+				username: 'FjamZoo',
+			});
+		});
+
+		it('should return null when no admin matches the id', () => {
+			expect(adminsRepo.findById(999)).toBeNull();
+		});
+	});
 });

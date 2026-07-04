@@ -1,5 +1,5 @@
 import { QueryService } from '@/lib/query';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '@fxmanager/ui/components/avatar';
 import { Badge } from '@fxmanager/ui/components/badge';
@@ -111,6 +111,17 @@ export default function PlayerView() {
 				setError((err as ApiError).message ?? 'Failed to load player data.');
 			})
 			.finally(() => setLoading(false));
+	}, [params.playerId]);
+
+	const refetch = useCallback(() => {
+		if (!params.playerId) return;
+
+		QueryService<ApiResponse<PlayerProfile>>({
+			endpoint: `/players/${params.playerId}`,
+			method: 'GET',
+		}).then((res) => {
+			if (res.success) setPlayerData(res.data);
+		});
 	}, [params.playerId]);
 
 	function handleTabChange(tab: string) {
@@ -311,7 +322,11 @@ export default function PlayerView() {
 						<TabsContent value="ban" className="mt-4">
 							<Card>
 								<CardContent className="p-0 overflow-auto">
-									<BansTab bans={punishments.bans} />
+									<BansTab
+										bans={punishments.bans}
+										playerId={playerData.id}
+										onRevoked={refetch}
+									/>
 								</CardContent>
 							</Card>
 						</TabsContent>
@@ -319,7 +334,11 @@ export default function PlayerView() {
 						<TabsContent value="warn" className="mt-4">
 							<Card>
 								<CardContent className="p-0 overflow-auto">
-									<WarnsTab warns={punishments.warns} />
+									<WarnsTab
+										warns={punishments.warns}
+										playerId={playerData.id}
+										onRevoked={refetch}
+									/>
 								</CardContent>
 							</Card>
 						</TabsContent>
@@ -327,7 +346,11 @@ export default function PlayerView() {
 						<TabsContent value="kick" className="mt-4">
 							<Card>
 								<CardContent className="p-0 overflow-auto">
-									<KicksTab kicks={punishments.kicks} />
+									<KicksTab
+										kicks={punishments.kicks}
+										playerId={playerData.id}
+										onRevoked={refetch}
+									/>
 								</CardContent>
 							</Card>
 						</TabsContent>
@@ -355,14 +378,7 @@ export default function PlayerView() {
 					open={dialogOpen}
 					defaultTab={actionTab}
 					onClose={closeAction}
-					onSuccess={() => {
-						QueryService<ApiResponse<PlayerProfile>>({
-							endpoint: `/players/${params.playerId}`,
-							method: 'GET',
-						}).then((res) => {
-							if (res.success) setPlayerData(res.data);
-						});
-					}}
+					onSuccess={refetch}
 				/>
 			</ScrollArea>
 		</div>

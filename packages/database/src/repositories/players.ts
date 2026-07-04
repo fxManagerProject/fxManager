@@ -560,6 +560,36 @@ class PlayersRepository {
 			};
 		});
 	}
+
+	revokeWarn(warnId: number, playerId?: number) {
+		return this.db
+			.update(warns)
+			.set({ revoked: 1 })
+			.where(
+				and(
+					eq(warns.id, warnId),
+					eq(warns.revoked, 0),
+					playerId !== undefined ? eq(warns.playerId, playerId) : undefined,
+				),
+			)
+			.returning()
+			.get();
+	}
+
+	revokeKick(kickId: number, playerId?: number) {
+		return this.db
+			.update(kicks)
+			.set({ revoked: 1 })
+			.where(
+				and(
+					eq(kicks.id, kickId),
+					eq(kicks.revoked, 0),
+					playerId !== undefined ? eq(kicks.playerId, playerId) : undefined,
+				),
+			)
+			.returning()
+			.get();
+	}
 }
 
 export function createPlayersRepository(db: DB) {

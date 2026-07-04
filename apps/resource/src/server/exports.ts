@@ -115,6 +115,14 @@ exports('revokeBan', (banId: number, opts?: { by?: number }) =>
 	post(`/ingame/bans/${banId}/revoke`, opts ?? {}),
 );
 
+exports('revokeWarn', (warnId: number, opts?: { by?: number }) =>
+	post(`/ingame/warns/${warnId}/revoke`, opts ?? {}),
+);
+
+exports('revokeKick', (kickId: number, opts?: { by?: number }) =>
+	post(`/ingame/kicks/${kickId}/revoke`, opts ?? {}),
+);
+
 exports('kick', (input: { target: Target; reason: string; by?: number }) =>
 	post('/ingame/kick', input),
 );

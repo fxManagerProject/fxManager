@@ -91,6 +91,12 @@ const mockBansSearch = mock((_opts: unknown) => [
 const mockBansRevoke = mock((id: number) =>
 	id === 999 ? undefined : { id, playerId: 10 },
 );
+const mockRevokeWarn = mock((id: number) =>
+	id === 999 ? undefined : { id, playerId: 10, reason: 'spam', issuer: null },
+);
+const mockRevokeKick = mock((id: number) =>
+	id === 999 ? undefined : { id, playerId: 10, reason: 'afk', issuer: null },
+);
 const mockFindAdmin = mock((playerId: number) =>
 	playerId === 10 ? { id: 4, username: 'FjamZoo' } : null,
 );
@@ -110,6 +116,8 @@ const fakeRepo = {
 		addKick: mockAddKick,
 		addWarn: mockAddWarn,
 		updatePlayerNotes: mockUpdateNotes,
+		revokeWarn: mockRevokeWarn,
+		revokeKick: mockRevokeKick,
 	},
 	bans: { search: mockBansSearch, revoke: mockBansRevoke },
 	admins: { findByPlayerId: mockFindAdmin },
@@ -117,7 +125,7 @@ const fakeRepo = {
 	audit: { log: mockAuditLog },
 };
 
-const mockEmit = mock(async () => {});
+const mockEmit = mock(async (_event: string, _data: unknown) => {});
 const dropPlayer = mock(async (_serverId: number, _msg: string) => ({
 	success: true,
 }));
@@ -183,6 +191,8 @@ describe('ingame API integration (HTTP)', () => {
 			mockUpdateNotes,
 			mockBansSearch,
 			mockBansRevoke,
+			mockRevokeWarn,
+			mockRevokeKick,
 			mockFindAdmin,
 			mockWhitelistAdd,
 			mockWhitelistRevoke,
@@ -293,6 +303,67 @@ describe('ingame API integration (HTTP)', () => {
 			reason: 'x',
 		});
 		expect(res.statusCode).toBe(404);
+	});
+
+	it('revokes a ban and emits actionRevoked', async () => {
+		const res = await call('POST', '/bans/5/revoke', { by: 1 });
+		expect(res.statusCode).toBe(200);
+		expect(res.json() as any).toEqual({ banId: 5 });
+		expect(mockBansRevoke).toHaveBeenCalledWith(5);
+		expect(mockAuditLog.mock.calls[0]?.[0]).toMatchObject({
+			adminId: 4,
+			action: 'player.unban',
+			playerId: 10,
+		});
+		expect(mockEmit).toHaveBeenCalledTimes(1);
+		expect(mockEmit.mock.calls[0]?.[1]).toMatchObject({ actionType: 'ban' });
+	});
+
+	it('404s revoking a ban that does not exist', async () => {
+		const res = await call('POST', '/bans/999/revoke', {});
+		expect(res.statusCode).toBe(404);
+		expect(res.json().message).toBe('ban_not_found');
+		expect(mockEmit).not.toHaveBeenCalled();
+	});
+
+	it('revokes a warn and emits actionRevoked', async () => {
+		const res = await call('POST', '/warns/6/revoke', { by: 1 });
+		expect(res.statusCode).toBe(200);
+		expect(res.json() as any).toEqual({ warnId: 6 });
+		expect(mockRevokeWarn).toHaveBeenCalledWith(6);
+		expect(mockAuditLog.mock.calls[0]?.[0]).toMatchObject({
+			adminId: 4,
+			action: 'player.unwarn',
+			playerId: 10,
+		});
+		expect(mockEmit.mock.calls[0]?.[1]).toMatchObject({ actionType: 'warn' });
+	});
+
+	it('404s revoking a warn that does not exist', async () => {
+		const res = await call('POST', '/warns/999/revoke', {});
+		expect(res.statusCode).toBe(404);
+		expect(res.json().message).toBe('warn_not_found');
+		expect(mockEmit).not.toHaveBeenCalled();
+	});
+
+	it('revokes a kick and emits actionRevoked', async () => {
+		const res = await call('POST', '/kicks/7/revoke', { by: 1 });
+		expect(res.statusCode).toBe(200);
+		expect(res.json() as any).toEqual({ kickId: 7 });
+		expect(mockRevokeKick).toHaveBeenCalledWith(7);
+		expect(mockAuditLog.mock.calls[0]?.[0]).toMatchObject({
+			adminId: 4,
+			action: 'player.unkick',
+			playerId: 10,
+		});
+		expect(mockEmit.mock.calls[0]?.[1]).toMatchObject({ actionType: 'kick' });
+	});
+
+	it('404s revoking a kick that does not exist', async () => {
+		const res = await call('POST', '/kicks/999/revoke', {});
+		expect(res.statusCode).toBe(404);
+		expect(res.json().message).toBe('kick_not_found');
+		expect(mockEmit).not.toHaveBeenCalled();
 	});
 
 	it('kicks an online player and 409s an offline target', async () => {

@@ -102,6 +102,50 @@ describe('BansRepository', () => {
 				.get();
 			expect(dbCheck?.revokedAt).toBeInstanceOf(Date);
 		});
+
+		it('should return undefined when the ban is already revoked', () => {
+			const player = seedPlayerWithLicense('Repeat_Appeal', 'license:appeal1');
+			const [initialBan] = testDb
+				.insert(bans)
+				.values({
+					playerId: player.id,
+					reason: 'Toxic Behavior',
+					createdAt: new Date(),
+				})
+				.returning()
+				.all();
+
+			bansRepo.revoke(initialBan.id);
+
+			expect(bansRepo.revoke(initialBan.id)).toBeUndefined();
+		});
+
+		it('should return undefined for a non-existent ban', () => {
+			expect(bansRepo.revoke(9999)).toBeUndefined();
+		});
+
+		it('should not revoke when the scoped playerId does not own the ban', () => {
+			const owner = seedPlayerWithLicense('Owner', 'license:owner1');
+			const other = seedPlayerWithLicense('Other', 'license:other1');
+			const [ban] = testDb
+				.insert(bans)
+				.values({
+					playerId: owner.id,
+					reason: 'Toxic Behavior',
+					createdAt: new Date(),
+				})
+				.returning()
+				.all();
+
+			expect(bansRepo.revoke(ban.id, other.id)).toBeUndefined();
+
+			const dbCheck = testDb
+				.select()
+				.from(bans)
+				.where(eq(bans.id, ban.id))
+				.get();
+			expect(dbCheck?.revokedAt).toBeNull();
+		});
 	});
 
 	describe('isLicenseBanned() Conditional Verification', () => {

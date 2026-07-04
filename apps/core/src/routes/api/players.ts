@@ -13,6 +13,7 @@ import {
 	buildBannedPayload,
 	buildWarnedPayload,
 } from '../../modules/txadmin/payloads';
+import { emitActionRevoked } from '../../modules/txadmin/revoke';
 
 const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { gm } = options;
@@ -317,6 +318,101 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			return reply.code(500).send({
 				success: false,
 				error: error.message,
+			});
+		}
+	});
+
+	const REVOKE_ACTIONS = {
+		ban: {
+			permission: UserPermissions.REVOKE_BAN,
+			audit: 'player.unban',
+			revoke: (id: number, pid: number) => repo.bans.revoke(id, pid),
+		},
+		kick: {
+			permission: UserPermissions.REVOKE_KICK,
+			audit: 'player.unkick',
+			revoke: (id: number, pid: number) => repo.players.revokeKick(id, pid),
+		},
+		warn: {
+			permission: UserPermissions.REVOKE_WARN,
+			audit: 'player.unwarn',
+			revoke: (id: number, pid: number) => repo.players.revokeWarn(id, pid),
+		},
+	} as const;
+
+	fastify.post('/:playerId/revoke', async (request, reply) => {
+		const { playerId: playerIdRaw } = request.params as { playerId: string };
+		const { type, id } = request.body as {
+			type?: string;
+			id?: number;
+		};
+		const { admin } = request as AuthedRequest;
+		const playerId = parseInt(playerIdRaw, 10);
+
+		if (type !== 'ban' && type !== 'kick' && type !== 'warn') {
+			return reply.code(400).send({
+				success: false,
+				error: 'Invalid action type',
+			});
+		}
+
+		if (typeof id !== 'number' || !Number.isInteger(id)) {
+			return reply.code(400).send({
+				success: false,
+				error: 'Invalid action id',
+			});
+		}
+
+		const revokeAction = REVOKE_ACTIONS[type];
+
+		if (!PermissionManager.has(admin.permissions, revokeAction.permission)) {
+			return reply.code(403).send({
+				success: false,
+				error: 'Not authorized',
+			});
+		}
+
+		try {
+			const revoked = revokeAction.revoke(id, playerId);
+
+			if (!revoked) {
+				return reply.code(404).send({
+					success: false,
+					error: 'Action not found or already revoked',
+				});
+			}
+
+			repo.audit.log({
+				adminId: admin.id,
+				action: revokeAction.audit,
+				playerId: revoked.playerId,
+				metadata: { [`${type}Id`]: id },
+			});
+
+			await emitActionRevoked({
+				actionId: id,
+				actionType: type,
+				actionReason: revoked.reason ?? null,
+				issuer: revoked.issuer,
+				playerId: revoked.playerId,
+				revokedBy: admin.username,
+			});
+
+			return { success: true, data: null };
+		} catch (err) {
+			const error = err as Error;
+
+			console.error('An error occurred when revoking a player action', {
+				message: error.message,
+				playerId,
+				type,
+				id,
+				admin: admin.username,
+			});
+
+			return reply.code(500).send({
+				success: false,
+				error: 'An internal server error occurred while revoking the action',
 			});
 		}
 	});

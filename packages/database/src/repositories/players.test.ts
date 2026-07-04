@@ -550,4 +550,132 @@ describe('PlayersRepository', () => {
 			expect(kick.issuer).toBeNull();
 		});
 	});
+
+	describe('revokeWarn()', () => {
+		it('should flag an active warn as revoked and return the updated row', async () => {
+			const [player] = testDb
+				.insert(players)
+				.values({ name: 'Warned_User' })
+				.returning()
+				.all();
+			const warn = await playersRepo.addWarn(player.id, 'Spamming', null);
+
+			const revoked = playersRepo.revokeWarn(warn.id);
+
+			expect(revoked).toBeDefined();
+			expect(revoked?.id).toBe(warn.id);
+			expect(revoked?.playerId).toBe(player.id);
+			expect(revoked?.revoked).toBe(1);
+
+			const rowCheck = testDb
+				.select()
+				.from(warns)
+				.where(eq(warns.id, warn.id))
+				.get();
+			expect(rowCheck?.revoked).toBe(1);
+		});
+
+		it('should return undefined when the warn is already revoked', async () => {
+			const [player] = testDb
+				.insert(players)
+				.values({ name: 'Warned_User' })
+				.returning()
+				.all();
+			const warn = await playersRepo.addWarn(player.id, 'Spamming', null);
+			playersRepo.revokeWarn(warn.id);
+
+			expect(playersRepo.revokeWarn(warn.id)).toBeUndefined();
+		});
+
+		it('should return undefined for a non-existent warn', () => {
+			expect(playersRepo.revokeWarn(9999)).toBeUndefined();
+		});
+
+		it('should not revoke when the scoped playerId does not own the warn', async () => {
+			const [owner] = testDb
+				.insert(players)
+				.values({ name: 'Owner' })
+				.returning()
+				.all();
+			const [other] = testDb
+				.insert(players)
+				.values({ name: 'Other' })
+				.returning()
+				.all();
+			const warn = await playersRepo.addWarn(owner.id, 'Spamming', null);
+
+			expect(playersRepo.revokeWarn(warn.id, other.id)).toBeUndefined();
+
+			const rowCheck = testDb
+				.select()
+				.from(warns)
+				.where(eq(warns.id, warn.id))
+				.get();
+			expect(rowCheck?.revoked).toBe(0);
+		});
+	});
+
+	describe('revokeKick()', () => {
+		it('should flag an active kick as revoked and return the updated row', async () => {
+			const [player] = testDb
+				.insert(players)
+				.values({ name: 'Kicked_User' })
+				.returning()
+				.all();
+			const kick = await playersRepo.addKick(player.id, 'AFK', null);
+
+			const revoked = playersRepo.revokeKick(kick.id);
+
+			expect(revoked).toBeDefined();
+			expect(revoked?.id).toBe(kick.id);
+			expect(revoked?.playerId).toBe(player.id);
+			expect(revoked?.revoked).toBe(1);
+
+			const rowCheck = testDb
+				.select()
+				.from(kicks)
+				.where(eq(kicks.id, kick.id))
+				.get();
+			expect(rowCheck?.revoked).toBe(1);
+		});
+
+		it('should return undefined when the kick is already revoked', async () => {
+			const [player] = testDb
+				.insert(players)
+				.values({ name: 'Kicked_User' })
+				.returning()
+				.all();
+			const kick = await playersRepo.addKick(player.id, 'AFK', null);
+			playersRepo.revokeKick(kick.id);
+
+			expect(playersRepo.revokeKick(kick.id)).toBeUndefined();
+		});
+
+		it('should return undefined for a non-existent kick', () => {
+			expect(playersRepo.revokeKick(9999)).toBeUndefined();
+		});
+
+		it('should not revoke when the scoped playerId does not own the kick', async () => {
+			const [owner] = testDb
+				.insert(players)
+				.values({ name: 'Owner' })
+				.returning()
+				.all();
+			const [other] = testDb
+				.insert(players)
+				.values({ name: 'Other' })
+				.returning()
+				.all();
+			const kick = await playersRepo.addKick(owner.id, 'AFK', null);
+
+			expect(playersRepo.revokeKick(kick.id, other.id)).toBeUndefined();
+
+			const rowCheck = testDb
+				.select()
+				.from(kicks)
+				.where(eq(kicks.id, kick.id))
+				.get();
+			expect(rowCheck?.revoked).toBe(0);
+		});
+	});
 });

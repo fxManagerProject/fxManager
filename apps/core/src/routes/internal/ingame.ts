@@ -7,6 +7,7 @@ import {
 	buildBannedPayload,
 	buildWarnedPayload,
 } from '../../modules/txadmin/payloads';
+import { emitActionRevoked } from '../../modules/txadmin/revoke';
 import {
 	resolveExpiry,
 	resolveIssuer,
@@ -227,7 +228,7 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		}
 	});
 
-	fastify.post('/bans/:id/revoke', (request, reply) => {
+	fastify.post('/bans/:id/revoke', async (request, reply) => {
 		const { id } = request.params as { id: string };
 		const banId = parseInt(id, 10);
 		const body = (request.body ?? {}) as { by?: number; resource?: string };
@@ -248,7 +249,82 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			},
 		});
 
+		await emitActionRevoked({
+			actionId: banId,
+			actionType: 'ban',
+			actionReason: revoked.reason ?? null,
+			issuer: revoked.issuer ?? null,
+			playerId: revoked.playerId,
+			revokedBy: acting?.username ?? 'Ingame API',
+		});
+
 		return { banId };
+	});
+
+	fastify.post('/warns/:id/revoke', async (request, reply) => {
+		const { id } = request.params as { id: string };
+		const warnId = parseInt(id, 10);
+		const body = (request.body ?? {}) as { by?: number; resource?: string };
+
+		const revoked = repo.players.revokeWarn(warnId);
+		if (!revoked) return reply.code(404).send({ message: 'warn_not_found' });
+
+		const acting = resolveIssuer(body.by, issuerDeps);
+
+		repo.audit.log({
+			adminId: acting?.id ?? undefined,
+			action: 'player.unwarn',
+			playerId: revoked.playerId,
+			metadata: {
+				warnId,
+				source: 'ingame-api',
+				resource: body.resource ?? null,
+			},
+		});
+
+		await emitActionRevoked({
+			actionId: warnId,
+			actionType: 'warn',
+			actionReason: revoked.reason ?? null,
+			issuer: revoked.issuer ?? null,
+			playerId: revoked.playerId,
+			revokedBy: acting?.username ?? 'Ingame API',
+		});
+
+		return { warnId };
+	});
+
+	fastify.post('/kicks/:id/revoke', async (request, reply) => {
+		const { id } = request.params as { id: string };
+		const kickId = parseInt(id, 10);
+		const body = (request.body ?? {}) as { by?: number; resource?: string };
+
+		const revoked = repo.players.revokeKick(kickId);
+		if (!revoked) return reply.code(404).send({ message: 'kick_not_found' });
+
+		const acting = resolveIssuer(body.by, issuerDeps);
+
+		repo.audit.log({
+			adminId: acting?.id ?? undefined,
+			action: 'player.unkick',
+			playerId: revoked.playerId,
+			metadata: {
+				kickId,
+				source: 'ingame-api',
+				resource: body.resource ?? null,
+			},
+		});
+
+		await emitActionRevoked({
+			actionId: kickId,
+			actionType: 'kick',
+			actionReason: revoked.reason ?? null,
+			issuer: revoked.issuer ?? null,
+			playerId: revoked.playerId,
+			revokedBy: acting?.username ?? 'Ingame API',
+		});
+
+		return { kickId };
 	});
 
 	fastify.post('/kick', async (request, reply) => {

@@ -14,8 +14,11 @@ import {
 	Hammer,
 	Loader2,
 	StickyNote,
+	Undo2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { formatDate } from '@/lib/utils';
+import { QueryService } from '@/lib/query';
 import { Badge } from '@fxmanager/ui/components/badge';
 import {
 	Card,
@@ -23,7 +26,19 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@fxmanager/ui/components/card';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@fxmanager/ui/components/alert-dialog';
 import type { PlayerProfile } from '@fxmanager/database/types';
+import type { ApiResponse, RevokeActionType } from '@fxmanager/shared/types';
 import { useAuth } from '@/hooks/use-auth';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
@@ -32,10 +47,109 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Separator } from '@fxmanager/ui/components/separator';
 
+const REVOKE_PERMISSION: Record<RevokeActionType, number> = {
+	ban: UserPermissions.REVOKE_BAN,
+	kick: UserPermissions.REVOKE_KICK,
+	warn: UserPermissions.REVOKE_WARN,
+};
+
+function RevokeActionButton({
+	type,
+	id,
+	playerId,
+	label,
+	onRevoked,
+}: {
+	type: RevokeActionType;
+	id: number;
+	playerId: number;
+	label: string;
+	onRevoked: () => void;
+}) {
+	const { hasPermission } = useAuth();
+	const [open, setOpen] = useState(false);
+	const [loading, setLoading] = useState(false);
+
+	if (!hasPermission(REVOKE_PERMISSION[type])) return null;
+
+	const handleRevoke = async () => {
+		setLoading(true);
+		try {
+			const res = await QueryService<ApiResponse>({
+				endpoint: `/players/${playerId}/revoke`,
+				method: 'POST',
+				body: { type, id },
+			});
+
+			if (res.success) {
+				toast.success(`${label} revoked.`);
+				setOpen(false);
+				onRevoked();
+			} else {
+				toast.error(res.error ?? `Failed to revoke ${label.toLowerCase()}.`);
+			}
+		} catch {
+			toast.error('An unexpected error occurred.');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	return (
+		<AlertDialog open={open} onOpenChange={setOpen}>
+			<AlertDialogTrigger asChild>
+				<Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+					<Undo2 className="h-3.5 w-3.5" />
+					Revoke
+				</Button>
+			</AlertDialogTrigger>
+			<AlertDialogContent size="sm">
+				<AlertDialogHeader>
+					<AlertDialogTitle>Revoke {label.toLowerCase()}?</AlertDialogTitle>
+					<AlertDialogDescription>
+						This lifts the {label.toLowerCase()} and notifies in-game resources.
+						The action is recorded in the audit log.
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+					<AlertDialogAction
+						variant="destructive"
+						disabled={loading}
+						onClick={(e) => {
+							e.preventDefault();
+							handleRevoke();
+						}}
+					>
+						{loading ? (
+							<Loader2 className="h-4 w-4 animate-spin" />
+						) : (
+							<Undo2 className="h-4 w-4" />
+						)}
+						Revoke
+					</AlertDialogAction>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
+	);
+}
+
+function RevocableStatus({ revoked }: { revoked: number }) {
+	return (
+		<Badge variant={revoked ? 'success' : 'outline'}>
+			{revoked ? 'Revoked' : 'Active'}
+		</Badge>
+	);
+}
+
 export function BansTab({
 	bans,
+	playerId,
+	onRevoked,
 }: {
 	bans: PlayerProfile['punishments']['bans'];
+	playerId: number;
+	onRevoked: () => void;
 }) {
 	if (!bans.length)
 		return <EmptyState icon={Ban} message="No bans on record" />;
@@ -47,19 +161,17 @@ export function BansTab({
 	}: {
 		ban: PlayerProfile['punishments']['bans'][0];
 	}) {
-		const variant =
-			!ban.expiresAt || ban.expiresAt > now
+		const variant = ban.revokedAt
+			? 'success'
+			: !ban.expiresAt || ban.expiresAt > now
 				? 'destructive'
-				: ban.revokedAt
-					? 'success'
-					: 'outline';
+				: 'outline';
 
-		const label =
-			!ban.expiresAt || ban.expiresAt > now
+		const label = ban.revokedAt
+			? 'Revoked'
+			: !ban.expiresAt || ban.expiresAt > now
 				? 'Active'
-				: ban.revokedAt
-					? 'Revoked'
-					: 'Expired';
+				: 'Expired';
 
 		return <Badge variant={variant}>{label}</Badge>;
 	}
@@ -73,6 +185,7 @@ export function BansTab({
 					<TableHead>Issued by</TableHead>
 					<TableHead>Expires</TableHead>
 					<TableHead>Created</TableHead>
+					<TableHead className="text-right">Actions</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -97,6 +210,17 @@ export function BansTab({
 						<TableCell className="text-muted-foreground text-xs">
 							{formatDate(ban.createdAt)}
 						</TableCell>
+						<TableCell className="text-right">
+							{!ban.revokedAt && (
+								<RevokeActionButton
+									type="ban"
+									id={ban.id}
+									playerId={playerId}
+									label="Ban"
+									onRevoked={onRevoked}
+								/>
+							)}
+						</TableCell>
 					</TableRow>
 				))}
 			</TableBody>
@@ -106,8 +230,12 @@ export function BansTab({
 
 export function WarnsTab({
 	warns,
+	playerId,
+	onRevoked,
 }: {
 	warns: PlayerProfile['punishments']['warns'];
+	playerId: number;
+	onRevoked: () => void;
 }) {
 	if (!warns.length)
 		return <EmptyState icon={AlertTriangle} message="No warnings on record" />;
@@ -116,8 +244,10 @@ export function WarnsTab({
 			<TableHeader>
 				<TableRow>
 					<TableHead>Reason</TableHead>
+					<TableHead>Status</TableHead>
 					<TableHead>Issued by</TableHead>
 					<TableHead>Created</TableHead>
+					<TableHead className="text-right">Actions</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -126,9 +256,23 @@ export function WarnsTab({
 						<TableCell className="max-w-[300px] truncate">
 							{warn.reason}
 						</TableCell>
+						<TableCell>
+							<RevocableStatus revoked={warn.revoked} />
+						</TableCell>
 						<TableCell>{warn.issuerName ?? 'System'}</TableCell>
 						<TableCell className="text-muted-foreground text-xs">
 							{formatDate(warn.issuedAt)}
+						</TableCell>
+						<TableCell className="text-right">
+							{!warn.revoked && (
+								<RevokeActionButton
+									type="warn"
+									id={warn.id}
+									playerId={playerId}
+									label="Warning"
+									onRevoked={onRevoked}
+								/>
+							)}
 						</TableCell>
 					</TableRow>
 				))}
@@ -139,8 +283,12 @@ export function WarnsTab({
 
 export function KicksTab({
 	kicks,
+	playerId,
+	onRevoked,
 }: {
 	kicks: PlayerProfile['punishments']['kicks'];
+	playerId: number;
+	onRevoked: () => void;
 }) {
 	if (!kicks.length)
 		return <EmptyState icon={Hammer} message="No kicks on record" />;
@@ -149,8 +297,10 @@ export function KicksTab({
 			<TableHeader>
 				<TableRow>
 					<TableHead>Reason</TableHead>
+					<TableHead>Status</TableHead>
 					<TableHead>Issued by</TableHead>
 					<TableHead>Issued at</TableHead>
+					<TableHead className="text-right">Actions</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -159,9 +309,23 @@ export function KicksTab({
 						<TableCell className="max-w-[300px] truncate">
 							{kick.reason}
 						</TableCell>
+						<TableCell>
+							<RevocableStatus revoked={kick.revoked} />
+						</TableCell>
 						<TableCell>{kick.issuerName ?? 'System'}</TableCell>
 						<TableCell className="text-muted-foreground text-xs">
 							{formatDate(kick.issuedAt)}
+						</TableCell>
+						<TableCell className="text-right">
+							{!kick.revoked && (
+								<RevokeActionButton
+									type="kick"
+									id={kick.id}
+									playerId={playerId}
+									label="Kick"
+									onRevoked={onRevoked}
+								/>
+							)}
 						</TableCell>
 					</TableRow>
 				))}

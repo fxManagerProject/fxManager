@@ -38,6 +38,16 @@ class AdminsRepository {
 		);
 	}
 
+	findById(id: number): { id: number; username: string } | null {
+		return (
+			this.db
+				.select({ id: adminUsers.id, username: adminUsers.username })
+				.from(adminUsers)
+				.where(eq(adminUsers.id, id))
+				.get() ?? null
+		);
+	}
+
 	list(
 		page = 1,
 		pageSize = 20,

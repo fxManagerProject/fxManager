@@ -31,11 +31,17 @@ class BansRepository {
 			.get();
 	}
 
-	revoke(banId: number) {
+	revoke(banId: number, playerId?: number) {
 		return this.db
 			.update(bans)
 			.set({ revokedAt: new Date() })
-			.where(eq(bans.id, banId))
+			.where(
+				and(
+					eq(bans.id, banId),
+					isNull(bans.revokedAt),
+					playerId !== undefined ? eq(bans.playerId, playerId) : undefined,
+				),
+			)
 			.returning()
 			.get();
 	}

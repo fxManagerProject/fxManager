@@ -43,6 +43,27 @@ export function buildBannedPayload(args: {
 	};
 }
 
+export function buildActionRevokedPayload(args: {
+	actionId: number | undefined;
+	actionType: string;
+	actionReason: string | null;
+	actionAuthor: string;
+	playerName: string | null;
+	identifiers?: Partial<PlayerIdentifiers>;
+	revokedBy: string;
+}): TxEventPayloads['actionRevoked'] {
+	return {
+		actionId: toActionId(args.actionId),
+		actionType: args.actionType,
+		actionReason: args.actionReason ?? '',
+		actionAuthor: args.actionAuthor,
+		playerName: args.playerName ?? false,
+		playerIds: identifiersToTxIds(args.identifiers),
+		playerHwids: [],
+		revokedBy: args.revokedBy,
+	};
+}
+
 export function buildWarnedPayload(args: {
 	author: string;
 	reason: string;

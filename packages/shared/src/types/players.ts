@@ -35,3 +35,5 @@ export interface BanForm {
 export interface NoteForm {
 	content: string;
 }
+
+export type RevokeActionType = 'ban' | 'kick' | 'warn';
