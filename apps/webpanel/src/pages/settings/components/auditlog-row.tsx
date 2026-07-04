@@ -1,5 +1,10 @@
+import { GroupBadge } from '@/components/group-badge';
+import { type AdminGroupEntry, useGroups } from '@/hooks/use-groups';
 import { formatDate } from '@/lib/utils';
+import { PERMISSION_LABELS } from '@fxmanager/shared/constants';
+import { PermissionManager } from '@fxmanager/shared/utils';
 import type { AuditLog } from '@fxmanager/database/types';
+import { Badge } from '@fxmanager/ui/components/badge';
 import { Button } from '@fxmanager/ui/components/button';
 import {
 	ChevronDown,
@@ -31,6 +36,95 @@ const ACTION_ICON_MAP: Record<
 	config: FileSliders,
 };
 
+const META_KEY_LABELS: Record<string, string> = {
+	groupId: 'Group',
+	playerId: 'Player',
+	banId: 'Ban',
+	permissions: 'Permissions',
+	previous_permissions: 'Previous permissions',
+	new_permissions: 'New permissions',
+	previous_groupId: 'Previous group',
+	new_groupId: 'New group',
+	previous_playerId: 'Previous player',
+	new_playerId: 'New player',
+};
+
+const PERMISSION_KEYS = new Set([
+	'permissions',
+	'previous_permissions',
+	'new_permissions',
+]);
+
+function isGroupIdKey(key: string): boolean {
+	return /group_?id$/i.test(key);
+}
+
+function formatMetaKey(key: string): string {
+	if (META_KEY_LABELS[key]) return META_KEY_LABELS[key];
+
+	const spaced = key.replace(/_/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+	return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+function permissionNames(bitfield: number): string[] {
+	if (PermissionManager.isMaster(bitfield)) return ['All permissions'];
+
+	const names = Object.entries(PERMISSION_LABELS)
+		.filter(([bit]) => (bitfield & Number(bit)) !== 0)
+		.map(([, meta]) => meta.label);
+
+	return names.length ? names : ['None'];
+}
+
+function MetaValue({
+	metaKey,
+	value,
+	groups,
+}: {
+	metaKey: string;
+	value: unknown;
+	groups: AdminGroupEntry[];
+}) {
+	if (value === null || value === undefined) {
+		return <span className="italic text-muted-foreground/50">none</span>;
+	}
+
+	if (PERMISSION_KEYS.has(metaKey) && typeof value === 'number') {
+		return (
+			<span className="inline-flex flex-wrap gap-1">
+				{permissionNames(value).map((name) => (
+					<Badge
+						key={name}
+						variant="secondary"
+						className="text-[10px] font-normal px-1.5 py-0"
+					>
+						{name}
+					</Badge>
+				))}
+			</span>
+		);
+	}
+
+	if (isGroupIdKey(metaKey)) {
+		const group = groups.find((g) => g.id === Number(value));
+		if (group) return <GroupBadge group={group} />;
+		return <span className="font-mono">#{String(value)}</span>;
+	}
+
+	if (
+		/id$/i.test(metaKey) &&
+		(typeof value === 'number' || typeof value === 'string')
+	) {
+		return <span className="font-mono">#{String(value)}</span>;
+	}
+
+	if (typeof value === 'object') {
+		return <span className="font-mono">{JSON.stringify(value)}</span>;
+	}
+
+	return <span>{String(value)}</span>;
+}
+
 export function AuditLogRow({
 	log,
 	showAdmin,
@@ -39,6 +133,7 @@ export function AuditLogRow({
 	showAdmin?: boolean;
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const { groups } = useGroups();
 
 	const group = log.action.split('.')[0] || '';
 	const ActionIcon = ACTION_ICON_MAP[group] || FileQuestion;
@@ -98,9 +193,9 @@ export function AuditLogRow({
 												className="flex flex-col flex-1 gap-0.5 border-r border-border/40 last:border-0 pr-4 last:pr-0 pb-0"
 											>
 												<span className="font-semibold text-foreground/70 text-[11px] uppercase tracking-wider">
-													{key}
+													{formatMetaKey(key)}
 												</span>
-												<span className="font-mono text-muted-foreground text-xs">
+												<span className="text-muted-foreground text-xs">
 													{typeof val === 'object' && val !== null ? (
 														<ul className="space-y-1 list-disc pl-4 mt-1">
 															{Object.entries(val).map(
@@ -111,13 +206,14 @@ export function AuditLogRow({
 																	>
 																		<div className="inline-flex items-start gap-1 text-muted-foreground">
 																			<span className="text-muted-foreground/70 font-semibold shrink-0">
-																				{nestedKey}:
+																				{formatMetaKey(nestedKey)}:
 																			</span>
 																			<span className="text-foreground">
-																				{typeof nestedVal === 'object' &&
-																				nestedVal !== null
-																					? JSON.stringify(nestedVal)
-																					: String(nestedVal)}
+																				<MetaValue
+																					metaKey={nestedKey}
+																					value={nestedVal}
+																					groups={groups}
+																				/>
 																			</span>
 																		</div>
 																	</li>
@@ -125,7 +221,11 @@ export function AuditLogRow({
 															)}
 														</ul>
 													) : (
-														String(val)
+														<MetaValue
+															metaKey={key}
+															value={val}
+															groups={groups}
+														/>
 													)}
 												</span>
 											</div>
@@ -136,9 +236,11 @@ export function AuditLogRow({
 						) : (
 							<div className="flex flex-wrap gap-x-3 gap-y-1 text-muted-foreground/80 font-medium">
 								{Object.entries(log.metadata).map(([key, val]) => (
-									<span key={key} className="inline-block">
-										<span className="text-muted-foreground/50">{key}:</span>{' '}
-										{String(val)}
+									<span key={key} className="inline-flex items-center gap-1">
+										<span className="text-muted-foreground/50">
+											{formatMetaKey(key)}:
+										</span>
+										<MetaValue metaKey={key} value={val} groups={groups} />
 									</span>
 								))}
 							</div>

@@ -220,20 +220,70 @@ class PlayersRepository {
 
 		if (!result) return null;
 
-		const identifiers = result.identifiers.reduce((acc, curr) => {
+		const {
+			bans: banRows,
+			warns: warnRows,
+			kicks: kickRows,
+			notes: noteRows,
+			reports: reportRows,
+			identifiers: identifierRows,
+			...player
+		} = result;
+
+		const identifiers = identifierRows.reduce((acc, curr) => {
 			acc[curr.type as keyof PlayerIdentifiers] = curr.value;
 			return acc;
 		}, {} as PlayerIdentifiers);
 
+		const issuerIds = [
+			...new Set(
+				[...banRows, ...warnRows, ...kickRows, ...noteRows]
+					.map((row) => row.issuer)
+					.filter((v): v is number => v != null),
+			),
+		];
+		const reporterIds = [...new Set(reportRows.map((r) => r.reporterId))];
+
+		const adminNames = new Map(
+			issuerIds.length
+				? this.db
+						.select({ id: adminUsers.id, username: adminUsers.username })
+						.from(adminUsers)
+						.where(inArray(adminUsers.id, issuerIds))
+						.all()
+						.map((a) => [a.id, a.username] as const)
+				: [],
+		);
+		const reporterNames = new Map(
+			reporterIds.length
+				? this.db
+						.select({ id: players.id, name: players.name })
+						.from(players)
+						.where(inArray(players.id, reporterIds))
+						.all()
+						.map((p) => [p.id, p.name] as const)
+				: [],
+		);
+
+		const withIssuerName = <T extends { issuer: number | null }>(row: T) => ({
+			...row,
+			issuerName: row.issuer != null ? (adminNames.get(row.issuer) ?? null) : null,
+		});
+
 		return {
-			...result,
+			...player,
 			isStaff: !!result.adminProfile,
 			identifiers,
 			punishments: {
-				bans: result.bans,
-				warns: result.warns,
-				kicks: result.kicks,
+				bans: banRows.map(withIssuerName),
+				warns: warnRows.map(withIssuerName),
+				kicks: kickRows.map(withIssuerName),
 			},
+			notes: noteRows.map(withIssuerName),
+			reports: reportRows.map((r) => ({
+				...r,
+				reporterName: reporterNames.get(r.reporterId) ?? null,
+			})),
 		};
 	}
 

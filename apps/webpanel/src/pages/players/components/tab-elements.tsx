@@ -84,7 +84,7 @@ export function BansTab({
 						<TableCell>
 							<BanStatus ban={ban} />
 						</TableCell>
-						<TableCell>{ban.issuer ?? 'System'}</TableCell>
+						<TableCell>{ban.issuerName ?? 'System'}</TableCell>
 						<TableCell>
 							{ban.expiresAt ? (
 								formatDate(ban.expiresAt)
@@ -126,7 +126,7 @@ export function WarnsTab({
 						<TableCell className="max-w-[300px] truncate">
 							{warn.reason}
 						</TableCell>
-						<TableCell>{warn.issuer ?? 'System'}</TableCell>
+						<TableCell>{warn.issuerName ?? 'System'}</TableCell>
 						<TableCell className="text-muted-foreground text-xs">
 							{formatDate(warn.issuedAt)}
 						</TableCell>
@@ -159,7 +159,7 @@ export function KicksTab({
 						<TableCell className="max-w-[300px] truncate">
 							{kick.reason}
 						</TableCell>
-						<TableCell>{kick.issuer ?? 'System'}</TableCell>
+						<TableCell>{kick.issuerName ?? 'System'}</TableCell>
 						<TableCell className="text-muted-foreground text-xs">
 							{formatDate(kick.issuedAt)}
 						</TableCell>
@@ -189,7 +189,9 @@ export function ReportsTab({ reports }: { reports: PlayerProfile['reports'] }) {
 						<TableCell className="max-w-[260px] truncate">
 							{report.subject}
 						</TableCell>
-						<TableCell>{report.reporterId}</TableCell>
+						<TableCell>
+							{report.reporterName ?? `Player #${report.reporterId}`}
+						</TableCell>
 						<TableCell>
 							<Badge
 								variant={report.status === 'open' ? 'secondary' : 'outline'}
@@ -218,7 +220,8 @@ export function NotesTab({ notes }: { notes: PlayerProfile['notes'] }) {
 				<div key={note.id} className="p-4">
 					<p className="text-sm">{note.content}</p>
 					<p className="text-xs text-muted-foreground mt-2">
-						Added by <span className="font-medium">{note.issuer}</span> ·{' '}
+						Added by{' '}
+						<span className="font-medium">{note.issuerName ?? 'System'}</span> ·{' '}
 						{formatDate(note.issuedAt)}
 					</p>
 				</div>

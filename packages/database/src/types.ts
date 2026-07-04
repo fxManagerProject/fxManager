@@ -17,19 +17,22 @@ export type Ban = typeof bans.$inferSelect;
 export type Warn = typeof warns.$inferSelect;
 export type Kick = typeof kicks.$inferSelect;
 export type PlayerNote = typeof playerNotes.$inferSelect;
+export type Report = typeof reports.$inferSelect;
 export type AdminSelect = Omit<typeof adminUsers.$inferSelect, 'passwordHash'>;
+
+type WithIssuerName<T> = T & { issuerName: string | null };
 
 export interface PlayerProfile extends Player {
 	identifiers: PlayerIdentifiers;
 	isStaff: boolean;
 	adminProfile?: Omit<typeof adminUsers.$inferSelect, 'passwordHash'>;
 	punishments: {
-		bans: (typeof bans.$inferSelect)[];
-		warns: (typeof warns.$inferSelect)[];
-		kicks: (typeof kicks.$inferSelect)[];
+		bans: WithIssuerName<Ban>[];
+		warns: WithIssuerName<Warn>[];
+		kicks: WithIssuerName<Kick>[];
 	};
-	reports: (typeof reports.$inferSelect)[];
-	notes: (typeof playerNotes.$inferSelect)[];
+	reports: (Report & { reporterName: string | null })[];
+	notes: WithIssuerName<PlayerNote>[];
 }
 
 export type { ImportSummary } from './import/txadmin.importer';
