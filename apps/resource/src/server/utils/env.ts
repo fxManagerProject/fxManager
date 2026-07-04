@@ -7,4 +7,9 @@ const uuidV4Regex =
 if (!uuidV4Regex.test(API_TOKEN))
 	throw new Error('An invalid api token was loaded !');
 
+export function censorConvars() {
+	SetConvar('resource-api-token', 'REDACTED');
+	SetConvar('api-port', 'REDACTED');
+}
+
 export { API_TOKEN, PORT, HOSTNAME };

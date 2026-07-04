@@ -6,6 +6,7 @@ const g = globalThis as Globalish;
 g.GetConvar = (key: string, def: string) =>
 	key === 'resource-api-token' ? '00000000-0000-4000-8000-000000000000' : def;
 g.GetConvarInt = (_key: string, def: number) => def;
+g.SetConvar = (_key: string, def: number) => undefined;
 
 const { playerManager } = await import('./players');
 
