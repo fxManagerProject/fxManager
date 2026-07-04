@@ -1,13 +1,9 @@
 import os from 'os';
 import { randomBytes } from 'node:crypto';
 import { repo } from '@fxmanager/database';
-import open from 'open';
 
 export const isProduction = process.env.NODE_ENV === 'production';
 export const COOKIE_NAME = 'fxm_session';
-
-const osType = os.platform();
-export const isWindows = osType === 'win32';
 
 export function isFxManagerSetup() {
 	return repo.auth.countUsers() > 0;
@@ -40,9 +36,4 @@ export function getIp(): string {
 		}
 	}
 	return '127.0.0.1';
-}
-
-export function openUrlInBrowser(url: string): void {
-	if (isWindows) return;
-	open(url).catch(() => {});
 }

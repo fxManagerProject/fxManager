@@ -24,6 +24,7 @@ import { sessionManager } from './modules/session/manager';
 import { restartScheduler } from './modules/schedule/manager';
 import { setupTokenManager } from './modules/setup/token';
 import { MIGRATE_WORKER_FLAG, runMigrateWorker } from './migrate-worker';
+import open from 'open';
 
 const ip = getIp();
 
@@ -52,7 +53,7 @@ if (!isFxManagerSetup()) {
 			`\t${localhostUrl}`,
 	);
 
-	openUrlInBrowser(localhostUrl);
+	open(localhostUrl).catch(() => {});
 }
 const fastify = Fastify({ logger: !isProduction, forceCloseConnections: true });
 
