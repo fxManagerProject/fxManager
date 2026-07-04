@@ -1,6 +1,6 @@
 {
   "name": "fxmanager",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "packageManager": "bun@1.3.2",
   "scripts": {
@@ -11,7 +11,7 @@
     "format": "turbo format && biome format --write ./scripts/*.ts",
     "typecheck": "turbo typecheck",
     "db:studio": "drizzle-kit studio",
-		"db:migrate": "drizzle-kit generate && bun ./scripts/migrate.ts && bun biome format --write ./packages/database"
+    "db:migrate": "drizzle-kit generate && bun ./scripts/migrate.ts && bun biome format --write ./packages/database"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
