@@ -3,12 +3,16 @@ import './common/env';
 import path, { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import Fastify from 'fastify';
-import open from 'open';
 import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import fastifyCookie from '@fastify/cookie';
 import { applyMigrations } from '@fxmanager/database';
-import { getIp, isFxManagerSetup, isProduction } from './common/utils';
+import {
+	getIp,
+	isFxManagerSetup,
+	isProduction,
+	openUrlInBrowser,
+} from './common/utils';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
@@ -48,7 +52,7 @@ if (!isFxManagerSetup()) {
 			`\t${localhostUrl}`,
 	);
 
-	open(localhostUrl);
+	openUrlInBrowser(localhostUrl);
 }
 const fastify = Fastify({ logger: !isProduction, forceCloseConnections: true });
 
