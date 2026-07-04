@@ -96,6 +96,20 @@ describe('GroupsRepository', () => {
 				groupsRepo.create({ name: 'Staff', permissions: 0, colour: '#fff' }),
 			).toThrow(/UNIQUE/);
 		});
+
+		it('should reject a name that collides with an existing slug', () => {
+			insertGroup('Head Admin');
+
+			expect(() =>
+				groupsRepo.create({ name: 'Head-Admin', permissions: 0, colour: '#fff' }),
+			).toThrow('slug_conflict');
+		});
+
+		it('should reject a name with no slug-safe characters', () => {
+			expect(() =>
+				groupsRepo.create({ name: '🎮', permissions: 0, colour: '#fff' }),
+			).toThrow('invalid_slug');
+		});
 	});
 
 	describe('update()', () => {
@@ -115,6 +129,31 @@ describe('GroupsRepository', () => {
 		it('should throw not_found for a missing group', () => {
 			expect(() => groupsRepo.update(999, { name: 'Ghost' })).toThrow(
 				'not_found',
+			);
+		});
+
+		it('should reject renaming onto another group’s slug', () => {
+			insertGroup('Moderator');
+			const devs = insertGroup('Developers');
+
+			expect(() =>
+				groupsRepo.update(devs.id, { name: 'moderator' }),
+			).toThrow('slug_conflict');
+		});
+
+		it('should allow a rename that keeps the same slug for the same group', () => {
+			const group = insertGroup('Moderator');
+
+			const updated = groupsRepo.update(group.id, { name: 'MODERATOR' });
+
+			expect(updated.name).toBe('MODERATOR');
+		});
+
+		it('should reject renaming to a slug-empty name', () => {
+			const group = insertGroup('Moderator');
+
+			expect(() => groupsRepo.update(group.id, { name: '!!!' })).toThrow(
+				'invalid_slug',
 			);
 		});
 	});

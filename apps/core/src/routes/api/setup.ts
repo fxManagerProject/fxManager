@@ -116,8 +116,15 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 						});
 					}
 				} catch (err) {
+					const message = (err as Error).message;
+					const detail =
+						message === 'slug_conflict'
+							? 'two groups resolve to the same name'
+							: message === 'invalid_slug'
+								? 'a group name has no letters or numbers'
+								: message;
 					return reply.code(400).send({
-						error: `Failed to store admin groups: ${(err as Error).message}`,
+						error: `Failed to store admin groups: ${detail}`,
 					});
 				}
 			}

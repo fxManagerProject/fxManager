@@ -1,5 +1,6 @@
 import { ACE_PREFIX } from '@fxmanager/shared/constants';
 import type { PlayerIdentifiers } from '@fxmanager/shared/types';
+import { slugifyGroupName } from '@fxmanager/shared/utils';
 import { QueryManager } from './utils/query';
 
 type Target =
@@ -63,6 +64,19 @@ exports(
 		return IsPlayerAceAllowed(
 			String(playerId),
 			`${ACE_PREFIX}.${permissionKey}`,
+		);
+	},
+);
+
+exports(
+	'hasGroup',
+	(playerId: number | string, groupName: string): boolean => {
+		const slug = slugifyGroupName(groupName);
+		if (!slug) return false;
+
+		return IsPlayerAceAllowed(
+			String(playerId),
+			`${ACE_PREFIX}.group.${slug}`,
 		);
 	},
 );

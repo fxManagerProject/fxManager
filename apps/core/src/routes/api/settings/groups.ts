@@ -14,6 +14,16 @@ interface GroupBody {
 	icon?: string | null;
 }
 
+function groupErrorMessage(message: string): string {
+	if (message === 'invalid_slug')
+		return 'Group name must contain at least one letter or number';
+	if (message === 'slug_conflict')
+		return 'Group name conflicts with an existing group';
+	if (message.includes('UNIQUE constraint failed'))
+		return 'Group name is already taken';
+	return message;
+}
+
 const GroupManagementEndpoints: RouteModule['handler'] = async (
 	fastify,
 	{ pm },
@@ -63,13 +73,7 @@ const GroupManagementEndpoints: RouteModule['handler'] = async (
 
 			return { success: true, data: group };
 		} catch (err) {
-			const message = (err as Error).message;
-			return {
-				success: false,
-				error: message.includes('UNIQUE constraint failed')
-					? 'Group name is already taken'
-					: message,
-			};
+			return { success: false, error: groupErrorMessage((err as Error).message) };
 		}
 	});
 
@@ -112,8 +116,10 @@ const GroupManagementEndpoints: RouteModule['handler'] = async (
 
 				if (message === 'not_found')
 					return { success: false, error: 'Group not found' };
-				if (message.includes('UNIQUE constraint failed'))
-					return { success: false, error: 'Group name is already taken' };
+
+				const friendly = groupErrorMessage(message);
+				if (friendly !== message)
+					return { success: false, error: friendly };
 
 				throw err;
 			}
