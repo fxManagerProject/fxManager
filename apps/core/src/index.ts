@@ -7,12 +7,7 @@ import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import fastifyCookie from '@fastify/cookie';
 import { applyMigrations } from '@fxmanager/database';
-import {
-	getIp,
-	isFxManagerSetup,
-	isProduction,
-	openUrlInBrowser,
-} from './common/utils';
+import { getIp, isFxManagerSetup, isProduction } from './common/utils';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
