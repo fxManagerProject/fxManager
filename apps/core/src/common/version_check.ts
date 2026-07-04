@@ -1,3 +1,42 @@
+const GITHUB_LATEST_RELEASE =
+	'https://api.github.com/repos/fxManagerProject/fxManager/releases/latest';
+const DEFAULT_TTL_MS = 30 * 60 * 1000;
+const REQUEST_TIMEOUT_MS = 5_000;
+
+export interface VersionStatus {
+	current: string;
+	latest: string | null;
+	latestUrl: string | null;
+	updateAvailable: boolean;
+	isBeta: boolean;
+	isDev: boolean;
+}
+
+interface GitHubRelease {
+	tag_name: string;
+	html_url: string;
+}
+
+export function getCurrentVersion(): string {
+	return process.env.VERSION ?? 'dev-build';
+}
+
+async function fetchLatestRelease(): Promise<GitHubRelease> {
+	const response = await fetch(GITHUB_LATEST_RELEASE, {
+		headers: { 'User-Agent': 'fxManager-Updater' },
+		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+	});
+
+	if (!response.ok)
+		throw new Error(`${response.status} - ${response.statusText}`);
+
+	const data = (await response.json()) as GitHubRelease & {
+		[key: string]: unknown;
+	};
+
+	return { tag_name: data.tag_name, html_url: data.html_url };
+}
+
 function compareVersions(current: string, latest: string): number {
 	const parse = (v: string) => {
 		const [main, tag] = v.replace('v', '').split('-') as [
@@ -27,6 +66,62 @@ function compareVersions(current: string, latest: string): number {
 	return 0;
 }
 
+/**
+ * TTL-cached version status provider for the API/UI. Mirrors the
+ * recommended-artifact fetcher: caches success, falls back to the last known
+ * value (or a safe "no update" state) on failure so it never blocks callers.
+ */
+export function createVersionChecker(opts?: {
+	currentVersion?: string;
+	ttlMs?: number;
+	now?: () => number;
+}) {
+	const currentVersion = opts?.currentVersion ?? getCurrentVersion();
+	const ttlMs = opts?.ttlMs ?? DEFAULT_TTL_MS;
+	const now = opts?.now ?? Date.now;
+	const isDev = currentVersion === 'dev-build';
+	const isBeta = !isDev && currentVersion.includes('-b');
+	let cache: { value: VersionStatus; expiresAt: number } | null = null;
+
+	const noUpdate = (): VersionStatus => ({
+		current: currentVersion,
+		latest: null,
+		latestUrl: null,
+		updateAvailable: false,
+		isBeta,
+		isDev,
+	});
+
+	return async function getVersionStatus(): Promise<VersionStatus> {
+		if (isDev) return noUpdate();
+		if (cache && cache.expiresAt > now()) return cache.value;
+
+		try {
+			const { tag_name, html_url } = await fetchLatestRelease();
+
+			const value: VersionStatus = {
+				current: currentVersion,
+				latest: tag_name,
+				latestUrl: html_url,
+				updateAvailable: !isBeta && compareVersions(currentVersion, tag_name) === 1,
+				isBeta,
+				isDev,
+			};
+
+			cache = { value, expiresAt: now() + ttlMs };
+			return value;
+		} catch (err) {
+			console.error(
+				`[version] Could not check for updates:`,
+				(err as Error).message,
+			);
+			return cache?.value ?? noUpdate();
+		}
+	};
+}
+
+export const getVersionStatus = createVersionChecker();
+
 export async function checkVersion(currentVersion: string) {
 	if (currentVersion === 'dev-build') {
 		console.info(`[version] Running in development mode.`);
@@ -34,23 +129,8 @@ export async function checkVersion(currentVersion: string) {
 	}
 
 	try {
-		const response = await fetch(
-			`https://api.github.com/repos/fxManagerProject/fxManager/releases/latest`,
-			{
-				headers: { 'User-Agent': 'fxManager-Updater' },
-			},
-		);
-
-		if (!response.ok)
-			throw new Error(`${response.status} - ${response.statusText}`);
-
-		const data = (await response.json()) as {
-			tag_name: string;
-			html_url: string;
-			[key: string]: unknown;
-		};
-		const latestVersion = data.tag_name;
-		const releaseUrl = data.html_url;
+		const { tag_name: latestVersion, html_url: releaseUrl } =
+			await fetchLatestRelease();
 
 		const comparison = compareVersions(currentVersion, latestVersion);
 		const isCurrentBeta = currentVersion.includes('-b');

@@ -10,6 +10,7 @@ import { STATUS_VARIANT } from '@/static/server-state';
 import { formatDuration, formatRemaining, isServerRunning } from '@/lib/utils';
 import { Button } from '@fxmanager/ui/components/button';
 import {
+	ArrowUpCircle,
 	ExternalLink,
 	MonitorCog,
 	Play,
@@ -25,6 +26,7 @@ import {
 import { HandleServerAction } from '@/lib/query';
 import { usePlayerlistSocket, useServerStateSocket } from '@/hooks/ws-channels';
 import { useRecommendedArtifact } from '@/hooks/use-recommended-artifact';
+import { useVersionStatus } from '@/hooks/use-version';
 import { useSchedule } from '@/hooks/use-schedule';
 import { useEffect, useState } from 'react';
 
@@ -73,6 +75,7 @@ export function ServerStatusCard() {
 	const { state: serverState } = useServerStateSocket();
 	const { count } = usePlayerlistSocket();
 	const recommendedArtifact = useRecommendedArtifact();
+	const version = useVersionStatus();
 	const { state: sideBarState, setOpen } = useSidebar();
 	const { status: schedule, restartIn, skip } = useSchedule();
 	const isCollapsed = sideBarState === 'collapsed';
@@ -221,6 +224,43 @@ export function ServerStatusCard() {
 										<ExternalLink className="h-3 w-3" />
 									</a>
 								</div>
+							)}
+						</div>
+					)}
+					{version && !version.isDev && (
+						<div className="space-y-2 border-t pt-3">
+							<div className="flex flex-row justify-between">
+								<p>Panel</p>
+								{version.updateAvailable && version.latestUrl ? (
+									<a
+										href={version.latestUrl}
+										target="_blank"
+										rel="noreferrer"
+										className="font-mono text-primary hover:underline"
+									>
+										v{version.current}
+									</a>
+								) : (
+									<p className="font-mono text-muted-foreground">
+										v{version.current}
+									</p>
+								)}
+							</div>
+							{version.updateAvailable && version.latestUrl && (
+								<a
+									href={version.latestUrl}
+									target="_blank"
+									rel="noreferrer"
+									className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-2 py-1.5 text-xs text-primary transition-colors hover:bg-primary/20"
+									title="View the latest patch notes on GitHub"
+								>
+									<ArrowUpCircle className="h-3.5 w-3.5 shrink-0" />
+									<span className="flex-1">
+										<span className="font-mono">{version.latest}</span>{' '}
+										available — patch notes
+									</span>
+									<ExternalLink className="h-3 w-3 shrink-0" />
+								</a>
 							)}
 						</div>
 					)}

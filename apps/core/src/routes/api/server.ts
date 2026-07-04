@@ -8,6 +8,7 @@ import type { AuthedRequest, RouteModule } from '../../types';
 import { sessionAuth } from '../../middleware/session';
 import { resourceManager } from '../../modules/resource/manager';
 import { getRecommendedArtifact } from '../../common/recommended-artifact';
+import { getVersionStatus } from '../../common/version_check';
 import { restartScheduler } from '../../modules/schedule/manager';
 
 const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
@@ -94,6 +95,11 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	fastify.get('/artifact/recommended', async (_request, reply) => {
 		const recommended = await getRecommendedArtifact();
 		return reply.code(200).send({ recommended });
+	});
+
+	fastify.get('/version', async (_request, reply) => {
+		const version = await getVersionStatus();
+		return reply.code(200).send(version);
 	});
 
 	fastify.post('/resource/action/start', async (request, reply) => {

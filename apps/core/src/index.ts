@@ -9,7 +9,7 @@ import fastifyWebsocket from '@fastify/websocket';
 import fastifyCookie from '@fastify/cookie';
 import { applyMigrations } from '@fxmanager/database';
 import { getIp, isFxManagerSetup, isProduction } from './common/utils';
-import { checkVersion } from './common/version_check';
+import { checkVersion, getCurrentVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
 import { processManager } from './modules/process/manager';
@@ -30,8 +30,7 @@ if (process.argv.includes(MIGRATE_WORKER_FLAG)) {
 }
 
 applyMigrations();
-// hardcoded until release versioning is wired up
-checkVersion('dev-build');
+checkVersion(getCurrentVersion());
 
 const cm = ConfigManager.getInstance();
 const { cookieSecret, webServerPort } = cm.getSystemValues();
