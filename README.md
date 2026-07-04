@@ -7,12 +7,14 @@
 	<img alt="GitHub commits since latest release" src="https://img.shields.io/github/commits-since/fxManagerProject/fxManager/latest">
 	<img alt="GitHub contributors" src="https://img.shields.io/github/contributors/fxManagerProject/fxManager">
 </p>
-
-<!--
-![GitHub License](https://img.shields.io/github/license/fxManagerProject/fxManager)
-![GitHub commits since latest release](https://img.shields.io/github/commits-since/fxManagerProject/fxManager/latest)
-![GitHub contributors](https://img.shields.io/github/contributors/fxManagerProject/fxManager)
--->
+<p align="center">
+	<a href="https://fxmanager.dev/docs" target="_blank" style="text-decoration: none;">
+		<img alt="Documentation" src="https://img.shields.io/badge/view-documentation-orange?logo=readthedocs&logoColor=white">
+	</a>
+	<a href="https://discord.gg/WxFGydWfhP" target="_blank" style="text-decoration: none;">
+		<img alt="Documentation" src="https://img.shields.io/badge/join-discord-5865F2?logo=discord&logoColor=white">
+	</a>
+</p>
 
 A self-contained, cross-platform admin panel for FiveM & RedM servers.  
 Single binary deployment - no runtime dependencies required on the target machine.
