@@ -137,8 +137,6 @@ exports(
 		post('/ingame/whitelist/remove', input),
 );
 
-exports('serverStart', (by?: number) => post('/ingame/server/start', { by }));
-
 exports('serverStop', (by?: number) => post('/ingame/server/stop', { by }));
 
 exports('serverRestart', (by?: number) =>
