@@ -4,12 +4,13 @@ import {
 	PERMISSION_ACE_KEYS,
 	UserPermissions,
 } from '@fxmanager/shared/constants';
-import { PermissionManager } from '@fxmanager/shared/utils';
+import { PermissionManager, slugifyGroupName } from '@fxmanager/shared/utils';
 
 type CommandSender = { sendCommand(command: string): void };
 
 interface AceGroup {
 	id: number;
+	name: string;
 	permissions: number;
 }
 
@@ -36,9 +37,18 @@ export function buildAceCommands(
 	admins: AceAdmin[],
 ): string[] {
 	const commands: string[] = [];
+	const slugById = new Map<number, string>();
 
 	for (const group of groups) {
-		pushBitAces(commands, `${ACE_PREFIX}.group.${group.id}`, group.permissions);
+		const slug = slugifyGroupName(group.name);
+		if (!slug) continue;
+
+		slugById.set(group.id, slug);
+
+		const principal = `${ACE_PREFIX}.group.${slug}`;
+		// self-marker so membership is checkable via IsPlayerAceAllowed / hasGroup
+		commands.push(`add_ace ${principal} ${principal} allow`);
+		pushBitAces(commands, principal, group.permissions);
 	}
 
 	const linked = admins.filter((admin) => {
@@ -66,9 +76,12 @@ export function buildAceCommands(
 		}
 
 		if (admin.groupId !== null) {
-			commands.push(
-				`add_principal ${identity} ${ACE_PREFIX}.group.${admin.groupId}`,
-			);
+			const slug = slugById.get(admin.groupId);
+			if (slug) {
+				commands.push(
+					`add_principal ${identity} ${ACE_PREFIX}.group.${slug}`,
+				);
+			}
 		}
 
 		const personal = admin.permissions & ~UserPermissions.MASTER;

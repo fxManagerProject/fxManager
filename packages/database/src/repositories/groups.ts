@@ -4,6 +4,7 @@ import type * as schema from '../schema';
 import { adminGroups, adminUsers } from '../schema';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type { AdminGroupForm } from '@fxmanager/shared/types';
+import { slugifyGroupName } from '@fxmanager/shared/utils';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -48,7 +49,28 @@ class GroupsRepository {
 		);
 	}
 
+	// names map to `fxmanager.group.<slug>` aces, so slugs must be unique
+	private assertSlugAvailable(name: string, excludeId: number | null) {
+		const slug = slugifyGroupName(name);
+		if (!slug) throw new Error('invalid_slug');
+
+		const clash = this.db
+			.select({ id: adminGroups.id, name: adminGroups.name })
+			.from(adminGroups)
+			.all()
+			.find(
+				(g) =>
+					g.id !== excludeId &&
+					g.name !== name &&
+					slugifyGroupName(g.name) === slug,
+			);
+
+		if (clash) throw new Error('slug_conflict');
+	}
+
 	create(form: AdminGroupForm) {
+		this.assertSlugAvailable(form.name, null);
+
 		return this.db
 			.insert(adminGroups)
 			.values({
@@ -63,6 +85,9 @@ class GroupsRepository {
 	}
 
 	update(groupId: number, patch: Partial<AdminGroupForm>) {
+		if (patch.name !== undefined)
+			this.assertSlugAvailable(patch.name, groupId);
+
 		const updated = this.db
 			.update(adminGroups)
 			.set({

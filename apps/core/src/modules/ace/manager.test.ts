@@ -29,21 +29,28 @@ afterAll(() => {
 });
 
 describe('buildAceCommands()', () => {
-	it('should grant one ace per permission bit to the group principal', () => {
+	it('should grant a membership marker then one ace per permission bit to the group principal', () => {
 		const commands = buildAceCommands(
-			[{ id: 3, permissions: UserPermissions.KICK | UserPermissions.BAN }],
+			[
+				{
+					id: 3,
+					name: 'Moderator',
+					permissions: UserPermissions.KICK | UserPermissions.BAN,
+				},
+			],
 			[],
 		);
 
 		expect(commands).toEqual([
-			'add_ace fxmanager.group.3 fxmanager.players.kick allow',
-			'add_ace fxmanager.group.3 fxmanager.players.ban allow',
+			'add_ace fxmanager.group.moderator fxmanager.group.moderator allow',
+			'add_ace fxmanager.group.moderator fxmanager.players.kick allow',
+			'add_ace fxmanager.group.moderator fxmanager.players.ban allow',
 		]);
 	});
 
-	it('should bind linked admins to their group principal', () => {
+	it('should bind linked admins to their slugged group principal', () => {
 		const commands = buildAceCommands(
-			[{ id: 3, permissions: UserPermissions.KICK }],
+			[{ id: 3, name: 'Head Admin', permissions: UserPermissions.KICK }],
 			[
 				{
 					id: 7,
@@ -56,8 +63,25 @@ describe('buildAceCommands()', () => {
 		);
 
 		expect(commands).toContain(
-			'add_principal identifier.license:abc123 fxmanager.group.3',
+			'add_principal identifier.license:abc123 fxmanager.group.head_admin',
 		);
+	});
+
+	it('should skip a group whose name yields an empty slug', () => {
+		const commands = buildAceCommands(
+			[{ id: 8, name: '🎮', permissions: UserPermissions.KICK }],
+			[
+				{
+					id: 1,
+					username: 'x',
+					permissions: 0,
+					groupId: 8,
+					license: 'license:xyz',
+				},
+			],
+		);
+
+		expect(commands).toEqual([]);
 	});
 
 	it('should grant master admins the root ace via the master principal', () => {
@@ -176,8 +200,9 @@ describe('AceSyncManager', () => {
 		aceSync.apply(sender);
 
 		expect(sent).toEqual([
-			'add_ace fxmanager.group.1 fxmanager.players.kick allow',
-			'add_principal identifier.license:abc fxmanager.group.1',
+			'add_ace fxmanager.group.mods fxmanager.group.mods allow',
+			'add_ace fxmanager.group.mods fxmanager.players.kick allow',
+			'add_principal identifier.license:abc fxmanager.group.mods',
 		]);
 	});
 
@@ -226,10 +251,10 @@ describe('AceSyncManager', () => {
 		aceSync.resync(sender);
 
 		expect(sent).toContain(
-			'add_principal identifier.license:abc fxmanager.group.2',
+			'add_principal identifier.license:abc fxmanager.group.devs',
 		);
 		expect(sent).toContain(
-			'remove_principal identifier.license:abc fxmanager.group.1',
+			'remove_principal identifier.license:abc fxmanager.group.mods',
 		);
 	});
 
@@ -241,7 +266,7 @@ describe('AceSyncManager', () => {
 		aceSync.resync(sender);
 
 		expect(sent).toContain(
-			'remove_principal identifier.license:abc fxmanager.group.1',
+			'remove_principal identifier.license:abc fxmanager.group.mods',
 		);
 	});
 
@@ -264,8 +289,8 @@ describe('AceSyncManager', () => {
 		aceSync.resync(sender);
 
 		expect(sent).toEqual([
-			'add_ace fxmanager.group.1 fxmanager.players.ban allow',
-			'remove_ace fxmanager.group.1 fxmanager.players.kick allow',
+			'add_ace fxmanager.group.mods fxmanager.players.ban allow',
+			'remove_ace fxmanager.group.mods fxmanager.players.kick allow',
 		]);
 	});
 
@@ -273,8 +298,9 @@ describe('AceSyncManager', () => {
 		aceSync.resync(sender);
 
 		expect(sent).toEqual([
-			'add_ace fxmanager.group.1 fxmanager.players.kick allow',
-			'add_principal identifier.license:abc fxmanager.group.1',
+			'add_ace fxmanager.group.mods fxmanager.group.mods allow',
+			'add_ace fxmanager.group.mods fxmanager.players.kick allow',
+			'add_principal identifier.license:abc fxmanager.group.mods',
 		]);
 	});
 
@@ -305,7 +331,7 @@ describe('AceSyncManager', () => {
 		aceSync.refresh();
 
 		expect(sent).toEqual([
-			'add_principal identifier.license:def fxmanager.group.1',
+			'add_principal identifier.license:def fxmanager.group.mods',
 		]);
 	});
 
