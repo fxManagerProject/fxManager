@@ -4,6 +4,7 @@
 
 <p align="center">
 	<img alt="GitHub License" src="https://img.shields.io/github/license/fxManagerProject/fxManager">
+	<img alt="GitHub latest release" src="https://img.shields.io/github/downloads/fxManagerProject/fxManager/total?logo=github">
 	<img alt="GitHub commits since latest release" src="https://img.shields.io/github/commits-since/fxManagerProject/fxManager/latest">
 	<img alt="GitHub contributors" src="https://img.shields.io/github/contributors/fxManagerProject/fxManager">
 </p>
