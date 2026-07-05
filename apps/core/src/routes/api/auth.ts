@@ -2,7 +2,7 @@ import { Type, type Static } from '@sinclair/typebox';
 import type { FastifyPluginAsync } from 'fastify';
 import { repo } from '@fxmanager/database';
 
-import { COOKIE_NAME, isProduction } from '../../common/utils';
+import { COOKIE_NAME } from '../../common/utils';
 import { loginRateLimiter } from '../../modules/auth/rate-limiter';
 import type { RouteModule } from '../../types';
 
@@ -44,7 +44,7 @@ const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
 			return reply
 				.setCookie(COOKIE_NAME, session.id, {
 					httpOnly: true,
-					secure: isProduction,
+					secure: request.protocol === 'https',
 					sameSite: 'lax',
 					path: '/',
 					maxAge: 60 * 60 * 24 * 7,
