@@ -37,3 +37,31 @@ export interface NoteForm {
 }
 
 export type RevokeActionType = 'ban' | 'kick' | 'warn';
+
+export interface PlayerSession {
+	id: number;
+	connectedAt: number;
+	disconnectedAt: number | null;
+	durationMs: number | null;
+	endReason: string | null;
+}
+
+export interface PlayerActivityDay {
+	date: string; // YYYY-MM-DD, server-local
+	playtimeMs: number;
+	sessionCount: number;
+}
+
+export interface PlayerActivitySummary {
+	daysActive: number;
+	totalPlaytimeMs: number;
+	longestSessionMs: number;
+	avgSessionMs: number;
+}
+
+export interface PlayerActivity {
+	from: string; // YYYY-MM-DD
+	to: string; // YYYY-MM-DD
+	days: PlayerActivityDay[];
+	summary: PlayerActivitySummary;
+}

@@ -8,6 +8,7 @@ class SessionManager {
 
 	init(): void {
 		repo.serverSessions.closeDangling();
+		repo.playerSessions.closeDangling();
 	}
 
 	openSession(): ServerSession {

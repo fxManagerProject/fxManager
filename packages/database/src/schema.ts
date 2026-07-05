@@ -284,6 +284,30 @@ export const disconnectEvents = sqliteTable(
 	(t) => [index('disconnect_event_session_ts_idx').on(t.sessionId, t.ts)],
 );
 
+export const playerSessions = sqliteTable(
+	'player_sessions',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		playerId: integer('player_id')
+			.notNull()
+			.references(() => players.id, { onDelete: 'cascade' }),
+		serverSessionId: integer('server_session_id').references(
+			() => serverSessions.id,
+			{ onDelete: 'set null' },
+		),
+		connectedAt: integer('connected_at', { mode: 'timestamp' }).notNull(),
+		disconnectedAt: integer('disconnected_at', { mode: 'timestamp' }),
+		durationMs: integer('duration_ms'),
+		endReason: text('end_reason'),
+	},
+	(t) => [
+		index('player_session_player_connected_idx').on(
+			t.playerId,
+			t.connectedAt,
+		),
+	],
+);
+
 // region Relations
 
 export const playersRelations = relations(players, ({ many, one }) => ({
@@ -293,6 +317,7 @@ export const playersRelations = relations(players, ({ many, one }) => ({
 	kicks: many(kicks),
 	notes: many(playerNotes),
 	reports: many(reports),
+	sessions: many(playerSessions),
 	adminProfile: one(adminUsers, {
 		fields: [players.id],
 		references: [adminUsers.playerId],
@@ -391,5 +416,16 @@ export const reportsRelations = relations(reports, ({ one }) => ({
 	player: one(players, {
 		fields: [reports.reporterId],
 		references: [players.id],
+	}),
+}));
+
+export const playerSessionsRelations = relations(playerSessions, ({ one }) => ({
+	player: one(players, {
+		fields: [playerSessions.playerId],
+		references: [players.id],
+	}),
+	serverSession: one(serverSessions, {
+		fields: [playerSessions.serverSessionId],
+		references: [serverSessions.id],
 	}),
 }));

@@ -7,13 +7,26 @@ import { sessionAuth } from '../../middleware/session';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import { repo } from '@fxmanager/database';
-import type { PaginatedResponse, Player } from '@fxmanager/shared/types';
+import type {
+	PaginatedResponse,
+	Player,
+	PlayerSession,
+} from '@fxmanager/shared/types';
 import { txAdminCompat } from '../../modules/txadmin/compat';
 import {
 	buildBannedPayload,
 	buildWarnedPayload,
 } from '../../modules/txadmin/payloads';
 import { emitActionRevoked } from '../../modules/txadmin/revoke';
+
+const startOfDay = (d: Date) =>
+	new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const addDays = (d: Date, n: number) =>
+	new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const endOfToday = () => {
+	const d = new Date();
+	return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+};
 
 const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { gm } = options;
@@ -53,6 +66,44 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		return { success: true, data: profile };
 	});
+
+	fastify.get('/:playerId/activity', (request) => {
+		const { playerId: raw } = request.params as { playerId: string };
+		const playerId = parseInt(raw, 10);
+		const { from, to } = (request.query ?? {}) as {
+			from?: string;
+			to?: string;
+		};
+
+		const toDate = to ? new Date(`${to}T23:59:59.999`) : endOfToday();
+		const fromDate = from
+			? new Date(`${from}T00:00:00.000`)
+			: startOfDay(addDays(toDate, -29));
+
+		const data = repo.playerSessions.getRangeActivity(
+			playerId,
+			fromDate,
+			toDate,
+		);
+		return { success: true, data };
+	});
+
+	fastify.get(
+		'/:playerId/sessions',
+		(request): PaginatedResponse<PlayerSession> => {
+			const { playerId: raw } = request.params as { playerId: string };
+			const playerId = parseInt(raw, 10);
+			const { page, pageSize } = (request.query ?? {}) as {
+				page?: string;
+				pageSize?: string;
+			};
+			return repo.playerSessions.listSessions(
+				playerId,
+				Number(page ?? 1),
+				Number(pageSize ?? 25),
+			);
+		},
+	);
 
 	fastify.post('/:playerId/notes', async (request, reply) => {
 		const { playerId: playerIdRaw } = request.params as { playerId: string };

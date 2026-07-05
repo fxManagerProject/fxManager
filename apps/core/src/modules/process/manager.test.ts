@@ -25,6 +25,7 @@ import { txAdminCompat } from '../txadmin/compat';
 
 const mockGetHistory = mock(() => []);
 const mockBufferPush = mock(() => {});
+const mockSettingsGet = mock(() => undefined);
 
 const mockRegenerateApiToken = mock(() => {});
 const mockGetSystemValues = mock(() => ({
@@ -37,6 +38,12 @@ const mockGetFxServerValues = mock(() => ({
 	executablePath: 'FXServer.exe',
 	serverDataPath: '/home/fxserver/server-data',
 	serverConfigFile: 'server.cfg',
+}));
+
+mock.module('@fxmanager/database', () => ({
+	repo: {
+		settings: { get: mockSettingsGet },
+	},
 }));
 
 // Use spyOn to safely intercept instances without corrupting Bun's global module cache

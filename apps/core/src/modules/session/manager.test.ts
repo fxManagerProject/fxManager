@@ -28,6 +28,7 @@ const mockClose = mock(() => closedStub());
 const mockCloseDangling = mock(() => {});
 const mockPrune = mock(() => {});
 const mockListRecent = mock(() => [closedStub()]);
+const mockPlayerCloseDangling = mock(() => {});
 
 mock.module('@fxmanager/database', () => ({
 	repo: {
@@ -37,6 +38,9 @@ mock.module('@fxmanager/database', () => ({
 			closeDangling: mockCloseDangling,
 			prune: mockPrune,
 			listRecent: mockListRecent,
+		},
+		playerSessions: {
+			closeDangling: mockPlayerCloseDangling,
 		},
 	},
 }));
@@ -55,6 +59,7 @@ describe('sessionManager', () => {
 		mockCloseDangling.mockReset();
 		mockPrune.mockReset();
 		mockListRecent.mockReset().mockReturnValue([closedStub()]);
+		mockPlayerCloseDangling.mockReset();
 		wsSpy.mockClear();
 	});
 
@@ -65,6 +70,19 @@ describe('sessionManager', () => {
 	it('init closes dangling sessions from a previous run', () => {
 		sessionManager.init();
 		expect(mockCloseDangling).toHaveBeenCalledTimes(1);
+	});
+
+	it('init reconciles dangling player sessions after server sessions', () => {
+		const order: string[] = [];
+		mockCloseDangling.mockImplementation(() => {
+			order.push('server');
+		});
+		mockPlayerCloseDangling.mockImplementation(() => {
+			order.push('player');
+		});
+		sessionManager.init();
+		expect(mockPlayerCloseDangling).toHaveBeenCalledTimes(1);
+		expect(order).toEqual(['server', 'player']);
 	});
 
 	it('openSession opens, caches, and does not double-open', () => {

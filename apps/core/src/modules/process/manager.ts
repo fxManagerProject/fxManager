@@ -19,6 +19,7 @@ import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
 import { gameManager } from '../game/manager';
 import { txAdminCompat } from '../txadmin/compat';
+import { repo } from '@fxmanager/database';
 
 const STARTUP_STALL_MS = 90_000;
 const KILL_GRACE_MS = 5_000;
@@ -78,6 +79,10 @@ export class ProcessManager {
 			'+add_convar_permission', 'fxManager', 'read', 'resource-api-token',
 			'+add_convar_permission', 'fxManager', 'read', 'api-port',
 		];
+
+		const configuredArgs =
+			repo.settings.get('fxserver.startupArguments')?.split(' ') ?? [];
+		args.push(...configuredArgs);
 
 		console.log(`[core] Starting fxServer`);
 

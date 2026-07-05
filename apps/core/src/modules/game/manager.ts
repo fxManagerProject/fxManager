@@ -165,6 +165,8 @@ export class GameManager {
 
 		if (player.isStaff) aceSync.refresh();
 
+		repo.playerSessions.open(player.id, sessionManager.getCurrentId());
+
 		const playerPayload = {
 			serverId,
 			health: -1,
@@ -216,6 +218,12 @@ export class GameManager {
 		const newPlaytime = player.playtime + sessionDuration;
 
 		repo.players.updatePlaytime(player.id, newPlaytime);
+
+		const endReason =
+			typeof drop?.reason === 'string' && drop.reason.length > 0
+				? drop.reason
+				: null;
+		repo.playerSessions.close(player.id, endReason);
 		wsManager.broadcast<{ serverId: number }>({
 			channel: 'playerlist',
 			event: 'player_left',

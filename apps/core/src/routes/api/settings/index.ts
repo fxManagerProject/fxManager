@@ -8,7 +8,11 @@ import type {
 	SettingsKey,
 	SettingsScope,
 } from '@fxmanager/shared/types';
-import { PermissionManager, canWriteSetting } from '@fxmanager/shared/utils';
+import {
+	PermissionManager,
+	canWriteSetting,
+	validateStartupArguments,
+} from '@fxmanager/shared/utils';
 import {
 	SETTINGS_KEYS,
 	SETTINGS_SCOPES,
@@ -17,6 +21,17 @@ import {
 } from '@fxmanager/shared/constants';
 import { repo } from '@fxmanager/database';
 import { restartScheduler } from '../../../modules/schedule/manager';
+
+interface HookResult {
+	valid: boolean;
+	[key: string]: unknown;
+}
+
+const SETTINGS_HOOKS: Partial<
+	Record<SettingsKey, (value: string) => HookResult>
+> = {
+	'fxserver.startupArguments': validateStartupArguments,
+};
 
 const SettingsEndpoints: RouteModule['handler'] = async (
 	fastify,
@@ -78,6 +93,11 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 
 		if (!canWriteSetting(key as SettingsKey, admin.permissions)) {
 			throw new Error('Unauthorized');
+		}
+
+		const hook = SETTINGS_HOOKS[key as SettingsKey];
+		if (hook && !hook(value).valid) {
+			throw new Error('Invalid value');
 		}
 
 		repo.settings.set(key, value);

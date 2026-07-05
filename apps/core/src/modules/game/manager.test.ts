@@ -20,6 +20,60 @@ const mockIsAnyIdentifierWhitelisted = mock(async () => false);
 const mockUpsertPlayer = mock(async () => ({}));
 const mockUpdatePlaytime = mock(async () => {});
 
+// Stateful in-memory fake for the player_sessions repo so the join/drop wiring
+// can be asserted through real open/close/listSessions behaviour.
+let sessionRows: any[] = [];
+let nextSessionId = 1;
+const mockPlayerSessions = {
+	open: mock(
+		(
+			playerId: number,
+			serverSessionId: number | null,
+			connectedAt: Date = new Date(),
+		) => {
+			const row = {
+				id: nextSessionId++,
+				playerId,
+				serverSessionId,
+				connectedAt: connectedAt.getTime(),
+				disconnectedAt: null as number | null,
+				durationMs: null as number | null,
+				endReason: null as string | null,
+			};
+			sessionRows.push(row);
+			return row;
+		},
+	),
+	close: mock(
+		(
+			playerId: number,
+			endReason: string | null = null,
+			disconnectedAt: Date = new Date(),
+		) => {
+			const open = [...sessionRows]
+				.reverse()
+				.find((r) => r.playerId === playerId && r.disconnectedAt === null);
+			if (!open) return null;
+			open.disconnectedAt = disconnectedAt.getTime();
+			open.durationMs = Math.max(0, open.disconnectedAt - open.connectedAt);
+			open.endReason = endReason;
+			return open;
+		},
+	),
+	closeDangling: mock(() => {}),
+	listSessions: (playerId: number, page = 1, pageSize = 25) => {
+		const all = sessionRows
+			.filter((r) => r.playerId === playerId)
+			.sort((a, b) => b.connectedAt - a.connectedAt);
+		return {
+			items: all.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize),
+			total: all.length,
+			page,
+			pageSize,
+		};
+	},
+};
+
 mock.module('@fxmanager/database', () => ({
 	repo: {
 		players: {
@@ -40,6 +94,7 @@ mock.module('@fxmanager/database', () => ({
 			closeDangling: () => {},
 			prune: () => {},
 		},
+		playerSessions: mockPlayerSessions,
 	},
 }));
 
@@ -78,6 +133,13 @@ describe('GameManager', () => {
 		mockIsAnyIdentifierWhitelisted.mockReset().mockResolvedValue(false);
 		mockUpsertPlayer.mockReset();
 		mockUpdatePlaytime.mockReset();
+
+		// Reset the stateful player_sessions fake
+		sessionRows = [];
+		nextSessionId = 1;
+		mockPlayerSessions.open.mockClear();
+		mockPlayerSessions.close.mockClear();
+		mockPlayerSessions.closeDangling.mockClear();
 
 		// Spying on core system managers cleanly isolates state mutations to this file execution context
 		wsSpy = spyOn(wsManager, 'broadcast').mockImplementation(() => {});
@@ -387,6 +449,31 @@ describe('GameManager', () => {
 			expect(gameManager.getPlayerList()).toHaveLength(1);
 			expect(setPlayerCountSpy).toHaveBeenLastCalledWith(1);
 		});
+
+		it('opens an in-progress player_session on join', async () => {
+			const dbPlayerPayload = {
+				id: 77,
+				name: 'Rex',
+				playtime: 0,
+				identifiers: sampleIdentifiers,
+				isStaff: false,
+				firstSeen: new Date(),
+				lastSeen: new Date(),
+			};
+			mockUpsertPlayer.mockResolvedValueOnce(dbPlayerPayload);
+
+			await gameManager.playerJoin({
+				name: 'Rex',
+				identifiers: sampleIdentifiers,
+				serverId: 3,
+			});
+
+			expect(mockPlayerSessions.open).toHaveBeenCalledWith(77, null);
+			const { items } = mockPlayerSessions.listSessions(77, 1, 10);
+			expect(items).toHaveLength(1);
+			expect(items[0].disconnectedAt).toBeNull();
+			expect(items[0].durationMs).toBeNull();
+		});
 	});
 
 	describe('resetPlayerlist()', () => {
@@ -477,6 +564,50 @@ describe('GameManager', () => {
 			await gameManager.playerDrop(999, { reason: 'Exiting', category: 2 });
 			expect(recordSpy).not.toHaveBeenCalled();
 			recordSpy.mockRestore();
+		});
+
+		it('closes the open player_session with the drop reason', async () => {
+			mockPlayerSessions.open(12, null, new Date(Date.now() - 5_000));
+			(gameManager as any).playerlist.push({
+				serverId: 9,
+				id: 12,
+				name: 'Vader',
+				playtime: 1000,
+				identifiers: sampleIdentifiers,
+				isStaff: false,
+				firstSeen: new Date(),
+				lastSeen: new Date(Date.now() - 5_000),
+				health: 100,
+				ping: 25,
+			});
+
+			await gameManager.playerDrop(9, { reason: 'Quit', category: 0 });
+
+			expect(mockPlayerSessions.close).toHaveBeenCalledWith(12, 'Quit');
+			const { items } = mockPlayerSessions.listSessions(12, 1, 10);
+			expect(items[0].disconnectedAt).not.toBeNull();
+			expect(items[0].durationMs).toBeGreaterThanOrEqual(0);
+			expect(items[0].endReason).toBe('Quit');
+		});
+
+		it('closes the player_session with a null reason when drop carries no reason', async () => {
+			mockPlayerSessions.open(12, null, new Date(Date.now() - 5_000));
+			(gameManager as any).playerlist.push({
+				serverId: 9,
+				id: 12,
+				name: 'Vader',
+				playtime: 1000,
+				identifiers: sampleIdentifiers,
+				isStaff: false,
+				firstSeen: new Date(),
+				lastSeen: new Date(Date.now() - 5_000),
+				health: 100,
+				ping: 25,
+			});
+
+			await gameManager.playerDrop(9);
+
+			expect(mockPlayerSessions.close).toHaveBeenCalledWith(12, null);
 		});
 	});
 
