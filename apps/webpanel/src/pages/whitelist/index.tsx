@@ -78,7 +78,7 @@ export default function WhitelistIndex() {
 	const sortBy = (searchParams.get('sortBy') as SortBy) ?? 'addedAt';
 	const sortOrder = (searchParams.get('sortOrder') as SortOrder) ?? 'desc';
 	const page = Number(searchParams.get('page') ?? 1);
-	const pageSize = Number(searchParams.get('pageSize') ?? 5);
+	const pageSize = Number(searchParams.get('pageSize') ?? 20);
 
 	const debouncedSearch = useDebounce(search, 300);
 	const loading = entries === null;
