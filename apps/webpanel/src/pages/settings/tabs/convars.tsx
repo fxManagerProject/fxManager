@@ -7,6 +7,7 @@ import {
 	TabsTrigger,
 } from '@fxmanager/ui/components/tabs';
 import PoolSizesSection from './convars-pool-sizes';
+import AnticheatSection from './convars-anticheat';
 
 type ConvarSection = {
 	value: string;
@@ -27,6 +28,13 @@ const CONVAR_SECTIONS = [
 		label: 'Security',
 		description:
 			'Convars that harden the server, such as sv_scriptHookAllowed and sv_authMaxVariance.',
+	},
+	{
+		value: 'anticheat',
+		label: 'Anticheat',
+		description:
+			'Harden the server against common cheats and griefing. Each convar is off unless you set it.',
+		Component: AnticheatSection,
 	},
 	{
 		value: 'pool-sizes',
