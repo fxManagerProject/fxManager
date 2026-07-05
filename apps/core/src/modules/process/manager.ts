@@ -19,6 +19,12 @@ import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
 import { gameManager } from '../game/manager';
 import { txAdminCompat } from '../txadmin/compat';
+import { poolLimits } from '../convars/pool-limits';
+import {
+	buildIncreasePoolSizeArgs,
+	validatePoolSizes,
+} from '../convars/pool-sizes';
+import { getStoredPoolConfig } from '../convars/store';
 
 const STARTUP_STALL_MS = 90_000;
 const KILL_GRACE_MS = 5_000;
@@ -92,6 +98,8 @@ export class ProcessManager {
 			} satisfies RawOutputLine,
 		});
 
+		args.push(...(await this.buildPoolSizeArgs()));
+
 		try {
 			const muslLoader = resolveMuslLoader(
 				config.executablePath,
@@ -131,6 +139,56 @@ export class ProcessManager {
 			this.setState('crashed');
 			return false;
 		}
+	}
+
+	// Build the `+increase_pool_size` startup args from the stored convar config.
+	private async buildPoolSizeArgs(): Promise<string[]> {
+		let stored: ReturnType<typeof getStoredPoolConfig>;
+		try {
+			stored = getStoredPoolConfig();
+		} catch {
+			return [];
+		}
+
+		const { gameType, poolSizes } = stored;
+		if (Object.keys(poolSizes).length === 0) return [];
+
+		let valid = poolSizes;
+		let warnings: string[] = [];
+
+		try {
+			const limits = await poolLimits.getLimits(gameType, {
+				forceRefresh: true,
+			});
+			const result = validatePoolSizes(poolSizes, limits);
+			valid = result.valid;
+			warnings = result.warnings;
+		} catch (err) {
+			this.injectConsoleLine({
+				process: 'fxManager',
+				value: `Could not fetch pool size limits from cfx.re (${(err as Error).message}); applying configured pool sizes without validation.`,
+				color: '\x1b[38;5;208m',
+			});
+		}
+
+		for (const warning of warnings) {
+			this.injectConsoleLine({
+				process: 'fxManager',
+				value: warning,
+				color: '\x1b[38;5;208m',
+			});
+		}
+
+		const applied = Object.keys(valid);
+		if (applied.length > 0) {
+			this.injectConsoleLine({
+				process: 'fxManager',
+				value: `Applying ${applied.length} pool size increase${applied.length === 1 ? '' : 's'}: ${applied.join(', ')}`,
+				color: '\x1b[38;5;40m',
+			});
+		}
+
+		return buildIncreasePoolSizeArgs(valid);
 	}
 
 	async stop(opts?: ShutdownOpts) {
