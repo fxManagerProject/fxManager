@@ -2,7 +2,7 @@ import type { SettingsKey, SettingsKeysByScope } from '../types';
 
 export const SETTINGS_SCOPES = {
 	general: [],
-	fxserver: ['onesync', 'executablePath', 'serverDataPath', 'serverConfigPath'],
+	fxserver: ['onesync', 'startupArguments', 'executablePath', 'serverDataPath', 'serverConfigPath'],
 	whitelist: ['mode', 'discordBotToken', 'discordGuildId', 'discordRoleIds'],
 	restarts: ['enabled', 'times'],
 } as const;
@@ -29,6 +29,7 @@ export const SETTINGS_SENSITIVE_KEYS: SettingsKey[] = [
 ];
 
 export const SETTINGS_MASTER_ONLY_KEYS: SettingsKey[] = [
+	'fxserver.startupArguments',
 	'fxserver.executablePath',
 	'fxserver.serverDataPath',
 	'fxserver.serverConfigPath',
