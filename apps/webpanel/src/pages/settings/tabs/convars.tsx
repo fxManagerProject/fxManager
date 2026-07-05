@@ -1,0 +1,70 @@
+import { useState } from 'react';
+import { SlidersHorizontal } from 'lucide-react';
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from '@fxmanager/ui/components/tabs';
+
+type ConvarSection = {
+	value: string;
+	label: string;
+	description: string;
+};
+
+const CONVAR_SECTIONS = [
+	{
+		value: 'whitelist',
+		label: 'Whitelist',
+		description:
+			'Convars that control server access and whitelisting, such as sv_lan.',
+	},
+	{
+		value: 'security',
+		label: 'Security',
+		description:
+			'Convars that harden the server, such as sv_scriptHookAllowed and sv_authMaxVariance.',
+	},
+	{
+		value: 'objects',
+		label: 'Objects',
+		description:
+			'Convars that tune object and entity limits handled by OneSync.',
+	},
+] satisfies ConvarSection[];
+
+export default function ConvarsTab() {
+	const [section, setSection] = useState<string>(CONVAR_SECTIONS[0].value);
+
+	return (
+		<Tabs value={section} onValueChange={setSection}>
+			<TabsList variant="line" className="justify-start flex-wrap h-auto">
+				{CONVAR_SECTIONS.map(({ value, label }) => (
+					<TabsTrigger key={value} value={value}>
+						{label}
+					</TabsTrigger>
+				))}
+			</TabsList>
+
+			{CONVAR_SECTIONS.map(({ value, label, description }) => (
+				<TabsContent key={value} value={value} className="pt-2">
+					<div className="space-y-1">
+						<h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-200">
+							{label}
+						</h3>
+						<p className="text-sm text-muted-foreground">{description}</p>
+					</div>
+
+					<div className="mt-4 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-12 text-center">
+						<SlidersHorizontal className="size-6 text-muted-foreground" />
+						<p className="text-sm font-medium">No convars configured yet</p>
+						<p className="max-w-sm text-sm text-muted-foreground">
+							Convars for the {label.toLowerCase()} category will appear here.
+						</p>
+					</div>
+				</TabsContent>
+			))}
+		</Tabs>
+	);
+}

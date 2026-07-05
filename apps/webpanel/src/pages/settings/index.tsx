@@ -19,6 +19,7 @@ import { useCallback, useEffect, useState } from 'react';
 import FXServerTab from './tabs/fxserver';
 import WhitelistTab from './tabs/whitelist';
 import RestartsTab from './tabs/restarts';
+import ConvarsTab from './tabs/convars';
 import { QueryService } from '@/lib/query';
 import type {
 	ApiResponse,
@@ -65,6 +66,8 @@ const TABS = [
 		component: RestartsTab,
 	},
 ] satisfies Tab[];
+
+const SCOPE_TAB_VALUES = new Set<string>(TABS.map((tab) => tab.value));
 
 type SettingsCache = {
 	[S in SettingsScope]?: Partial<Record<SettingsKey<S>, string>>;
@@ -149,6 +152,7 @@ export default function SettingsPage() {
 	}
 
 	useEffect(() => {
+		if (!SCOPE_TAB_VALUES.has(currentTab)) return;
 		void loadTab(currentTab);
 	}, [currentTab, loadTab]);
 
@@ -173,6 +177,7 @@ export default function SettingsPage() {
 							{label}
 						</TabsTrigger>
 					))}
+					<TabsTrigger value="convars">Convars</TabsTrigger>
 				</TabsList>
 
 				<ScrollArea className="h-[calc(100vh-12rem)]">
@@ -233,6 +238,23 @@ export default function SettingsPage() {
 							</Card>
 						</TabsContent>
 					))}
+
+					<TabsContent value="convars">
+						<Card>
+							<CardHeader className="gap-0.5">
+								<CardTitle className="text-2xl text-neutral-700 dark:text-neutral-200">
+									Convars
+								</CardTitle>
+								<CardDescription>
+									FXServer console variables (convars), grouped by category.
+								</CardDescription>
+							</CardHeader>
+
+							<CardContent>
+								<ConvarsTab />
+							</CardContent>
+						</Card>
+					</TabsContent>
 				</ScrollArea>
 			</Tabs>
 		</div>
