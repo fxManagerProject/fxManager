@@ -12,6 +12,7 @@ import { checkVersion, getCurrentVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
 import { processManager } from './modules/process/manager';
+import { shouldAutostart } from './modules/process/autostart';
 import { gameManager } from './modules/game/manager';
 import { ConfigManager } from './modules/config/manager';
 import { perfManager } from './modules/perf/manager';
@@ -174,6 +175,30 @@ if (!isProduction) {
 	});
 }
 
+const maybeAutostart = async () => {
+	const setupComplete = isFxManagerSetup();
+	const enabled = cm.isAutostartEnabled();
+	const status = pm.getState().status;
+
+	if (!shouldAutostart({ setupComplete, enabled, status })) {
+		const reason = !setupComplete
+			? 'first-run setup not complete'
+			: !enabled
+				? 'disabled (fxserver.autostart / FXSERVER_AUTOSTART)'
+				: `server already '${status}'`;
+		console.log(`[core] Auto-start skipped: ${reason}`);
+		return;
+	}
+
+	console.log('[core] Auto-starting fxServer');
+	try {
+		await pm.start();
+	} catch (err) {
+		// A failed auto-start must never take the panel down with it.
+		console.error('[core] Auto-start failed', err);
+	}
+};
+
 const start = async () => {
 	try {
 		await fastify.listen({ port: webServerPort, host: '0.0.0.0' });
@@ -182,6 +207,7 @@ const start = async () => {
 				`\thttp://localhost:${webServerPort}\n` +
 				`\thttp://${ip}:${webServerPort}`,
 		);
+		await maybeAutostart();
 	} catch (err) {
 		fastify.log.error(err);
 		process.exit(1);

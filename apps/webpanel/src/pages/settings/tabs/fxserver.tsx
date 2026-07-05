@@ -10,6 +10,7 @@ import { SETTINGS_DEFAULTS } from '@fxmanager/shared/constants';
 import type { SettingsTabProps } from '@/types/settings';
 import { Separator } from '@fxmanager/ui/components/separator';
 import { Input } from '@fxmanager/ui/components/input';
+import { Switch } from '@fxmanager/ui/components/switch';
 import { Field, FieldDescription } from '@fxmanager/ui/components/field';
 import { validateStartupArguments } from '@fxmanager/shared/utils';
 import { useState } from 'react';
@@ -72,6 +73,9 @@ export default function FXServerTab({
 	const serverConfigPath =
 		data['fxserver.serverConfigPath'] ??
 		SETTINGS_DEFAULTS['fxserver.serverConfigPath'];
+	const autostart =
+		(data['fxserver.autostart'] ?? SETTINGS_DEFAULTS['fxserver.autostart']) ===
+		'true';
 
 	return (
 		<div className="space-y-4">
@@ -101,6 +105,16 @@ export default function FXServerTab({
 
 						onChange('fxserver.startupArguments', value);
 					}}
+				/>
+			</SettingRow>
+
+			<SettingRow label="Auto-start server on launch">
+				<Switch
+					checked={autostart}
+					disabled={disabled}
+					onCheckedChange={(checked) =>
+						onChange('fxserver.autostart', checked ? 'true' : 'false')
+					}
 				/>
 			</SettingRow>
 

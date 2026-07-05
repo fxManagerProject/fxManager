@@ -5,6 +5,7 @@ import type {
 	ServerConfig,
 } from '@fxmanager/shared/types';
 import crypto from 'node:crypto';
+import { resolveAutostartEnabled } from '../process/autostart';
 
 type CoreSettings = CoreConfig &
 	ServerConfig & {
@@ -51,6 +52,13 @@ export class ConfigManager {
 
 	regenerateApiToken() {
 		this.systemValues.resourceApiToken = crypto.randomUUID();
+	}
+
+	isAutostartEnabled(): boolean {
+		return resolveAutostartEnabled(
+			repo.settings.get('fxserver.autostart'),
+			process.env.FXSERVER_AUTOSTART,
+		);
 	}
 
 	getSystemValues() {
