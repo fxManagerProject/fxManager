@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
 	Activity,
+	ArrowRight,
 	CalendarDays,
 	ChevronLeft,
 	ChevronRight,
@@ -121,23 +122,12 @@ export function ActivityHeatmap({ playerId }: { playerId: number }) {
 
 	return (
 		<Card>
-			<CardHeader className="pb-2 pt-4 px-4 flex-row items-center justify-between gap-2">
+			<CardHeader className="py-2 px-4 flex-row items-center justify-between gap-2">
 				<CardTitle className="text-sm flex items-center gap-2 shrink-0">
 					<Activity className="h-4 w-4" />
-					Activity — last {WINDOW} days
+					Activity - last {WINDOW} days
 				</CardTitle>
 				<div className="flex items-center gap-3 min-w-0">
-					<span className="text-xs text-muted-foreground truncate tabular-nums">
-						{active
-							? `${shortLabel(active.date)} · ${
-									active.playtimeMs > 0
-										? `${formatDuration(active.playtimeMs)} · ${active.sessionCount} session${active.sessionCount > 1 ? 's' : ''}`
-										: 'no activity'
-								}`
-							: offset === 0
-								? ''
-								: `${keyOf(from)} → ${keyOf(to)}`}
-					</span>
 					<div className="flex items-center gap-1 shrink-0">
 						<Button
 							variant="ghost"
@@ -148,6 +138,21 @@ export function ActivityHeatmap({ playerId }: { playerId: number }) {
 						>
 							<ChevronLeft className="h-4 w-4" />
 						</Button>
+						<span className="text-xs text-muted-foreground truncate tabular-nums">
+							{active ? (
+								`${shortLabel(active.date)} · ${
+									active.playtimeMs > 0
+										? `${formatDuration(active.playtimeMs)} · ${active.sessionCount} session${active.sessionCount > 1 ? 's' : ''}`
+										: 'no activity'
+								}`
+							) : (
+								<>
+									{keyOf(from)}
+									<ArrowRight className="inline mx-1 h-3 w-3 align-middle" />
+									{keyOf(to)}
+								</>
+							)}
+						</span>
 						<Button
 							variant="ghost"
 							size="icon"
