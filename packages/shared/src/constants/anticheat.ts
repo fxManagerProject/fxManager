@@ -156,7 +156,7 @@ export const ANTICHEAT_CONVARS: AnticheatConvarDef[] = [
 		setter: 'setr',
 		label: 'State bag strict mode',
 		description:
-			'Controls whether the network owner of a replicated entity may modify its state bags client-side. Default (false) lets the owner modify state bags of entities and players it owns; when enabled (true) only the server can change networked entity and player state — clients cannot modify state bags at all.',
+			'Determines whether clients are allowed to set replicated state bags.',
 		recommended: 'true',
 		control: BOOLEAN_OPTIONS,
 	},
