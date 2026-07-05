@@ -34,7 +34,7 @@ import {
 } from '@fxmanager/ui/components/dynamic-icon';
 import { Input } from '@fxmanager/ui/components/input';
 import { Label } from '@fxmanager/ui/components/label';
-import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
+import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
 import {
 	Table,
 	TableBody,
@@ -214,26 +214,26 @@ export default function GroupManagement() {
 	}
 
 	return (
-		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4">
+		<div className="flex h-full flex-col gap-4 p-4">
 			<PageHeader
 				Icon={UsersRound}
 				title="Permission Groups"
 				description="Define permission sets and assign admins to them."
 			/>
 
-			<div className="flex flex-row justify-end">
+			<div className="flex flex-row justify-end shrink-0">
 				<Button onClick={() => setDialog('new')}>
 					<Plus />
 					<span className="hidden lg:block">Create Group</span>
 				</Button>
 			</div>
 
-			<Card className="bg-card/50 py-0">
-				<div className="overflow-hidden rounded-lg">
-					<Table className="table-fixed w-full">
-						<TableHeader className="bg-card block w-full">
+			<Card className="bg-card/50 py-0 flex-1 flex flex-col min-h-0">
+				<ScrollArea className="flex-1 w-full max-w-full rounded-lg">
+					<Table className="table-fixed w-full min-w-[600px]">
+						<TableHeader className="bg-card sticky top-0 z-10 block w-full shadow-sm shrink-0">
 							<TableRow className="flex w-full">
-								<TableHead className="pl-4 flex-1 flex items-center">
+								<TableHead className="pl-4 flex-2 flex items-center">
 									Group
 								</TableHead>
 								<TableHead className="flex-1 flex items-center">
@@ -245,93 +245,83 @@ export default function GroupManagement() {
 								<TableHead className="w-70 flex items-center" />
 							</TableRow>
 						</TableHeader>
+
 						<TableBody className="block w-full">
-							<ScrollArea className="h-[65vh]">
-								{loading ? (
-									<TableRow className="flex w-full">
-										<TableCell
-											colSpan={4}
-											className="flex-1 text-center text-muted-foreground"
-										>
-											Loading...
+							{loading ? (
+								<TableRow className="flex w-full">
+									<TableCell className="flex-1 text-center p-8 text-muted-foreground">
+										Loading...
+									</TableCell>
+								</TableRow>
+							) : groups.length === 0 ? (
+								<TableRow className="flex w-full">
+									<TableCell className="flex-1 text-center p-8 text-muted-foreground">
+										No groups yet, create one to get started.
+									</TableCell>
+								</TableRow>
+							) : (
+								groups.map((group) => (
+									<TableRow key={group.id} className="flex w-full items-center">
+										<TableCell className="font-medium pl-4 flex-2 flex items-center gap-2 truncate">
+											<GroupBadge group={group} />
 										</TableCell>
-									</TableRow>
-								) : groups.length === 0 ? (
-									<TableRow className="flex w-full">
-										<TableCell
-											colSpan={4}
-											className="flex-1 text-center text-muted-foreground"
-										>
-											No groups yet, create one to get started.
+										<TableCell className="flex-1 flex items-center text-sm text-muted-foreground">
+											{group.memberCount}
 										</TableCell>
-									</TableRow>
-								) : (
-									groups.map((group) => (
-										<TableRow
-											key={group.id}
-											className="flex w-full items-center"
-										>
-											<TableCell className="font-medium pl-4 flex-1 flex items-center gap-2 truncate">
-												<GroupBadge group={group} />
-											</TableCell>
-											<TableCell className="flex-1 flex items-center text-sm text-muted-foreground">
-												{group.memberCount}
-											</TableCell>
-											<TableCell className="flex-1 flex items-center text-sm text-muted-foreground">
-												{countPermissions(group.permissions)} granted
-											</TableCell>
-											<TableCell className="w-70 flex justify-end gap-2 pr-4">
-												<Button
-													size="sm"
-													variant="outline"
-													className="h-7"
-													onClick={() => setDialog(group)}
-												>
-													<Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
-												</Button>
+										<TableCell className="flex-1 flex items-center text-sm text-muted-foreground">
+											{countPermissions(group.permissions)} granted
+										</TableCell>
+										<TableCell className="w-70 flex justify-end gap-2 pr-4">
+											<Button
+												size="sm"
+												variant="outline"
+												className="h-7"
+												onClick={() => setDialog(group)}
+											>
+												<Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
+											</Button>
 
-												<AlertDialog>
-													<AlertDialogTrigger asChild>
-														<Button
-															size="sm"
+											<AlertDialog>
+												<AlertDialogTrigger asChild>
+													<Button
+														size="sm"
+														variant="destructive"
+														className="h-7"
+														disabled={group.memberCount > 0}
+													>
+														<Trash2 className="h-3.5 w-3.5" />
+													</Button>
+												</AlertDialogTrigger>
+												<AlertDialogContent>
+													<AlertDialogHeader>
+														<AlertDialogTitle>
+															Delete "{group.name}"?
+														</AlertDialogTitle>
+														<AlertDialogDescription>
+															This action cannot be undone. Admins can no longer
+															be assigned to this group.
+														</AlertDialogDescription>
+													</AlertDialogHeader>
+													<AlertDialogFooter>
+														<AlertDialogCancel>Cancel</AlertDialogCancel>
+														<AlertDialogAction
+															onClick={() => handleDelete(group)}
 															variant="destructive"
-															className="h-7"
-															disabled={group.memberCount > 0}
 														>
-															<Trash2 className="h-3.5 w-3.5" />
-														</Button>
-													</AlertDialogTrigger>
-
-													<AlertDialogContent>
-														<AlertDialogHeader>
-															<AlertDialogTitle>
-																Delete "{group.name}"?
-															</AlertDialogTitle>
-															<AlertDialogDescription>
-																This action cannot be undone. Admins can no
-																longer be assigned to this group.
-															</AlertDialogDescription>
-														</AlertDialogHeader>
-
-														<AlertDialogFooter>
-															<AlertDialogCancel>Cancel</AlertDialogCancel>
-															<AlertDialogAction
-																onClick={() => handleDelete(group)}
-																variant="destructive"
-															>
-																Delete Group
-															</AlertDialogAction>
-														</AlertDialogFooter>
-													</AlertDialogContent>
-												</AlertDialog>
-											</TableCell>
-										</TableRow>
-									))
-								)}
-							</ScrollArea>
+															Delete Group
+														</AlertDialogAction>
+													</AlertDialogFooter>
+												</AlertDialogContent>
+											</AlertDialog>
+										</TableCell>
+									</TableRow>
+								))
+							)}
 						</TableBody>
 					</Table>
-				</div>
+
+					<ScrollBar orientation="horizontal" className="hidden" />
+				</ScrollArea>
 			</Card>
 
 			<GroupDialog

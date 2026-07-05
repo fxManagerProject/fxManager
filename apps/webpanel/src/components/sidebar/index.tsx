@@ -10,7 +10,7 @@ export default function AppLayout() {
 		<SidebarProvider className="h-screen overflow-hidden">
 			<AppSidebar />
 			<SidebarInset className="h-screen overflow-hidden">
-				<div className="flex flex-col h-full overflow-hidden p-4 gap-4">
+				<div className="flex flex-col h-full overflow-hidden gap-4">
 					<Outlet />
 				</div>
 			</SidebarInset>

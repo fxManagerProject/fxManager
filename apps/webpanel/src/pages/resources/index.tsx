@@ -213,7 +213,7 @@ export function ResourceList() {
 	}
 
 	return (
-		<div className="space-y-4 text-zinc-900 dark:text-zinc-50">
+		<div className="flex flex-col gap-4 text-zinc-900 dark:text-zinc-50 h-full p-4">
 			<div className="flex justify-between items-end">
 				<PageHeader
 					Icon={LayoutList}
@@ -305,14 +305,14 @@ export function ResourceList() {
 
 			<div
 				className={cn(
-					'h-[calc(100vh-13rem)] rounded-md border border-zinc-200 dark:border-zinc-800 p-4 pr-1',
+					'flex-1 flex flex-col min-h-0 rounded-md border border-zinc-200 dark:border-zinc-800 p-4 pr-1',
 					(loading || state.status !== 'running') && 'overflow-hidden',
 				)}
 			>
 				{loading || state.status === 'starting' ? (
 					<LoadingSkeleton />
 				) : state.status === 'running' ? (
-					<ScrollArea className="h-[calc(100vh-15rem)] pr-3">
+					<ScrollArea className="h-full pr-3">
 						<div className="grid gap-4">
 							{displayedResources.length > 0 ? (
 								displayedResources.map((res) => (
@@ -413,7 +413,7 @@ export function ResourceList() {
 						</div>
 					</ScrollArea>
 				) : (
-					<div className="relative overflow-hidden h-[calc(100vh-15rem)] pr-3">
+					<div className="relative overflow-hidden h-full pr-3">
 						<LoadingSkeleton blur />
 						<div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
 							<div className="pointer-events-auto">

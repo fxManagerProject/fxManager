@@ -248,7 +248,7 @@ export default function ConfigEditor() {
 	};
 
 	return (
-		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4 overflow-hidden">
+		<div className="flex h-full flex-col gap-4 p-4 overflow-hidden">
 			<PageHeader
 				Icon={FileCog}
 				title="Config Editor"

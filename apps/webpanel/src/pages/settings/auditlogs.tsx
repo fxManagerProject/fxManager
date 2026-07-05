@@ -147,14 +147,14 @@ export default function AuditLogPage() {
 	};
 
 	return (
-		<div className="flex h-[calc(100vh-2rem)] flex-col gap-6">
+		<div className="flex h-full flex-col gap-4 p-4">
 			<PageHeader
 				Icon={ScrollText}
 				title="Audit Logs"
 				description="Audit log view for fxManager actions."
 			/>
 
-			<div className="flex flex-wrap justify-between items-end border-b border-border/60 pb-4">
+			<div className="flex flex-wrap justify-between items-end border-b border-border/60 pb-4 mt-2">
 				<div className="flex flex-wrap items-end gap-4">
 					<div className="flex flex-col gap-1.5">
 						<Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">

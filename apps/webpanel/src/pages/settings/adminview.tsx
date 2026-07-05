@@ -232,9 +232,9 @@ export default function AdminView() {
 	const isMaster = PermissionManager.isMaster(adminData.permissions);
 
 	return (
-		<div>
-			<div className="flex flex-row justify-between items-center pr-4">
-				<div className="flex items-center gap-3 my-4">
+		<div className="flex flex-col h-full p-4 gap-4">
+			<div className="flex flex-row justify-between items-center shrink-0">
+				<div className="flex items-center gap-3">
 					<Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
 						<ArrowLeft className="h-4 w-4" />
 					</Button>
@@ -306,8 +306,8 @@ export default function AdminView() {
 				</div>
 			</div>
 
-			<div className="space-y-6 pt-2 pb-0 pl-0 pr-4">
-				<div className="flex flex-wrap gap-3 flex-col md:flex-row">
+			<div className="flex-1 flex flex-col min-h-0 gap-6">
+				<div className="flex flex-wrap gap-3 shrink-0">
 					<StatCard
 						icon={FileUser}
 						label="Linked Player"
@@ -345,21 +345,24 @@ export default function AdminView() {
 					/>
 				</div>
 
-				<Tabs defaultValue="activity" className="w-full">
+				<Tabs defaultValue="activity" className="flex-1 flex flex-col min-h-0">
 					<TabsList className="grid w-full grid-cols-2 mb-4">
 						<TabsTrigger value="activity">Recent Activity</TabsTrigger>
 						<TabsTrigger value="settings">Permissions</TabsTrigger>
 					</TabsList>
 
-					<TabsContent value="activity">
-						<Card>
+					<TabsContent
+						value="activity"
+						className="flex-1 flex flex-col min-h-0 mt-0"
+					>
+						<Card className="flex-1 flex flex-col min-h-0">
 							<CardHeader>
 								<CardTitle className="text-lg font-bold">
 									Action Recap
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<ScrollArea className="min-h-[40vh] h-[calc(100vh-27rem)]">
+								<ScrollArea className="h-full">
 									{!hasPermission(UserPermissions.AUDIT_LOG) ? (
 										<Alert
 											variant="destructive"
@@ -397,15 +400,18 @@ export default function AdminView() {
 						</Card>
 					</TabsContent>
 
-					<TabsContent value="settings" className="mt-0 outline-none">
-						<Card className="h-[100vh] md:h-[64vh] flex flex-col overflow-hidden">
+					<TabsContent
+						value="settings"
+						className="flex-1 flex flex-col min-h-0 mt-0"
+					>
+						<Card className="flex-1 flex flex-col min-h-0">
 							<CardHeader className="shrink-0">
 								<CardTitle className="text-lg font-bold">
 									Permissions Editor
 								</CardTitle>
 							</CardHeader>
 
-							<CardContent className="flex-1 flex flex-col min-h-0 px-6 pt-0 overflow-hidden">
+							<CardContent className="flex-1 overflow-hidden">
 								{isMaster ? (
 									<Alert
 										variant="destructive"

@@ -16,7 +16,7 @@ import { Button } from '@fxmanager/ui/components/button';
 import { Input } from '@fxmanager/ui/components/input';
 import { Badge } from '@fxmanager/ui/components/badge';
 import { Card } from '@fxmanager/ui/components/card';
-import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
+import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
 import {
 	Table,
 	TableHeader,
@@ -222,16 +222,16 @@ export default function WhitelistIndex() {
 	}, [fetchFromServer]);
 
 	return (
-		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4">
+		<div className="flex h-full flex-col gap-4 p-4">
 			<PageHeader
 				Icon={ScanEye}
 				title="Whitelist Management"
 				description="Handle whitelist management."
 			/>
 
-			<div className="flex flex-row justify-between">
-				<div className="flex items-center gap-3">
-					<div className="relative flex-1 max-w-sm">
+			<div className="flex flex-wrap items-center justify-between gap-4 shrink-0">
+				<div className="flex flex-wrap items-center gap-3">
+					<div className="relative flex-1 min-w-[200px] max-w-sm">
 						<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
 						<Input
 							placeholder="Search by name, identifier..."
@@ -242,7 +242,7 @@ export default function WhitelistIndex() {
 					</div>
 
 					<Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-						<SelectTrigger className="lg:w-40">
+						<SelectTrigger className="w-32 lg:w-40">
 							<SelectValue placeholder="Sort by" />
 						</SelectTrigger>
 						<SelectContent>
@@ -254,7 +254,7 @@ export default function WhitelistIndex() {
 					<Button
 						variant="outline"
 						onClick={toggleSortOrder}
-						className="lg:w-40 justify-between"
+						className="w-12 lg:w-40 justify-center lg:justify-between px-0 lg:px-4"
 					>
 						<span className="hidden lg:block">
 							{sortOrder === 'asc' ? 'Ascending' : 'Descending'}
@@ -316,121 +316,115 @@ export default function WhitelistIndex() {
 				</Dialog>
 			</div>
 
-			{/* ToDo:
-        find a solution for mobile display as this fucks up, options:
-        * Dynamically display columns on mobile (only show active filter)
-        * Don't show extra columns
-      */}
-
-			<Card className="bg-card/50 py-0">
-				<div className="overflow-hidden rounded-t-lg">
-					<Table className="table-fixed w-full">
-						<TableHeader className="bg-card block w-full">
+			<Card className="bg-card/50 py-0 flex-1 flex flex-col min-h-0">
+				<ScrollArea className="rounded-t-lg flex-1 w-full max-w-full">
+					<Table className="table-fixed w-full min-w-[700px]">
+						<TableHeader className="bg-card sticky top-0 z-10 block w-full shadow-sm shrink-0">
 							<TableRow className="flex w-full">
-								<TableHead className="flex-[1] flex items-center pl-4">
+								<TableHead className="flew-1 flex items-center pl-4">
 									Player
 								</TableHead>
-								<TableHead className="flex-[1] hidden md:flex items-center">
-									Type
-								</TableHead>
-								<TableHead className="flex-[1.5] hidden md:flex items-center">
+								<TableHead className="flew-1 flex items-center">Type</TableHead>
+								<TableHead className="flex-[1.5] flex items-center">
 									Identifier
 								</TableHead>
-								<TableHead className="flex-[1] hidden lg:flex items-center">
+								<TableHead className="flew-1 flex items-center">
 									Added By
 								</TableHead>
 								<TableHead className="flex-[0.25] flex items-center justify-end pr-4">
 									Actions
-								</TableHead>{' '}
+								</TableHead>
 							</TableRow>
 						</TableHeader>
+
 						<TableBody className="block w-full">
-							<ScrollArea className="h-[65vh]">
-								{loading ? (
-									<div className="p-8 text-center text-muted-foreground">
+							{loading ? (
+								<TableRow className="flex w-full">
+									<TableCell className="flex-1 p-8 text-center text-muted-foreground">
 										Loading whitelist...
-									</div>
-								) : entries.length === 0 ? (
-									<div className="p-8 text-center text-muted-foreground">
+									</TableCell>
+								</TableRow>
+							) : entries.length === 0 ? (
+								<TableRow className="flex w-full">
+									<TableCell className="flex-1 p-8 text-center text-muted-foreground">
 										No entries found.
-									</div>
-								) : (
-									entries.map((entry) => (
-										<TableRow
-											key={entry.id}
-											className="flex w-full items-center py-2"
-										>
-											<TableCell className="flex-[1] flex items-center pl-4 min-w-0">
-												<div className="flex flex-col">
-													<span className="font-medium truncate">
-														{entry.playerName ?? 'Unlinked Player'}
-													</span>
-												</div>
-											</TableCell>
+									</TableCell>
+								</TableRow>
+							) : (
+								entries.map((entry) => (
+									<TableRow
+										key={entry.id}
+										className="flex w-full items-center py-2"
+									>
+										<TableCell className="flew-1 flex items-center pl-4 min-w-0">
+											<div className="flex flex-col">
+												<span className="font-medium truncate">
+													{entry.playerName ?? 'Unlinked Player'}
+												</span>
+											</div>
+										</TableCell>
 
-											<TableCell className="flex-[1] hidden md:flex items-start justify-start">
-												<Badge
-													variant="outline"
-													className="text-[10px] font-bold uppercase tracking-wider"
-												>
-													{entry.type}
-												</Badge>
-											</TableCell>
+										<TableCell className="flew-1 flex items-start justify-start">
+											<Badge
+												variant="outline"
+												className="text-[10px] font-bold uppercase tracking-wider"
+											>
+												{entry.type}
+											</Badge>
+										</TableCell>
 
-											<TableCell className="flex-[1.5] hidden md:flex items-center font-mono text-zinc-500">
-												<button
-													type="button"
-													title="Click to copy identifier"
-													onClick={() => copyToClipboard(entry.value)}
-												>
-													{formatIdentifier(entry.value)}
-												</button>
-											</TableCell>
+										<TableCell className="flex-[1.5] flex items-center font-mono text-zinc-500">
+											<button
+												type="button"
+												title="Click to copy identifier"
+												onClick={() => copyToClipboard(entry.value)}
+											>
+												{formatIdentifier(entry.value)}
+											</button>
+										</TableCell>
 
-											<TableCell className="flex-[1] hidden lg:flex items-center gap-2">
-												{entry.addedByAdmin === 'system' ? (
-													<>
-														<Server className="h-4 w-4 text-primary" />
-														<span className="truncate">System</span>
-													</>
-												) : entry.addedByAdmin === 'deleted_admin' ? (
-													<>
-														<UserX2 className="h-4 w-4 text-red-500" />
-														<span className="truncate">Deleted Admin</span>
-													</>
+										<TableCell className="flew-1 flex items-center gap-2">
+											{entry.addedByAdmin === 'system' ? (
+												<>
+													<Server className="h-4 w-4 text-primary shrink-0" />
+													<span className="truncate">System</span>
+												</>
+											) : entry.addedByAdmin === 'deleted_admin' ? (
+												<>
+													<UserX2 className="h-4 w-4 text-red-500 shrink-0" />
+													<span className="truncate">Deleted Admin</span>
+												</>
+											) : (
+												<>
+													<ShieldCheck className="h-4 w-4 text-blue-500 shrink-0" />
+													<span className="truncate">{entry.addedByAdmin}</span>
+												</>
+											)}
+										</TableCell>
+
+										<TableCell className="flex-[0.25] flex items-center justify-end pr-4">
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-8 w-8 hover:text-red-500 hover:bg-red-500/10"
+												onClick={() => handleDelete(entry.id)}
+											>
+												{isDeleting === entry.id ? (
+													<Loader2 className="text-orange-500 animate-spin" />
 												) : (
-													<>
-														<ShieldCheck className="h-4 w-4 text-blue-500" />
-														<span className="truncate">
-															{entry.addedByAdmin}
-														</span>
-													</>
+													<Trash2 className="h-4 w-4" />
 												)}
-											</TableCell>
-
-											<TableCell className="flex-[0.25] flex items-center justify-end pr-4">
-												<Button
-													variant="ghost"
-													size="icon"
-													className="h-8 w-8 hover:text-red-500 hover:bg-red-500/10"
-													onClick={() => handleDelete(entry.id)}
-												>
-													{isDeleting === entry.id ? (
-														<Loader2 className="text-orange-500 animate-spin" />
-													) : (
-														<Trash2 className="h-4 w-4" />
-													)}
-												</Button>
-											</TableCell>
-										</TableRow>
-									))
-								)}
-							</ScrollArea>
+											</Button>
+										</TableCell>
+									</TableRow>
+								))
+							)}
 						</TableBody>
 					</Table>
-				</div>
+					<ScrollBar orientation="horizontal" className="hidden" />
+				</ScrollArea>
 
-				<div className="flex items-center justify-between px-4 py-4 border-t border-border bg-card">
+				<div className="flex flex-wrap items-center justify-between gap-4 px-4 py-4 border-t border-border bg-card shrink-0">
 					<PageSizeSelector
 						pageSize={pageSize}
 						setPageSize={setPageSize}

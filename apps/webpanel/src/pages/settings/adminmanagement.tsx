@@ -24,7 +24,7 @@ import {
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Button } from '@fxmanager/ui/components/button';
-import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
+import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
 import PageSizeSelector from '@/components/page-size-selector';
 import PageSelector from '@/components/page-selector';
 import { GroupBadge } from '@/components/group-badge';
@@ -133,7 +133,7 @@ export default function AdminManagementList() {
 	}, [debouncedSearch, sortBy, sortOrder, page, pageSize]);
 
 	return (
-		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4">
+		<div className="flex flex-col gap-6 h-full p-4">
 			<PageHeader
 				Icon={ShieldUser}
 				title="Admin Management"
@@ -182,16 +182,10 @@ export default function AdminManagementList() {
 				</Button>
 			</div>
 
-			{/* ToDo:
-        find a solution for mobile display as this fucks up, options:
-        * Dynamically display columns on mobile (only show active filter)
-        * Don't show extra columns
-      */}
-
-			<Card className="bg-card/50 py-0">
-				<div className="overflow-hidden rounded-t-lg">
-					<Table className="table-fixed w-full">
-						<TableHeader className="bg-card block w-full">
+			<Card className="bg-card/50 py-0 flex-1 flex flex-col min-h-0">
+				<ScrollArea className="rounded-t-lg flex-1 w-full max-w-full">
+					<Table className="table-fixed w-full min-w-[800px]">
+						<TableHeader className="bg-card sticky top-0 z-10 block w-full shadow-sm">
 							<TableRow className="flex w-full">
 								<TableHead className="pl-4 flex-1 flex items-center">
 									Name
@@ -206,68 +200,69 @@ export default function AdminManagementList() {
 								<TableHead className="w-70 flex items-center" />
 							</TableRow>
 						</TableHeader>
+
 						<TableBody className="block w-full">
-							<ScrollArea className="h-[65vh]">
-								{loading ? (
-									<TableRow className="flex w-full">
-										<TableCell
-											colSpan={5}
-											className="flex-1 text-center text-muted-foreground"
-										>
-											Loading...
+							{loading ? (
+								<TableRow className="flex w-full">
+									<TableCell
+										colSpan={5}
+										className="flex-1 text-center text-muted-foreground"
+									>
+										Loading...
+									</TableCell>
+								</TableRow>
+							) : admins.length === 0 ? (
+								<TableRow className="flex w-full">
+									<TableCell
+										colSpan={5}
+										className="flex-1 text-center text-muted-foreground"
+									>
+										{search
+											? `No admins matching "${search}"`
+											: 'No admins found'}
+									</TableCell>
+								</TableRow>
+							) : (
+								admins.map((a) => (
+									<TableRow
+										key={a.id}
+										className="flex w-full items-center"
+										onClick={() => navigate(`/settings/admins/${a.id}`)}
+									>
+										<TableCell className="font-medium pl-4 flex-1 flex items-center gap-2 truncate">
+											<span>{a.username}</span>
+										</TableCell>
+										<TableCell className="flex-1 flex items-center gap-2 truncate">
+											{a.group && <GroupBadge group={a.group} />}
+										</TableCell>
+										<TableCell className="text-sm text-muted-foreground flex-1">
+											{new Date(a.createdAt).toLocaleDateString()}
+										</TableCell>
+										<TableCell className="text-sm text-muted-foreground flex-1">
+											{a.lastLoginAt
+												? new Date(a.lastLoginAt).toLocaleString()
+												: 'N/A'}
+										</TableCell>
+										<TableCell className="w-70 flex justify-around">
+											<Button
+												size="sm"
+												variant="outline"
+												className="h-7 w-37"
+												onClick={() => {}}
+											>
+												<Settings className="mr-1.5 h-3.5 w-3.5" /> Edit
+											</Button>
 										</TableCell>
 									</TableRow>
-								) : admins.length === 0 ? (
-									<TableRow className="flex w-full">
-										<TableCell
-											colSpan={5}
-											className="flex-1 text-center text-muted-foreground"
-										>
-											{search
-												? `No admins matching "${search}"`
-												: 'No admins found'}
-										</TableCell>
-									</TableRow>
-								) : (
-									admins.map((a) => (
-										<TableRow
-											key={a.id}
-											className="flex w-full items-center"
-											onClick={() => navigate(`/settings/admins/${a.id}`)}
-										>
-											<TableCell className="font-medium pl-4 flex-1 flex items-center gap-2 truncate">
-												<span>{a.username}</span>
-											</TableCell>
-											<TableCell className="flex-1 flex items-center gap-2 truncate">
-												{a.group && <GroupBadge group={a.group} />}
-											</TableCell>
-											<TableCell className="text-sm text-muted-foreground flex-1">
-												{new Date(a.createdAt).toLocaleDateString()}
-											</TableCell>
-											<TableCell className="text-sm text-muted-foreground flex-1">
-												{a.lastLoginAt
-													? new Date(a.lastLoginAt).toLocaleString()
-													: 'N/A'}
-											</TableCell>
-											<TableCell className="w-70 flex justify-around">
-												<Button
-													size="sm"
-													variant="outline"
-													className="h-7 w-37"
-													onClick={() => {}}
-												>
-													<Settings className="mr-1.5 h-3.5 w-3.5" /> Edit
-												</Button>
-											</TableCell>
-										</TableRow>
-									))
-								)}
-							</ScrollArea>
+								))
+							)}
 						</TableBody>
 					</Table>
-				</div>
 
-				<div className="flex items-center justify-between px-4 py-4 border-t border-border bg-card">
+					<ScrollBar orientation="horizontal" className="hidden" />
+				</ScrollArea>
+
+				<div className="flex flex-wrap items-center justify-between gap-4 px-4 py-4 border-t border-border bg-card shrink-0">
 					<PageSizeSelector
 						pageSize={pageSize}
 						setPageSize={setPageSize}

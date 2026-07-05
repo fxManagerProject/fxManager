@@ -161,8 +161,8 @@ export default function PlayerView() {
 		punishments.kicks.length;
 
 	return (
-		<div>
-			<div className="flex items-center gap-3 my-4">
+		<div className="flex flex-col gap-4 h-full p-4">
+			<div className="flex items-center gap-3 shrink-0">
 				<Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
 					<ArrowLeft className="h-4 w-4" />
 				</Button>
@@ -197,35 +197,37 @@ export default function PlayerView() {
 				</Button>
 			</div>
 
-			<ScrollArea className="h-[calc(100vh-7rem)]">
-				<div className="space-y-6 pt-2 pb-0 pl-0 pr-4">
-					<div className="flex flex-wrap gap-3">
-						<StatCard
-							icon={Clock}
-							label="Playtime"
-							value={formatDuration(playerData.playtime)}
-						/>
-						<StatCard
-							icon={User}
-							label="First Seen"
-							value={formatDate(playerData.firstSeen)}
-						/>
-						<StatCard
-							icon={User}
-							label="Last Seen"
-							value={formatDate(playerData.lastSeen)}
-						/>
-						<StatCard
-							icon={Hammer}
-							label="Punishments"
-							value={
-								totalPunishments > 0 ? (
-									<span className="text-destructive">{totalPunishments}</span>
-								) : (
-									'None'
-								)
-							}
-						/>
+			<ScrollArea className="flex-1 min-h-0">
+				<div className="space-y-4 p-1">
+					<div className="space-y-6">
+						<div className="flex flex-wrap gap-3">
+							<StatCard
+								icon={Clock}
+								label="Playtime"
+								value={formatDuration(playerData.playtime)}
+							/>
+							<StatCard
+								icon={User}
+								label="First Seen"
+								value={formatDate(playerData.firstSeen)}
+							/>
+							<StatCard
+								icon={User}
+								label="Last Seen"
+								value={formatDate(playerData.lastSeen)}
+							/>
+							<StatCard
+								icon={Hammer}
+								label="Punishments"
+								value={
+									totalPunishments > 0 ? (
+										<span className="text-destructive">{totalPunishments}</span>
+									) : (
+										'None'
+									)
+								}
+							/>
+						</div>
 					</div>
 
 					<Card>
@@ -256,7 +258,7 @@ export default function PlayerView() {
 					<AdminProfile adminProfile={playerData.adminProfile} />
 
 					<Tabs defaultValue="ban" onValueChange={handleTabChange}>
-						<TabsList className="w-full justify-start flex-wrap h-auto">
+						<TabsList className="w-full justify-start flex-wrap h-auto mt-2">
 							<TabsTrigger value="ban" className="gap-1.5">
 								<Ban className="h-3.5 w-3.5" />
 								Bans
@@ -319,7 +321,7 @@ export default function PlayerView() {
 							</TabsTrigger>
 						</TabsList>
 
-						<TabsContent value="ban" className="mt-4">
+						<TabsContent value="ban" className="mt-2">
 							<Card>
 								<CardContent className="p-0 overflow-auto">
 									<BansTab
@@ -331,7 +333,7 @@ export default function PlayerView() {
 							</Card>
 						</TabsContent>
 
-						<TabsContent value="warn" className="mt-4">
+						<TabsContent value="warn" className="mt-2">
 							<Card>
 								<CardContent className="p-0 overflow-auto">
 									<WarnsTab
@@ -343,7 +345,7 @@ export default function PlayerView() {
 							</Card>
 						</TabsContent>
 
-						<TabsContent value="kick" className="mt-4">
+						<TabsContent value="kick" className="mt-2">
 							<Card>
 								<CardContent className="p-0 overflow-auto">
 									<KicksTab
@@ -355,7 +357,7 @@ export default function PlayerView() {
 							</Card>
 						</TabsContent>
 
-						<TabsContent value="report" className="mt-4">
+						<TabsContent value="report" className="mt-2">
 							<Card>
 								<CardContent className="p-0 overflow-auto">
 									<ReportsTab reports={playerData.reports} />
@@ -363,7 +365,7 @@ export default function PlayerView() {
 							</Card>
 						</TabsContent>
 
-						<TabsContent value="note" className="mt-4">
+						<TabsContent value="note" className="mt-2">
 							<Card>
 								<CardContent className="p-0 overflow-auto">
 									<NotesTab notes={playerData.notes} />
@@ -372,15 +374,15 @@ export default function PlayerView() {
 						</TabsContent>
 					</Tabs>
 				</div>
-
-				<PlayerActionDialog
-					player={dialogPlayer}
-					open={dialogOpen}
-					defaultTab={actionTab}
-					onClose={closeAction}
-					onSuccess={refetch}
-				/>
 			</ScrollArea>
+
+			<PlayerActionDialog
+				player={dialogPlayer}
+				open={dialogOpen}
+				defaultTab={actionTab}
+				onClose={closeAction}
+				onSuccess={refetch}
+			/>
 		</div>
 	);
 }

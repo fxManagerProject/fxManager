@@ -64,7 +64,7 @@ export default function AdminCreate() {
 	}
 
 	return (
-		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4 overflow-hidden">
+		<div className="flex h-full flex-col p-4 gap-4 overflow-hidden">
 			<PageHeader
 				Icon={UserPlus}
 				title="Create Admin"

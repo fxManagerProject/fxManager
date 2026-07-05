@@ -256,7 +256,8 @@ export function ServerStatusCard() {
 								>
 									<ArrowUpCircle className="h-3.5 w-3.5 shrink-0" />
 									<span className="flex-1">
-										<span className="font-mono">{version.latest}</span> available
+										<span className="font-mono">{version.latest}</span>{' '}
+										available
 									</span>
 									<ExternalLink className="h-3 w-3 shrink-0" />
 								</a>

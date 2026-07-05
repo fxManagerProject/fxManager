@@ -133,8 +133,8 @@ export default function DashboardPage() {
 	];
 
 	return (
-		<ScrollArea className="h-screen overflow-auto pr-2 pb-2">
-			<div className="space-y-6">
+		<ScrollArea className="h-screen overflow-auto">
+			<div className="space-y-6 p-4">
 				<PageHeader
 					Icon={LayoutDashboard}
 					title="Dashboard"
@@ -169,6 +169,8 @@ export default function DashboardPage() {
 				</ScrollArea>
 
 				<div className="grid gap-6 lg:grid-cols-3">
+					{' '}
+					{/* The cards in this section have their edges cropped out */}
 					<div className="lg:col-span-2 space-y-6">
 						<Card className="bg-card/50 min-h-[350px] w-full">
 							<CardHeader>
@@ -246,7 +248,6 @@ export default function DashboardPage() {
 							</CardContent>
 						</Card>
 					</div>
-
 					<div className="lg:col-span-1">
 						<Card className="bg-card/50 flex flex-col h-full">
 							<CardHeader>

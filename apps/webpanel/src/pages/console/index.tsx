@@ -156,7 +156,7 @@ export default function Console() {
 	}, []);
 
 	return (
-		<div className="flex h-full flex-col gap-4">
+		<div className="flex h-full flex-col gap-4 p-4">
 			<PageHeader Icon={Terminal} title="Console" />
 
 			<Card className="flex flex-1 flex-col min-h-0 pb-0 overflow-hidden gap-0.5">

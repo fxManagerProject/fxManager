@@ -68,16 +68,17 @@ export default function PlayerListPage() {
 	const { players, loading } = usePlayerlistSocket();
 
 	return (
-		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4">
+		<div className="flex h-full flex-col gap-4 p-4">
 			<PageHeader
 				Icon={BookUser}
 				title="Player List"
 				description="Current connected players on the server."
 			/>
-			<Card className="bg-card/50 py-0">
-				<div className="overflow-hidden rounded-t-lg">
-					<Table className="w-full">
-						<TableHeader className="bg-card block w-full">
+
+			<Card className="bg-card/50 py-0 flex-1 flex flex-col min-h-0">
+				<div className="rounded-t-lg flex-1 flex flex-col min-h-0">
+					<Table className="w-full flex-1 flex flex-col">
+						<TableHeader className="bg-card block w-full shrink-0">
 							<TableRow className={`grid ${COL_GRID} w-full`}>
 								<TableHead className="flex items-center">#</TableHead>
 								<TableHead className="flex items-center">Player</TableHead>
@@ -97,8 +98,8 @@ export default function PlayerListPage() {
 							</TableRow>
 						</TableHeader>
 
-						<TableBody className="block w-full">
-							<ScrollArea className="h-[65vh]">
+						<TableBody className="block w-full flex-1 min-h-0">
+							<ScrollArea className="h-full">
 								{loading ? (
 									Array.from({ length: 6 }).map((_, i) => (
 										// biome-ignore lint/suspicious/noArrayIndexKey: indexes are immutable

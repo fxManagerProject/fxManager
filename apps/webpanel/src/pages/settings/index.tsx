@@ -153,7 +153,7 @@ export default function SettingsPage() {
 	}, [currentTab, loadTab]);
 
 	return (
-		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4">
+		<div className="flex h-full flex-col gap-4 p-4">
 			<PageHeader
 				Icon={Settings}
 				title="Settings"

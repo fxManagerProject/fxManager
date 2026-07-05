@@ -10,6 +10,7 @@ import type { PerfInspect } from './components/perf-series';
 import { usePerfSocket } from '@/hooks/ws-channels/use-perf';
 import { usePerfSeries } from '@/hooks/ws-channels/use-perf-series';
 import { useWsChannel } from '@/hooks/ws-channels/use-ws-core';
+import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
 
 export default function PerformancePage() {
 	const { samples } = usePerfSocket();
@@ -65,42 +66,45 @@ export default function PerformancePage() {
 	}, [inspect, selected, isLive, snapshots]);
 
 	return (
-		<div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
-			<PageHeader
-				Icon={ChartBar}
-				title="Performance"
-				description="Monitor fxServer thread distribution and system resource usage."
-			/>
-
-			<PerfStatsGrid samples={samples} inspect={effectiveInspect} />
-
-			<div className="grid gap-6 lg:grid-cols-2">
-				<DisconnectDonut
-					sessionId={selectedId}
-					session={selected}
-					isLive={isLive}
-					zoom={zoom}
+		<ScrollArea className="h-full">
+			<div className="flex min-h-0 flex-1 flex-col gap-6 p-4 overflow-y-auto">
+				<PageHeader
+					Icon={ChartBar}
+					title="Performance"
+					description="Monitor fxServer thread distribution and system resource usage."
 				/>
-				<PerfDistribution
-					samples={samples}
-					inspect={effectiveInspect}
-					thread={thread}
-				/>
+
+				<PerfStatsGrid samples={samples} inspect={effectiveInspect} />
+
+				<div className="grid gap-6 lg:grid-cols-2">
+					<DisconnectDonut
+						sessionId={selectedId}
+						session={selected}
+						isLive={isLive}
+						zoom={zoom}
+					/>
+					<PerfDistribution
+						samples={samples}
+						inspect={effectiveInspect}
+						thread={thread}
+					/>
+				</div>
+
+				<div className="flex min-h-[360px] flex-1 flex-col">
+					<FullPerfChart
+						thread={thread}
+						onThreadChange={setThread}
+						snapshots={snapshots}
+						sessions={sessions}
+						selectedId={selectedId}
+						onSelect={setPickedId}
+						zoom={zoom}
+						onZoomChange={setZoom}
+						onInspect={setInspect}
+					/>
+				</div>
 			</div>
-
-			<div className="flex min-h-[360px] flex-1 flex-col">
-				<FullPerfChart
-					thread={thread}
-					onThreadChange={setThread}
-					snapshots={snapshots}
-					sessions={sessions}
-					selectedId={selectedId}
-					onSelect={setPickedId}
-					zoom={zoom}
-					onZoomChange={setZoom}
-					onInspect={setInspect}
-				/>
-			</div>
-		</div>
+			<ScrollBar orientation="vertical" />
+		</ScrollArea>
 	);
 }
