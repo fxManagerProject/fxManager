@@ -76,7 +76,8 @@ export class ProcessManager {
 			'+add_convar_permission', 'fxManager', 'read', 'api-port',
 		];
 
-		const configuredArgs = repo.settings.get("fxserver.startupArguments")?.split(' ') ?? [];
+		const configuredArgs =
+			repo.settings.get('fxserver.startupArguments')?.split(' ') ?? [];
 		args.push(...configuredArgs);
 
 		console.log(`[core] Starting fxServer`);

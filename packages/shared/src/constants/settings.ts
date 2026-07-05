@@ -2,7 +2,13 @@ import type { SettingsKey, SettingsKeysByScope } from '../types';
 
 export const SETTINGS_SCOPES = {
 	general: [],
-	fxserver: ['onesync', 'startupArguments', 'executablePath', 'serverDataPath', 'serverConfigPath'],
+	fxserver: [
+		'onesync',
+		'startupArguments',
+		'executablePath',
+		'serverDataPath',
+		'serverConfigPath',
+	],
 	whitelist: ['mode', 'discordBotToken', 'discordGuildId', 'discordRoleIds'],
 	restarts: ['enabled', 'times'],
 } as const;

@@ -107,9 +107,7 @@ export default function FXServerTab({
 				</Select>
 			</SettingRow>
 
-			<SettingRow
-				label="Startup Arguments"
-			>
+			<SettingRow label="Startup Arguments">
 				<StartupArgumentsField
 					disabled={disabled}
 					value={startupArguments}
