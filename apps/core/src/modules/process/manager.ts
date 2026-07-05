@@ -5,6 +5,10 @@ import type {
 	ServerState,
 } from '@fxmanager/shared/types';
 import { getServerNetEndpoint } from '../../common/fxserver-endpoint';
+import {
+	buildFxServerCommand,
+	resolveMuslLoader,
+} from '../../common/fxserver-launch';
 import { parseFxServerBuild } from '../../common/fxserver-version';
 import { LogBuffer } from '../buffer/manager';
 import { ConfigManager } from '../config/manager';
@@ -89,7 +93,17 @@ export class ProcessManager {
 		});
 
 		try {
-			this.proc = Bun.spawn([config.executablePath, ...args], {
+			const muslLoader = resolveMuslLoader(
+				config.executablePath,
+				config.platform,
+			);
+			const command = buildFxServerCommand(
+				config.executablePath,
+				args,
+				muslLoader,
+			);
+
+			this.proc = Bun.spawn(command, {
 				cwd: config.serverDataPath,
 				stdin: 'pipe',
 				stdout: 'pipe',

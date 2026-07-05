@@ -9,6 +9,9 @@ import {
 	mock,
 	spyOn,
 } from 'bun:test';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 // Import real modules to safely establish spies on their shared instances/classes
 import { ConfigManager } from '../config/manager';
@@ -264,6 +267,42 @@ describe('ProcessManager', () => {
 					env: expect.any(Object),
 				},
 			);
+		});
+
+		it('wraps FXServer in the musl loader when running a Linux artifact', async () => {
+			const dir = mkdtempSync(path.join(tmpdir(), 'fxmgr-'));
+			try {
+				const executable = path.join(dir, 'FXServer');
+				const loader = path.join(dir, 'ld-musl-x86_64.so.1');
+				writeFileSync(loader, '');
+
+				mockGetSystemValues.mockReturnValueOnce({
+					serverConfigFile: 'server.cfg',
+					onesync: 'on',
+					resourceApiToken: 'mock-api-token',
+					webServerPort: 30120,
+					platform: 'linux',
+				} as any);
+				mockGetFxServerValues.mockReturnValueOnce({
+					executablePath: executable,
+					serverDataPath: '/home/fxserver/server-data',
+					serverConfigFile: 'server.cfg',
+				} as any);
+
+				await processManager.start();
+
+				const spawnArgs = (Bun.spawn as any).mock.calls.at(-1)[0] as string[];
+				expect(spawnArgs[0]).toBe(loader);
+				expect(spawnArgs).toContain('--library-path');
+				expect(spawnArgs).toContain('citizen_dir');
+				expect(spawnArgs).toContain(executable);
+				// the fxserver executable must come after the loader's `--` separator
+				expect(spawnArgs.indexOf(executable)).toBeGreaterThan(
+					spawnArgs.indexOf('--'),
+				);
+			} finally {
+				rmSync(dir, { recursive: true, force: true });
+			}
 		});
 
 		it('should catch runtime deployment errors gracefully and report setup execution failure flags', async () => {
