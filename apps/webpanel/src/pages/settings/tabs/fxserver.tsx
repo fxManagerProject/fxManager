@@ -13,19 +13,22 @@ import { Input } from '@fxmanager/ui/components/input';
 import { Field, FieldDescription } from '@fxmanager/ui/components/field';
 import { useState } from 'react';
 
-const RESTRICTED_ARGS = [
-	'+set onesync',
-	'+set resource-api-token',
-	'+set api-port',
-	'+ensure fxManager',
-	'+add_convar_permission fxManager read resource-api-token',
-	'+add_convar_permission fxManager read api-port',
+const RESTRICTED_PATTERNS = [
+	/^\+set\s+onesync\b/i,
+	/^\+set\s+resource-api-token\b/i,
+	/^\+set\s+api-port\b/i,
+	/^\+(ensure|start|stop|restart)\s+fxManager\b/i,
+
+	/^\+add_convar_permission\s+\S+\s+\S+\s+resource-api-token\b/i,
+	/^\+add_convar_permission\s+\S+\s+\S+\s+api-port\b/i,
 ];
 
-function checkStartupArguments(args: string) {
-	if (!args) return '';
+function checkStartupArguments(value: string) {
+	if (!value) return '';
 
-	const restricted = RESTRICTED_ARGS.find((arg) => args.includes(arg));
+	const args = value.match(/(?:\+|--)\S+(?:\s+(?!(?:\+|--))\S+)*/g) ?? [];
+	const restricted = args.find((arg) => RESTRICTED_PATTERNS.some((patt) => patt.test(arg)));
+
 	if (!restricted) return '';
 
 	return `"${restricted}" is not allowed here.`;
