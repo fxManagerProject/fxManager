@@ -17,4 +17,5 @@ export const CONVARS_SETTINGS_KEYS = {
 	gameType: 'convars.gameType',
 	poolSizes: 'convars.poolSizes',
 	anticheat: 'convars.anticheat',
+	allowlist: 'convars.allowlist',
 } as const;

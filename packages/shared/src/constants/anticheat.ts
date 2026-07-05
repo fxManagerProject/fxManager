@@ -1,4 +1,4 @@
-import type { AnticheatConvarDef } from '../types/convars';
+import type { ConvarDef } from '../types/convars';
 
 const BOOLEAN_OPTIONS = { kind: 'boolean' } as const;
 
@@ -11,7 +11,7 @@ const BOOLEAN_OPTIONS = { kind: 'boolean' } as const;
  * nothing here is injected into the server unless enabled — the user's own
  * server.cfg is never overridden by default.
  */
-export const ANTICHEAT_CONVARS: AnticheatConvarDef[] = [
+export const ANTICHEAT_CONVARS: ConvarDef[] = [
 	{
 		name: 'sv_endpointPrivacy',
 		setter: 'set',

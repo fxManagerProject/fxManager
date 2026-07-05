@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import { TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
-import { ANTICHEAT_CONVARS } from '@fxmanager/shared/constants';
 import type {
-	AnticheatConvarDef,
-	AnticheatOverrides,
 	ApiResponse,
+	ConvarDef,
+	ConvarOverrides,
 } from '@fxmanager/shared/types';
 import { QueryService } from '@/lib/query';
+import { cn } from '@fxmanager/ui/lib/utils';
 import { Button } from '@fxmanager/ui/components/button';
 import { Input } from '@fxmanager/ui/components/input';
 import { Spinner } from '@fxmanager/ui/components/spinner';
+import { Textarea } from '@fxmanager/ui/components/textarea';
 import {
 	Select,
 	SelectContent,
@@ -25,40 +26,67 @@ import {
 	TooltipTrigger,
 } from '@fxmanager/ui/components/tooltip';
 
-type SaveAnticheatResult = { overrides: AnticheatOverrides; warnings: string[] };
+type SaveResult = { overrides: ConvarOverrides; warnings: string[] };
 
 const UNSET = '__unset__';
 
-function canon(overrides: AnticheatOverrides): string {
+function canon(overrides: ConvarOverrides): string {
 	return JSON.stringify(
 		Object.entries(overrides).sort((a, b) => a[0].localeCompare(b[0])),
 	);
 }
 
-function numberError(def: AnticheatConvarDef, value: string | undefined): string | null {
-	if (def.control.kind !== 'number') return null;
-	if (value === undefined || value.trim() === '') return null;
-	const n = Number(value);
-	if (!Number.isInteger(n)) return 'Whole number required';
-	if (n < def.control.min) return `Min ${def.control.min}`;
-	if (def.control.max !== undefined && n > def.control.max) {
-		return `Max ${def.control.max}`;
+function valueError(def: ConvarDef, value: string | undefined): string | null {
+	if (def.control.kind === 'number') {
+		if (!value || value.trim() === '') return null;
+		const n = Number(value);
+		if (!Number.isInteger(n)) return 'Whole number required';
+		if (n < def.control.min) return `Min ${def.control.min}`;
+		if (def.control.max !== undefined && n > def.control.max) {
+			return `Max ${def.control.max}`;
+		}
+		return null;
+	}
+	if (def.control.kind === 'text') {
+		if (!value) return null;
+		if (
+			def.control.maxLength !== undefined &&
+			value.length > def.control.maxLength
+		) {
+			return `Max ${def.control.maxLength} characters`;
+		}
+		return null;
 	}
 	return null;
 }
 
-export default function AnticheatSection() {
-	const [overrides, setOverrides] = useState<AnticheatOverrides>({});
-	const [baseline, setBaseline] = useState<AnticheatOverrides>({});
+type ConvarDefsSectionProps = {
+	defs: ConvarDef[];
+	/** API path used for GET (load) and POST (save) of the overrides. */
+	endpoint: string;
+	/** Capitalised noun for toasts, e.g. "Anticheat" or "Allowlist". */
+	label: string;
+};
+
+export default function ConvarDefsSection({
+	defs,
+	endpoint,
+	label,
+}: ConvarDefsSectionProps) {
+	const [overrides, setOverrides] = useState<ConvarOverrides>({});
+	const [baseline, setBaseline] = useState<ConvarOverrides>({});
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
+
+	const noun = `${label.toLowerCase()} convars`;
 
 	useEffect(() => {
 		let active = true;
 		void (async () => {
+			setLoading(true);
 			try {
-				const res = await QueryService<ApiResponse<AnticheatOverrides>>({
-					endpoint: '/convars/anticheat',
+				const res = await QueryService<ApiResponse<ConvarOverrides>>({
+					endpoint,
 					method: 'GET',
 				});
 				if (active && res.success) {
@@ -66,7 +94,7 @@ export default function AnticheatSection() {
 					setBaseline(res.data);
 				}
 			} catch {
-				if (active) toast.error('Failed to load anticheat convars.');
+				if (active) toast.error('Failed to load convars.');
 			} finally {
 				if (active) setLoading(false);
 			}
@@ -74,7 +102,7 @@ export default function AnticheatSection() {
 		return () => {
 			active = false;
 		};
-	}, []);
+	}, [endpoint]);
 
 	function setValue(name: string, value: string | undefined) {
 		setOverrides((prev) => {
@@ -86,8 +114,8 @@ export default function AnticheatSection() {
 	}
 
 	const isDirty = canon(overrides) !== canon(baseline);
-	const allValid = ANTICHEAT_CONVARS.every(
-		(def) => numberError(def, overrides[def.name]) === null,
+	const allValid = defs.every(
+		(def) => valueError(def, overrides[def.name]) === null,
 	);
 	const canSave = isDirty && allValid && !saving && !loading;
 
@@ -98,8 +126,8 @@ export default function AnticheatSection() {
 	async function save() {
 		setSaving(true);
 		try {
-			const res = await QueryService<ApiResponse<SaveAnticheatResult>>({
-				endpoint: '/convars/anticheat',
+			const res = await QueryService<ApiResponse<SaveResult>>({
+				endpoint,
 				method: 'POST',
 				body: { overrides },
 			});
@@ -107,12 +135,12 @@ export default function AnticheatSection() {
 				setOverrides(res.data.overrides);
 				setBaseline(res.data.overrides);
 				for (const warning of res.data.warnings) toast.warning(warning);
-				toast.success('Anticheat convars saved. Restart the server to apply.');
+				toast.success(`${label} convars saved. Restart the server to apply.`);
 			} else {
-				toast.error(res.error ?? 'Failed to save anticheat convars.');
+				toast.error(res.error ?? `Failed to save ${noun}.`);
 			}
 		} catch {
-			toast.error('Failed to save anticheat convars.');
+			toast.error(`Failed to save ${noun}.`);
 		} finally {
 			setSaving(false);
 		}
@@ -126,11 +154,34 @@ export default function AnticheatSection() {
 		);
 	}
 
-	function renderControl(def: AnticheatConvarDef) {
+	function renderControl(def: ConvarDef) {
 		const current = overrides[def.name];
+		const error = valueError(def, current);
+
+		if (def.control.kind === 'text') {
+			return (
+				<div className="space-y-1">
+					<Textarea
+						value={current ?? ''}
+						disabled={saving}
+						maxLength={def.control.maxLength}
+						aria-invalid={error !== null}
+						placeholder={def.control.placeholder ?? 'Not set'}
+						onChange={(event) => setValue(def.name, event.currentTarget.value)}
+					/>
+					<div className="flex justify-between text-xs">
+						<span className="text-destructive">{error ?? ''}</span>
+						{def.control.maxLength !== undefined && (
+							<span className="text-muted-foreground">
+								{(current ?? '').length}/{def.control.maxLength}
+							</span>
+						)}
+					</div>
+				</div>
+			);
+		}
 
 		if (def.control.kind === 'number') {
-			const error = numberError(def, current);
 			return (
 				<div className="space-y-1">
 					<Input
@@ -193,43 +244,53 @@ export default function AnticheatSection() {
 				</div>
 
 				<div className="divide-y rounded-lg border">
-					{ANTICHEAT_CONVARS.map((def) => (
-						<div
-							key={def.name}
-							className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
-						>
-							<div className="min-w-0 space-y-0.5">
-								<div className="flex items-center gap-1.5">
-									<span className="text-sm font-medium">{def.label}</span>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<button
-												type="button"
-												aria-label={`About ${def.name}`}
-												className="flex size-4 items-center justify-center rounded-full border text-[10px] leading-none text-muted-foreground hover:text-foreground"
-											>
-												?
-											</button>
-										</TooltipTrigger>
-										<TooltipContent className="max-w-sm space-y-1">
-											<p>{def.description}</p>
-											{def.note && (
-												<p className="text-amber-300">Note: {def.note}</p>
-											)}
-											<p className="opacity-70">
-												Recommended: {def.recommended}
-											</p>
-										</TooltipContent>
-									</Tooltip>
+					{defs.map((def) => {
+						const isText = def.control.kind === 'text';
+						return (
+							<div
+								key={def.name}
+								className={cn(
+									'flex flex-col gap-2 p-3',
+									!isText && 'sm:flex-row sm:items-center sm:justify-between',
+								)}
+							>
+								<div className="min-w-0 space-y-0.5">
+									<div className="flex items-center gap-1.5">
+										<span className="text-sm font-medium">{def.label}</span>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<button
+													type="button"
+													aria-label={`About ${def.name}`}
+													className="flex size-4 items-center justify-center rounded-full border text-[10px] leading-none text-muted-foreground hover:text-foreground"
+												>
+													?
+												</button>
+											</TooltipTrigger>
+											<TooltipContent className="max-w-sm space-y-1">
+												<p>{def.description}</p>
+												{def.note && (
+													<p className="text-amber-300">Note: {def.note}</p>
+												)}
+												{def.recommended !== undefined && (
+													<p className="opacity-70">
+														Recommended: {def.recommended}
+													</p>
+												)}
+											</TooltipContent>
+										</Tooltip>
+									</div>
+									<span className="block font-mono text-xs text-muted-foreground">
+										{def.setter} {def.name}
+									</span>
 								</div>
-								<span className="block font-mono text-xs text-muted-foreground">
-									{def.setter} {def.name}
-								</span>
-							</div>
 
-							<div className="w-full sm:w-52">{renderControl(def)}</div>
-						</div>
-					))}
+								<div className={isText ? 'w-full' : 'w-full sm:w-52'}>
+									{renderControl(def)}
+								</div>
+							</div>
+						);
+					})}
 				</div>
 
 				<div className="flex gap-2">

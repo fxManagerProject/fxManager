@@ -1,3 +1,4 @@
+export * from './allowlist';
 export * from './anticheat';
 export * from './audit';
 export * from './convars';

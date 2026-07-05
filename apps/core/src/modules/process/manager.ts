@@ -19,18 +19,23 @@ import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
 import { gameManager } from '../game/manager';
 import { txAdminCompat } from '../txadmin/compat';
-import { ANTICHEAT_CONVARS } from '@fxmanager/shared/constants';
+import {
+	ALLOWLIST_CONVARS,
+	ANTICHEAT_CONVARS,
+	CONVARS_SETTINGS_KEYS,
+} from '@fxmanager/shared/constants';
+import type { ConvarDef } from '@fxmanager/shared/types';
 import { poolLimits } from '../convars/pool-limits';
 import {
 	buildIncreasePoolSizeArgs,
 	validatePoolSizes,
 } from '../convars/pool-sizes';
 import {
-	buildAnticheatArgs,
-	validateAnticheatOverrides,
-} from '../convars/anticheat';
+	buildConvarArgs,
+	validateConvarOverrides,
+} from '../convars/convar-defs';
 import {
-	getStoredAnticheatOverrides,
+	getStoredConvarOverrides,
 	getStoredPoolConfig,
 } from '../convars/store';
 
@@ -107,7 +112,20 @@ export class ProcessManager {
 		});
 
 		args.push(...(await this.buildPoolSizeArgs()));
-		args.push(...this.buildAnticheatArgs());
+		args.push(
+			...this.buildConvarGroupArgs(
+				CONVARS_SETTINGS_KEYS.anticheat,
+				ANTICHEAT_CONVARS,
+				'anticheat',
+			),
+		);
+		args.push(
+			...this.buildConvarGroupArgs(
+				CONVARS_SETTINGS_KEYS.allowlist,
+				ALLOWLIST_CONVARS,
+				'allowlist',
+			),
+		);
 
 		try {
 			const muslLoader = resolveMuslLoader(
@@ -201,24 +219,25 @@ export class ProcessManager {
 	}
 
 	/**
-	 * Build the `+set` / `+setr` startup args for configured anticheat convars.
-	 * Nothing is injected unless the user enabled a convar, so the server.cfg is
-	 * never overridden by default.
+	 * Build the `+set` / `+setr` / `+sets` startup args for a configured convar
+	 * group (anticheat, allowlist, …). Nothing is injected unless the user set a
+	 * convar, so the server.cfg is never overridden by default.
 	 */
-	private buildAnticheatArgs(): string[] {
-		let overrides: ReturnType<typeof getStoredAnticheatOverrides>;
+	private buildConvarGroupArgs(
+		storageKey: string,
+		defs: ConvarDef[],
+		label: string,
+	): string[] {
+		let overrides: ReturnType<typeof getStoredConvarOverrides>;
 		try {
-			overrides = getStoredAnticheatOverrides();
+			overrides = getStoredConvarOverrides(storageKey);
 		} catch {
 			return [];
 		}
 
 		if (Object.keys(overrides).length === 0) return [];
 
-		const { valid, warnings } = validateAnticheatOverrides(
-			overrides,
-			ANTICHEAT_CONVARS,
-		);
+		const { valid, warnings } = validateConvarOverrides(overrides, defs);
 
 		for (const warning of warnings) {
 			this.injectConsoleLine({
@@ -232,12 +251,12 @@ export class ProcessManager {
 		if (applied.length > 0) {
 			this.injectConsoleLine({
 				process: 'fxManager',
-				value: `Applying ${applied.length} anticheat convar${applied.length === 1 ? '' : 's'}: ${applied.join(', ')}`,
+				value: `Applying ${applied.length} ${label} convar${applied.length === 1 ? '' : 's'}: ${applied.join(', ')}`,
 				color: '\x1b[38;5;40m',
 			});
 		}
 
-		return buildAnticheatArgs(valid, ANTICHEAT_CONVARS);
+		return buildConvarArgs(valid, defs);
 	}
 
 	async stop(opts?: ShutdownOpts) {

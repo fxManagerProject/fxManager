@@ -1,8 +1,14 @@
 import { repo } from '@fxmanager/database';
-import { ANTICHEAT_CONVARS, UserPermissions } from '@fxmanager/shared/constants';
+import {
+	ALLOWLIST_CONVARS,
+	ANTICHEAT_CONVARS,
+	CONVARS_SETTINGS_KEYS,
+	UserPermissions,
+} from '@fxmanager/shared/constants';
 import type {
-	AnticheatOverrides,
 	ApiResponse,
+	ConvarDef,
+	ConvarOverrides,
 	ConvarPoolConfig,
 	PoolSizeLimits,
 	PoolSizeOverrides,
@@ -10,16 +16,16 @@ import type {
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { sessionAuth } from '../../middleware/session';
 import {
-	parseAnticheatOverrides,
-	validateAnticheatOverrides,
-} from '../../modules/convars/anticheat';
+	parseConvarOverrides,
+	validateConvarOverrides,
+} from '../../modules/convars/convar-defs';
 import { poolLimits } from '../../modules/convars/pool-limits';
 import { parsePoolSizes, validatePoolSizes } from '../../modules/convars/pool-sizes';
 import {
-	getStoredAnticheatOverrides,
+	getStoredConvarOverrides,
 	getStoredPoolConfig,
 	isConvarGameType,
-	setStoredAnticheatOverrides,
+	setStoredConvarOverrides,
 	setStoredPoolConfig,
 } from '../../modules/convars/store';
 import type { AuthedRequest, RouteModule } from '../../types';
@@ -28,8 +34,8 @@ interface SavePoolSizesResult extends ConvarPoolConfig {
 	warnings: string[];
 }
 
-interface SaveAnticheatResult {
-	overrides: AnticheatOverrides;
+interface SaveConvarsResult {
+	overrides: ConvarOverrides;
 	warnings: string[];
 }
 
@@ -125,51 +131,64 @@ const ConvarsEndpoints: RouteModule['handler'] = async (fastify) => {
 		} satisfies ApiResponse<SavePoolSizesResult>);
 	});
 
-	fastify.get('/anticheat', async (request, reply) => {
-		const { admin } = request as AuthedRequest;
-		if (!canAccess(admin.permissions)) {
-			return reply.code(403).send({ success: false, error: 'Not authorized' });
-		}
+	// Anticheat and allowlist share the same override storage/validation flow;
+	// only the definition set and storage key differ.
+	function registerConvarGroup(
+		path: string,
+		defs: ConvarDef[],
+		storageKey: string,
+	) {
+		fastify.get(path, async (request, reply) => {
+			const { admin } = request as AuthedRequest;
+			if (!canAccess(admin.permissions)) {
+				return reply.code(403).send({ success: false, error: 'Not authorized' });
+			}
 
-		return reply.send({
-			success: true,
-			data: getStoredAnticheatOverrides(),
-		} satisfies ApiResponse<AnticheatOverrides>);
-	});
-
-	fastify.post('/anticheat', async (request, reply) => {
-		const { admin } = request as AuthedRequest;
-		if (!canAccess(admin.permissions)) {
-			return reply.code(403).send({ success: false, error: 'Not authorized' });
-		}
-
-		const body = request.body as { overrides?: unknown };
-		const overrides: AnticheatOverrides = parseAnticheatOverrides(
-			typeof body.overrides === 'string'
-				? body.overrides
-				: JSON.stringify(body.overrides ?? {}),
-		);
-
-		const { valid, warnings } = validateAnticheatOverrides(
-			overrides,
-			ANTICHEAT_CONVARS,
-		);
-		setStoredAnticheatOverrides(valid);
-
-		repo.audit.log({
-			adminId: admin.id,
-			action: 'settings.update',
-			metadata: {
-				key: 'convars.anticheat',
-				convars: Object.keys(valid).length,
-			},
+			return reply.send({
+				success: true,
+				data: getStoredConvarOverrides(storageKey),
+			} satisfies ApiResponse<ConvarOverrides>);
 		});
 
-		return reply.send({
-			success: true,
-			data: { overrides: valid, warnings },
-		} satisfies ApiResponse<SaveAnticheatResult>);
-	});
+		fastify.post(path, async (request, reply) => {
+			const { admin } = request as AuthedRequest;
+			if (!canAccess(admin.permissions)) {
+				return reply.code(403).send({ success: false, error: 'Not authorized' });
+			}
+
+			const body = request.body as { overrides?: unknown };
+			const overrides = parseConvarOverrides(
+				typeof body.overrides === 'string'
+					? body.overrides
+					: JSON.stringify(body.overrides ?? {}),
+			);
+
+			const { valid, warnings } = validateConvarOverrides(overrides, defs);
+			setStoredConvarOverrides(storageKey, valid);
+
+			repo.audit.log({
+				adminId: admin.id,
+				action: 'settings.update',
+				metadata: { key: storageKey, convars: Object.keys(valid).length },
+			});
+
+			return reply.send({
+				success: true,
+				data: { overrides: valid, warnings },
+			} satisfies ApiResponse<SaveConvarsResult>);
+		});
+	}
+
+	registerConvarGroup(
+		'/anticheat',
+		ANTICHEAT_CONVARS,
+		CONVARS_SETTINGS_KEYS.anticheat,
+	);
+	registerConvarGroup(
+		'/allowlist',
+		ALLOWLIST_CONVARS,
+		CONVARS_SETTINGS_KEYS.allowlist,
+	);
 };
 
 export default {

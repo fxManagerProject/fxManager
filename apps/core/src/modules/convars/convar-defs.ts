@@ -1,20 +1,17 @@
-import type {
-	AnticheatConvarDef,
-	AnticheatOverrides,
-} from '@fxmanager/shared/types';
+import type { ConvarDef, ConvarOverrides } from '@fxmanager/shared/types';
 
-export interface AnticheatValidationResult {
-	valid: AnticheatOverrides;
+export interface ConvarValidationResult {
+	valid: ConvarOverrides;
 	warnings: string[];
 }
 
 /**
- * Parse the stored `convars.anticheat` JSON into a `{ convar: value }` map,
+ * Parse a stored convar-overrides JSON blob into a `{ convar: value }` map,
  * keeping only string values. Anything malformed collapses to an empty map.
  */
-export function parseAnticheatOverrides(
+export function parseConvarOverrides(
 	raw: string | null | undefined,
-): AnticheatOverrides {
+): ConvarOverrides {
 	if (!raw) return {};
 
 	let parsed: unknown;
@@ -28,17 +25,14 @@ export function parseAnticheatOverrides(
 		return {};
 	}
 
-	const result: AnticheatOverrides = {};
+	const result: ConvarOverrides = {};
 	for (const [name, value] of Object.entries(parsed)) {
 		if (typeof value === 'string') result[name] = value;
 	}
 	return result;
 }
 
-export function isValidAnticheatValue(
-	def: AnticheatConvarDef,
-	value: string,
-): boolean {
+export function isValidConvarValue(def: ConvarDef, value: string): boolean {
 	switch (def.control.kind) {
 		case 'boolean':
 			return value === 'true' || value === 'false';
@@ -51,6 +45,16 @@ export function isValidAnticheatValue(
 			if (def.control.max !== undefined && n > def.control.max) return false;
 			return true;
 		}
+		case 'text': {
+			if (value.length === 0) return false;
+			if (
+				def.control.maxLength !== undefined &&
+				value.length > def.control.maxLength
+			) {
+				return false;
+			}
+			return true;
+		}
 	}
 }
 
@@ -58,24 +62,22 @@ export function isValidAnticheatValue(
  * Validate stored overrides against the known convar definitions. Unknown
  * convars or invalid values are dropped and reported as warnings.
  */
-export function validateAnticheatOverrides(
-	overrides: AnticheatOverrides,
-	defs: AnticheatConvarDef[],
-): AnticheatValidationResult {
+export function validateConvarOverrides(
+	overrides: ConvarOverrides,
+	defs: ConvarDef[],
+): ConvarValidationResult {
 	const byName = new Map(defs.map((def) => [def.name, def]));
-	const valid: AnticheatOverrides = {};
+	const valid: ConvarOverrides = {};
 	const warnings: string[] = [];
 
 	for (const [name, value] of Object.entries(overrides)) {
 		const def = byName.get(name);
 		if (!def) {
-			warnings.push(`Unknown anticheat convar "${name}" was skipped.`);
+			warnings.push(`Unknown convar "${name}" was skipped.`);
 			continue;
 		}
-		if (!isValidAnticheatValue(def, value)) {
-			warnings.push(
-				`Invalid value "${value}" for "${name}" was skipped.`,
-			);
+		if (!isValidConvarValue(def, value)) {
+			warnings.push(`Invalid value "${value}" for "${name}" was skipped.`);
 			continue;
 		}
 		valid[name] = value;
@@ -85,19 +87,23 @@ export function validateAnticheatOverrides(
 }
 
 /**
- * Build the `+set` / `+setr` startup args for configured anticheat convars, in
+ * Build the `+set` / `+setr` / `+sets` startup args for configured convars, in
  * definition order. Only known convars with valid values are injected, so
  * nothing is applied unless the user explicitly set it.
  */
-export function buildAnticheatArgs(
-	overrides: AnticheatOverrides,
-	defs: AnticheatConvarDef[],
+export function buildConvarArgs(
+	overrides: ConvarOverrides,
+	defs: ConvarDef[],
 ): string[] {
 	const args: string[] = [];
 	for (const def of defs) {
 		const value = overrides[def.name];
-		if (value === undefined || !isValidAnticheatValue(def, value)) continue;
-		args.push(`+${def.setter}`, def.name, value);
+		if (value === undefined || !isValidConvarValue(def, value)) continue;
+		// Text values may contain newlines; escape them for the command line
+		// exactly like FXServer/txAdmin expect (\n -> literal \\n).
+		const arg =
+			def.control.kind === 'text' ? value.replaceAll('\n', '\\n') : value;
+		args.push(`+${def.setter}`, def.name, arg);
 	}
 	return args;
 }

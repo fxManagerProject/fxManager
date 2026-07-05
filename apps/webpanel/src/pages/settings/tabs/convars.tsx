@@ -6,14 +6,15 @@ import {
 	TabsList,
 	TabsTrigger,
 } from '@fxmanager/ui/components/tabs';
+import { ALLOWLIST_CONVARS, ANTICHEAT_CONVARS } from '@fxmanager/shared/constants';
 import PoolSizesSection from './convars-pool-sizes';
-import AnticheatSection from './convars-anticheat';
+import ConvarDefsSection from './convar-defs-section';
 
 type ConvarSection = {
 	value: string;
 	label: string;
 	description: string;
-	Component?: React.FC;
+	render?: () => React.ReactNode;
 };
 
 const CONVAR_SECTIONS = [
@@ -21,7 +22,14 @@ const CONVAR_SECTIONS = [
 		value: 'whitelist',
 		label: 'Whitelist',
 		description:
-			'Convars that control server access and whitelisting, such as sv_lan.',
+			'Server-appearance convars that advertise your allowlist to players.',
+		render: () => (
+			<ConvarDefsSection
+				defs={ALLOWLIST_CONVARS}
+				endpoint="/convars/allowlist"
+				label="Allowlist"
+			/>
+		),
 	},
 	{
 		value: 'security',
@@ -34,14 +42,20 @@ const CONVAR_SECTIONS = [
 		label: 'Anticheat',
 		description:
 			'Harden the server against common cheats and griefing. Each convar is off unless you set it.',
-		Component: AnticheatSection,
+		render: () => (
+			<ConvarDefsSection
+				defs={ANTICHEAT_CONVARS}
+				endpoint="/convars/anticheat"
+				label="Anticheat"
+			/>
+		),
 	},
 	{
 		value: 'pool-sizes',
 		label: 'Pool Sizes',
 		description:
 			'Increase FXServer streaming and entity pool sizes at startup. Limits are fetched live from cfx.re.',
-		Component: PoolSizesSection,
+		render: () => <PoolSizesSection />,
 	},
 ] satisfies ConvarSection[];
 
@@ -70,7 +84,7 @@ export default function ConvarsTab() {
 				))}
 			</TabsList>
 
-			{CONVAR_SECTIONS.map(({ value, label, description, Component }) => (
+			{CONVAR_SECTIONS.map(({ value, label, description, render }) => (
 				<TabsContent key={value} value={value} className="pt-2">
 					<div className="space-y-1">
 						<h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-200">
@@ -80,7 +94,7 @@ export default function ConvarsTab() {
 					</div>
 
 					<div className="mt-4">
-						{Component ? <Component /> : <SectionPlaceholder label={label} />}
+						{render ? render() : <SectionPlaceholder label={label} />}
 					</div>
 				</TabsContent>
 			))}

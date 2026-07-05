@@ -11,22 +11,28 @@ export interface ConvarPoolConfig {
 	poolSizes: PoolSizeOverrides;
 }
 
-export type AnticheatSetter = 'set' | 'setr';
+export type ConvarSetter = 'set' | 'setr' | 'sets';
 
-export type AnticheatControl =
+export type ConvarControl =
 	| { kind: 'boolean' }
 	| { kind: 'enum'; options: { value: string; label: string }[] }
-	| { kind: 'number'; min: number; max?: number; unit?: string };
+	| { kind: 'number'; min: number; max?: number; unit?: string }
+	| {
+			kind: 'text';
+			maxLength?: number;
+			multiline?: boolean;
+			placeholder?: string;
+	  };
 
-export interface AnticheatConvarDef {
+export interface ConvarDef {
 	name: string;
-	setter: AnticheatSetter;
+	setter: ConvarSetter;
 	label: string;
 	description: string;
 	note?: string;
-	recommended: string;
-	control: AnticheatControl;
+	recommended?: string;
+	control: ConvarControl;
 }
 
 /** Map of convar name to the string value the user configured. */
-export type AnticheatOverrides = Record<string, string>;
+export type ConvarOverrides = Record<string, string>;
