@@ -16,4 +16,5 @@ export const POOL_LIMIT_URLS: Record<ConvarGameType, string> = {
 export const CONVARS_SETTINGS_KEYS = {
 	gameType: 'convars.gameType',
 	poolSizes: 'convars.poolSizes',
+	anticheat: 'convars.anticheat',
 } as const;

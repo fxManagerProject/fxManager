@@ -5,10 +5,12 @@ import {
 	DEFAULT_CONVAR_GAME_TYPE,
 } from '@fxmanager/shared/constants';
 import type {
+	AnticheatOverrides,
 	ConvarGameType,
 	ConvarPoolConfig,
 	PoolSizeOverrides,
 } from '@fxmanager/shared/types';
+import { parseAnticheatOverrides } from './anticheat';
 import { parsePoolSizes } from './pool-sizes';
 
 export function isConvarGameType(value: unknown): value is ConvarGameType {
@@ -38,4 +40,16 @@ export function setStoredPoolConfig(
 ): void {
 	repo.settings.set(CONVARS_SETTINGS_KEYS.gameType, gameType);
 	repo.settings.set(CONVARS_SETTINGS_KEYS.poolSizes, JSON.stringify(poolSizes));
+}
+
+export function getStoredAnticheatOverrides(): AnticheatOverrides {
+	return parseAnticheatOverrides(
+		repo.settings.get<string>(CONVARS_SETTINGS_KEYS.anticheat),
+	);
+}
+
+export function setStoredAnticheatOverrides(
+	overrides: AnticheatOverrides,
+): void {
+	repo.settings.set(CONVARS_SETTINGS_KEYS.anticheat, JSON.stringify(overrides));
 }

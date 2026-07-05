@@ -1,3 +1,4 @@
+export * from './anticheat';
 export * from './audit';
 export * from './convars';
 export * from './events';

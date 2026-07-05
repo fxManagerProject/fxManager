@@ -10,3 +10,23 @@ export interface ConvarPoolConfig {
 	gameType: ConvarGameType;
 	poolSizes: PoolSizeOverrides;
 }
+
+export type AnticheatSetter = 'set' | 'setr';
+
+export type AnticheatControl =
+	| { kind: 'boolean' }
+	| { kind: 'enum'; options: { value: string; label: string }[] }
+	| { kind: 'number'; min: number; max?: number; unit?: string };
+
+export interface AnticheatConvarDef {
+	name: string;
+	setter: AnticheatSetter;
+	label: string;
+	description: string;
+	note?: string;
+	recommended: string;
+	control: AnticheatControl;
+}
+
+/** Map of convar name to the string value the user configured. */
+export type AnticheatOverrides = Record<string, string>;

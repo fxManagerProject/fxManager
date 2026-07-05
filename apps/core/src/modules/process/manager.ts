@@ -19,12 +19,20 @@ import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
 import { gameManager } from '../game/manager';
 import { txAdminCompat } from '../txadmin/compat';
+import { ANTICHEAT_CONVARS } from '@fxmanager/shared/constants';
 import { poolLimits } from '../convars/pool-limits';
 import {
 	buildIncreasePoolSizeArgs,
 	validatePoolSizes,
 } from '../convars/pool-sizes';
-import { getStoredPoolConfig } from '../convars/store';
+import {
+	buildAnticheatArgs,
+	validateAnticheatOverrides,
+} from '../convars/anticheat';
+import {
+	getStoredAnticheatOverrides,
+	getStoredPoolConfig,
+} from '../convars/store';
 
 const STARTUP_STALL_MS = 90_000;
 const KILL_GRACE_MS = 5_000;
@@ -99,6 +107,7 @@ export class ProcessManager {
 		});
 
 		args.push(...(await this.buildPoolSizeArgs()));
+		args.push(...this.buildAnticheatArgs());
 
 		try {
 			const muslLoader = resolveMuslLoader(
@@ -189,6 +198,46 @@ export class ProcessManager {
 		}
 
 		return buildIncreasePoolSizeArgs(valid);
+	}
+
+	/**
+	 * Build the `+set` / `+setr` startup args for configured anticheat convars.
+	 * Nothing is injected unless the user enabled a convar, so the server.cfg is
+	 * never overridden by default.
+	 */
+	private buildAnticheatArgs(): string[] {
+		let overrides: ReturnType<typeof getStoredAnticheatOverrides>;
+		try {
+			overrides = getStoredAnticheatOverrides();
+		} catch {
+			return [];
+		}
+
+		if (Object.keys(overrides).length === 0) return [];
+
+		const { valid, warnings } = validateAnticheatOverrides(
+			overrides,
+			ANTICHEAT_CONVARS,
+		);
+
+		for (const warning of warnings) {
+			this.injectConsoleLine({
+				process: 'fxManager',
+				value: warning,
+				color: '\x1b[38;5;208m',
+			});
+		}
+
+		const applied = Object.keys(valid);
+		if (applied.length > 0) {
+			this.injectConsoleLine({
+				process: 'fxManager',
+				value: `Applying ${applied.length} anticheat convar${applied.length === 1 ? '' : 's'}: ${applied.join(', ')}`,
+				color: '\x1b[38;5;40m',
+			});
+		}
+
+		return buildAnticheatArgs(valid, ANTICHEAT_CONVARS);
 	}
 
 	async stop(opts?: ShutdownOpts) {

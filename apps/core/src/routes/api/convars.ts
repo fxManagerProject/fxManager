@@ -1,6 +1,7 @@
 import { repo } from '@fxmanager/database';
-import { UserPermissions } from '@fxmanager/shared/constants';
+import { ANTICHEAT_CONVARS, UserPermissions } from '@fxmanager/shared/constants';
 import type {
+	AnticheatOverrides,
 	ApiResponse,
 	ConvarPoolConfig,
 	PoolSizeLimits,
@@ -8,16 +9,27 @@ import type {
 } from '@fxmanager/shared/types';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { sessionAuth } from '../../middleware/session';
+import {
+	parseAnticheatOverrides,
+	validateAnticheatOverrides,
+} from '../../modules/convars/anticheat';
 import { poolLimits } from '../../modules/convars/pool-limits';
 import { parsePoolSizes, validatePoolSizes } from '../../modules/convars/pool-sizes';
 import {
+	getStoredAnticheatOverrides,
 	getStoredPoolConfig,
 	isConvarGameType,
+	setStoredAnticheatOverrides,
 	setStoredPoolConfig,
 } from '../../modules/convars/store';
 import type { AuthedRequest, RouteModule } from '../../types';
 
 interface SavePoolSizesResult extends ConvarPoolConfig {
+	warnings: string[];
+}
+
+interface SaveAnticheatResult {
+	overrides: AnticheatOverrides;
 	warnings: string[];
 }
 
@@ -111,6 +123,52 @@ const ConvarsEndpoints: RouteModule['handler'] = async (fastify) => {
 			success: true,
 			data: { gameType: body.gameType, poolSizes: valid, warnings },
 		} satisfies ApiResponse<SavePoolSizesResult>);
+	});
+
+	fastify.get('/anticheat', async (request, reply) => {
+		const { admin } = request as AuthedRequest;
+		if (!canAccess(admin.permissions)) {
+			return reply.code(403).send({ success: false, error: 'Not authorized' });
+		}
+
+		return reply.send({
+			success: true,
+			data: getStoredAnticheatOverrides(),
+		} satisfies ApiResponse<AnticheatOverrides>);
+	});
+
+	fastify.post('/anticheat', async (request, reply) => {
+		const { admin } = request as AuthedRequest;
+		if (!canAccess(admin.permissions)) {
+			return reply.code(403).send({ success: false, error: 'Not authorized' });
+		}
+
+		const body = request.body as { overrides?: unknown };
+		const overrides: AnticheatOverrides = parseAnticheatOverrides(
+			typeof body.overrides === 'string'
+				? body.overrides
+				: JSON.stringify(body.overrides ?? {}),
+		);
+
+		const { valid, warnings } = validateAnticheatOverrides(
+			overrides,
+			ANTICHEAT_CONVARS,
+		);
+		setStoredAnticheatOverrides(valid);
+
+		repo.audit.log({
+			adminId: admin.id,
+			action: 'settings.update',
+			metadata: {
+				key: 'convars.anticheat',
+				convars: Object.keys(valid).length,
+			},
+		});
+
+		return reply.send({
+			success: true,
+			data: { overrides: valid, warnings },
+		} satisfies ApiResponse<SaveAnticheatResult>);
 	});
 };
 
