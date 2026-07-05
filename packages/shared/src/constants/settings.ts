@@ -40,3 +40,16 @@ export const SETTINGS_MASTER_ONLY_KEYS: SettingsKey[] = [
 	'fxserver.serverDataPath',
 	'fxserver.serverConfigPath',
 ];
+
+export const RESTRICTED_STARTUP_ARGUMENTS: RegExp[] = [
+	/^\+set\s+onesync\b/i,
+	/^\+set\s+resource-api-token\b/i,
+	/^\+set\s+api-port\b/i,
+	/^\+set\s+citizen-dir\b/i,
+	/^\+(ensure|start|stop|restart)\s+fxManager\b/i,
+
+	/^\+add_convar_permission\s+\S+\s+\S+\s+resource-api-token\b/i,
+	/^\+add_convar_permission\s+\S+\s+\S+\s+api-port\b/i,
+
+	/^--library-path\s+\S+/i,
+];

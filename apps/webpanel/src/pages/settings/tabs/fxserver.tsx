@@ -11,28 +11,8 @@ import type { SettingsTabProps } from '@/types/settings';
 import { Separator } from '@fxmanager/ui/components/separator';
 import { Input } from '@fxmanager/ui/components/input';
 import { Field, FieldDescription } from '@fxmanager/ui/components/field';
+import { validateStartupArguments } from '@fxmanager/shared/utils';
 import { useState } from 'react';
-
-const RESTRICTED_PATTERNS = [
-	/^\+set\s+onesync\b/i,
-	/^\+set\s+resource-api-token\b/i,
-	/^\+set\s+api-port\b/i,
-	/^\+(ensure|start|stop|restart)\s+fxManager\b/i,
-
-	/^\+add_convar_permission\s+\S+\s+\S+\s+resource-api-token\b/i,
-	/^\+add_convar_permission\s+\S+\s+\S+\s+api-port\b/i,
-];
-
-function checkStartupArguments(value: string) {
-	if (!value) return '';
-
-	const args = value.match(/(?:\+|--)\S+(?:\s+(?!(?:\+|--))\S+)*/g) ?? [];
-	const restricted = args.find((arg) => RESTRICTED_PATTERNS.some((patt) => patt.test(arg)));
-
-	if (!restricted) return '';
-
-	return `"${restricted}" is not allowed here.`;
-}
 
 function blur(event: React.KeyboardEvent<HTMLInputElement>) {
 	if (event.key !== 'Enter') return;
@@ -58,12 +38,14 @@ function StartupArgumentsField({
 				placeholder={'+exec server.cfg'}
 				onBlur={(event) => {
 					const value = event.currentTarget.value.trim();
-					const validationError = checkStartupArguments(value);
+					const validation = validateStartupArguments(value);
 
-					setError(validationError);
+					if (validation.valid !== true) {
+						setError(`"${validation.argument}" is not allowed here.`);
+						return;
+					}
 
-					if (validationError) return;
-
+					setError('');
 					onChange(value);
 				}}
 				onKeyDown={blur}
