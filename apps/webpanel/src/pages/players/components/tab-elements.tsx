@@ -9,6 +9,7 @@ import {
 import {
 	AlertTriangle,
 	Ban,
+	Clock,
 	FileText,
 	Flag,
 	Hammer,
@@ -16,9 +17,11 @@ import {
 	StickyNote,
 	Undo2,
 } from 'lucide-react';
-import { useState } from 'react';
-import { formatDate } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { formatDate, formatDuration } from '@/lib/utils';
 import { QueryService } from '@/lib/query';
+import PageSelector from '@/components/page-selector';
+import PageSizeSelector from '@/components/page-size-selector';
 import { Badge } from '@fxmanager/ui/components/badge';
 import {
 	Card,
@@ -38,7 +41,12 @@ import {
 	AlertDialogTrigger,
 } from '@fxmanager/ui/components/alert-dialog';
 import type { PlayerProfile } from '@fxmanager/database/types';
-import type { ApiResponse, RevokeActionType } from '@fxmanager/shared/types';
+import type {
+	ApiResponse,
+	PaginatedResponse,
+	PlayerSession,
+	RevokeActionType,
+} from '@fxmanager/shared/types';
 import { useAuth } from '@/hooks/use-auth';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
@@ -391,6 +399,88 @@ export function NotesTab({ notes }: { notes: PlayerProfile['notes'] }) {
 				</div>
 			))}
 		</div>
+	);
+}
+
+export function SessionsTab({ playerId }: { playerId: number }) {
+	const [page, setPage] = useState(1);
+	const [pageSize, setPageSize] = useState(20);
+	const [items, setItems] = useState<PlayerSession[]>([]);
+	const [total, setTotal] = useState(0);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		let cancelled = false;
+		setLoading(true);
+		const params = new URLSearchParams({
+			page: String(page),
+			pageSize: String(pageSize),
+		});
+		QueryService<PaginatedResponse<PlayerSession>>({
+			endpoint: `/players/${playerId}/sessions?${params}`,
+			method: 'GET',
+		})
+			.then((res) => {
+				if (cancelled) return;
+				setItems(res.items);
+				setTotal(res.total);
+			})
+			.catch((err) => console.error('Loading sessions failed', err))
+			.finally(() => !cancelled && setLoading(false));
+		return () => {
+			cancelled = true;
+		};
+	}, [playerId, page, pageSize]);
+
+	if (!loading && !items.length)
+		return <EmptyState icon={Clock} message="No sessions recorded yet" />;
+
+	return (
+		<>
+			<Table>
+				<TableHeader>
+					<TableRow>
+						<TableHead>Connected</TableHead>
+						<TableHead>Duration</TableHead>
+						<TableHead>Ended</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{items.map((s) => (
+						<TableRow key={s.id}>
+							<TableCell>{formatDate(new Date(s.connectedAt))}</TableCell>
+							<TableCell>
+								{s.durationMs == null ? (
+									<Badge variant="outline">In progress</Badge>
+								) : (
+									formatDuration(s.durationMs)
+								)}
+							</TableCell>
+							<TableCell className="max-w-[240px] truncate">
+								{s.endReason ?? '—'}
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+			<div className="flex items-center justify-between px-4 py-4 border-t border-border bg-card">
+				<PageSizeSelector
+					pageSize={pageSize}
+					setPageSize={(n: number) => {
+						setPageSize(n);
+						setPage(1);
+					}}
+					label="Sessions per page"
+				/>
+				<PageSelector
+					page={page}
+					pageSize={pageSize}
+					setPage={setPage}
+					loading={loading}
+					total={total}
+				/>
+			</div>
+		</>
 	);
 }
 

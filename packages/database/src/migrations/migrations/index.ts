@@ -1,3 +1,4 @@
+import { m0007_player_sessions } from './0007_player_sessions';
 import { m0006_admin_groups } from './0006_admin_groups';
 import { m0005_disconnect_events } from './0005_disconnect_events';
 import { m0004_disconnect_sessions } from './0004_disconnect_sessions';
@@ -31,4 +32,5 @@ export const migrations: Migration[] = [
 	m0004_disconnect_sessions,
 	m0005_disconnect_events,
 	m0006_admin_groups,
+	m0007_player_sessions,
 ];

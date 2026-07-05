@@ -43,8 +43,10 @@ import {
 	KicksTab,
 	NotesTab,
 	ReportsTab,
+	SessionsTab,
 	WarnsTab,
 } from './components/tab-elements';
+import { ActivityHeatmap } from './components/activity-heatmap';
 import { usePlayerAction } from '@/hooks/use-player-actions';
 import {
 	PlayerActionDialog,
@@ -125,7 +127,7 @@ export default function PlayerView() {
 	}, [params.playerId]);
 
 	function handleTabChange(tab: string) {
-		if (tab === 'report') return;
+		if (tab === 'report' || tab === 'session') return;
 
 		setActionTab(tab as ActionTab);
 	}
@@ -228,6 +230,8 @@ export default function PlayerView() {
 						/>
 					</div>
 
+					<ActivityHeatmap playerId={playerData.id} />
+
 					<Card>
 						<CardHeader className="pb-2 pt-4 px-4">
 							<CardTitle className="text-sm flex items-center gap-2">
@@ -317,6 +321,10 @@ export default function PlayerView() {
 									</Badge>
 								)}
 							</TabsTrigger>
+							<TabsTrigger value="session" className="gap-1.5">
+								<Clock className="h-3.5 w-3.5" />
+								Sessions
+							</TabsTrigger>
 						</TabsList>
 
 						<TabsContent value="ban" className="mt-4">
@@ -367,6 +375,14 @@ export default function PlayerView() {
 							<Card>
 								<CardContent className="p-0 overflow-auto">
 									<NotesTab notes={playerData.notes} />
+								</CardContent>
+							</Card>
+						</TabsContent>
+
+						<TabsContent value="session" className="mt-4">
+							<Card>
+								<CardContent className="p-0 overflow-auto">
+									<SessionsTab playerId={playerData.id} />
 								</CardContent>
 							</Card>
 						</TabsContent>
