@@ -73,7 +73,10 @@ const GroupManagementEndpoints: RouteModule['handler'] = async (
 
 			return { success: true, data: group };
 		} catch (err) {
-			return { success: false, error: groupErrorMessage((err as Error).message) };
+			return {
+				success: false,
+				error: groupErrorMessage((err as Error).message),
+			};
 		}
 	});
 
@@ -118,8 +121,7 @@ const GroupManagementEndpoints: RouteModule['handler'] = async (
 					return { success: false, error: 'Group not found' };
 
 				const friendly = groupErrorMessage(message);
-				if (friendly !== message)
-					return { success: false, error: friendly };
+				if (friendly !== message) return { success: false, error: friendly };
 
 				throw err;
 			}

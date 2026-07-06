@@ -78,9 +78,7 @@ export function buildAceCommands(
 		if (admin.groupId !== null) {
 			const slug = slugById.get(admin.groupId);
 			if (slug) {
-				commands.push(
-					`add_principal ${identity} ${ACE_PREFIX}.group.${slug}`,
-				);
+				commands.push(`add_principal ${identity} ${ACE_PREFIX}.group.${slug}`);
 			}
 		}
 

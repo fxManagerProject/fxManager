@@ -61,9 +61,7 @@ describe('resolveMuslLoader', () => {
 		});
 
 		it('returns null when the loader is missing next to the executable', () => {
-			expect(
-				resolveMuslLoader(path.join(dir, 'FXServer'), 'linux'),
-			).toBeNull();
+			expect(resolveMuslLoader(path.join(dir, 'FXServer'), 'linux')).toBeNull();
 		});
 	});
 });

@@ -558,7 +558,13 @@ describe('ingame API integration (HTTP)', () => {
 	it('fetches an action recap by admin id', async () => {
 		const res = await call('GET', '/recap?adminId=4');
 		expect(res.statusCode).toBe(200);
-		expect(mockAuditList).toHaveBeenCalledWith(1, 50, undefined, undefined, [4]);
+		expect(mockAuditList).toHaveBeenCalledWith(
+			1,
+			50,
+			undefined,
+			undefined,
+			[4],
+		);
 		expect(res.json().items).toHaveLength(1);
 		expect(res.json().total).toBe(1);
 	});
@@ -566,7 +572,13 @@ describe('ingame API integration (HTTP)', () => {
 	it('fetches an action recap by acting server id with paging', async () => {
 		const res = await call('GET', '/recap?serverId=1&page=2&pageSize=10');
 		expect(res.statusCode).toBe(200);
-		expect(mockAuditList).toHaveBeenCalledWith(2, 10, undefined, undefined, [4]);
+		expect(mockAuditList).toHaveBeenCalledWith(
+			2,
+			10,
+			undefined,
+			undefined,
+			[4],
+		);
 	});
 
 	it('400s an action recap lookup with no resolvable admin', async () => {

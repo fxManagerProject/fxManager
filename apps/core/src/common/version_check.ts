@@ -103,7 +103,8 @@ export function createVersionChecker(opts?: {
 				current: currentVersion,
 				latest: tag_name,
 				latestUrl: html_url,
-				updateAvailable: !isBeta && compareVersions(currentVersion, tag_name) === 1,
+				updateAvailable:
+					!isBeta && compareVersions(currentVersion, tag_name) === 1,
 				isBeta,
 				isDev,
 			};

@@ -13,7 +13,13 @@ const activeWarn = {
 	issuer: 7,
 	revoked: 1,
 };
-const activeKick = { id: 7, playerId: 10, reason: 'afk', issuer: null, revoked: 1 };
+const activeKick = {
+	id: 7,
+	playerId: 10,
+	reason: 'afk',
+	issuer: null,
+	revoked: 1,
+};
 
 const scopedRow = <T extends { id: number; playerId: number }>(
 	row: T,
