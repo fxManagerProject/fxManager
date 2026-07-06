@@ -100,6 +100,23 @@ const mockRevokeKick = mock((id: number) =>
 const mockFindAdmin = mock((playerId: number) =>
 	playerId === 10 ? { id: 4, username: 'FjamZoo' } : null,
 );
+const mockGetProfile = mock(async (adminId: number) =>
+	adminId === 4
+		? {
+				id: 4,
+				username: 'FjamZoo',
+				// BAN (1<<1) | SERVER_ACTIONS (1<<11)
+				effectivePermissions: 2 | 2048,
+				group: {
+					id: 1,
+					name: 'Senior Admin',
+					permissions: 2 | 2048,
+					colour: '#ff0000',
+					icon: null,
+				},
+			}
+		: null,
+);
 const mockWhitelistAdd = mock((_data: unknown) => true as const);
 const mockWhitelistRevoke = mock((value: string) =>
 	value === 'license:missing' ? undefined : { id: 1, value },
@@ -145,7 +162,7 @@ const fakeRepo = {
 		revokeKick: mockRevokeKick,
 	},
 	bans: { search: mockBansSearch, revoke: mockBansRevoke },
-	admins: { findByPlayerId: mockFindAdmin },
+	admins: { findByPlayerId: mockFindAdmin, getProfile: mockGetProfile },
 	whitelist: { add: mockWhitelistAdd, revokeByValue: mockWhitelistRevoke },
 	audit: { log: mockAuditLog, list: mockAuditList },
 };
@@ -219,6 +236,7 @@ describe('ingame API integration (HTTP)', () => {
 			mockRevokeWarn,
 			mockRevokeKick,
 			mockFindAdmin,
+			mockGetProfile,
 			mockWhitelistAdd,
 			mockWhitelistRevoke,
 			mockAuditLog,
@@ -255,6 +273,57 @@ describe('ingame API integration (HTTP)', () => {
 		expect(res.statusCode).toBe(200);
 		expect(res.json()).toHaveLength(2);
 		expect(res.json()[0].serverId).toBe(1);
+	});
+
+	describe('GET /self', () => {
+		it('returns admin identity, group and resolved permission keys', async () => {
+			// serverId 1 -> Alice (playerId 10) -> admin id 4
+			const res = await call('GET', '/self?serverId=1');
+			expect(res.statusCode).toBe(200);
+			const body = res.json() as {
+				isAdmin: boolean;
+				isMaster: boolean;
+				adminId: number | null;
+				username: string | null;
+				group: {
+					id: number;
+					name: string;
+					colour: string;
+					icon: string | null;
+				} | null;
+				permissions: string[];
+			};
+			expect(body.isAdmin).toBe(true);
+			expect(body.isMaster).toBe(false);
+			expect(body.adminId).toBe(4);
+			expect(body.username).toBe('FjamZoo');
+			expect(body.group).toEqual({
+				id: 1,
+				name: 'Senior Admin',
+				colour: '#ff0000',
+				icon: null,
+			});
+			expect(body.permissions).toEqual(['players.ban', 'control.server']);
+		});
+
+		it('returns isAdmin:false for an online non-admin', async () => {
+			// serverId 2 -> Bob (playerId 20) -> not an admin
+			const res = await call('GET', '/self?serverId=2');
+			expect(res.statusCode).toBe(200);
+			expect(res.json().isAdmin).toBe(false);
+			expect(res.json().permissions).toEqual([]);
+			expect(mockGetProfile).not.toHaveBeenCalled();
+		});
+
+		it('404s when the server id is not online', async () => {
+			const res = await call('GET', '/self?serverId=999');
+			expect(res.statusCode).toBe(404);
+		});
+
+		it('400s on a missing server id', async () => {
+			const res = await call('GET', '/self');
+			expect(res.statusCode).toBe(400);
+		});
 	});
 
 	it('looks up a player by server id and 404s an unknown one', async () => {

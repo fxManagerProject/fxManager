@@ -81,6 +81,19 @@ exports(
 	},
 );
 
+type SelfInfo = {
+	isAdmin: boolean;
+	isMaster: boolean;
+	adminId: number | null;
+	username: string | null;
+	group: { id: number; name: string; colour: string; icon: string | null } | null;
+	permissions: string[];
+};
+
+exports('getSelf', (playerId: number | string) =>
+	get<SelfInfo>(`/ingame/self?serverId=${Number(playerId)}`),
+);
+
 exports('fetchPlayers', () => get('/ingame/players'));
 
 exports('getPlayer', (target: Target) =>

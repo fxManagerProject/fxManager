@@ -1,5 +1,7 @@
 import { repo } from '@fxmanager/database';
+import { PERMISSION_ACE_KEYS } from '@fxmanager/shared/constants';
 import type { PlayerIdentifiers } from '@fxmanager/shared/types';
+import { PermissionManager } from '@fxmanager/shared/utils';
 import { resourceAuth } from '../../middleware/resource';
 import type { RouteModule } from '../../types';
 import { txAdminCompat } from '../../modules/txadmin/compat';
@@ -51,6 +53,14 @@ function parseTarget(raw: unknown): IngameTarget | null {
 
 const parsePage = (v: unknown) =>
 	typeof v === 'string' && v ? Number(v) : undefined;
+
+function permissionAceKeys(bitfield: number): string[] {
+	if (PermissionManager.isMaster(bitfield))
+		return Object.values(PERMISSION_ACE_KEYS);
+	return Object.entries(PERMISSION_ACE_KEYS)
+		.filter(([bit]) => (bitfield & Number(bit)) !== 0)
+		.map(([, key]) => key);
+}
 
 const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { gm, pm } = options;
@@ -143,6 +153,47 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		if (!profile) return reply.code(404).send({ message: 'player_not_found' });
 
 		return profile;
+	});
+
+	fastify.get('/self', async (request, reply) => {
+		const q = request.query as { serverId?: string };
+		const serverId = q.serverId ? Number(q.serverId) : Number.NaN;
+		if (!Number.isInteger(serverId))
+			return reply.code(400).send({ message: 'invalid_target' });
+
+		const online = onlineByServerId(serverId);
+		if (!online) return reply.code(404).send({ message: 'player_not_found' });
+
+		const notAdmin = {
+			isAdmin: false,
+			isMaster: false,
+			adminId: null,
+			username: null,
+			group: null,
+			permissions: [] as string[],
+		};
+
+		const admin = repo.admins.findByPlayerId(online.id);
+		if (!admin) return notAdmin;
+
+		const profile = await repo.admins.getProfile(admin.id);
+		if (!profile) return notAdmin;
+
+		return {
+			isAdmin: true,
+			isMaster: PermissionManager.isMaster(profile.effectivePermissions),
+			adminId: profile.id,
+			username: profile.username,
+			group: profile.group
+				? {
+						id: profile.group.id,
+						name: profile.group.name,
+						colour: profile.group.colour,
+						icon: profile.group.icon,
+					}
+				: null,
+			permissions: permissionAceKeys(profile.effectivePermissions),
+		};
 	});
 
 	fastify.post('/bans', async (request, reply) => {
