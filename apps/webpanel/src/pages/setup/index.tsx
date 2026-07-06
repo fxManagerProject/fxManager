@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Server } from 'lucide-react';
 import { cn } from '@fxmanager/ui/lib/utils';
 
@@ -23,9 +23,8 @@ export function SetupApp() {
 		resourcePath: '',
 		adminGroups: [],
 	});
-
-	const [isExiting, setIsExiting] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const isExitingRef = useRef(false);
 
 	function setError(message: string) {
 		toast.error('An error occured', {
@@ -93,15 +92,15 @@ export function SetupApp() {
 	}
 
 	function handleExit() {
-		setIsExiting(true);
+		isExitingRef.current = true;
 		setTimeout(() => {
 			window.location.href = '/';
-		}, 0);
+		}, 10);
 	}
 
 	useEffect(() => {
 		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-			if (isExiting && step === 'import') {
+			if (isExitingRef.current) {
 				return;
 			}
 			event.preventDefault();
