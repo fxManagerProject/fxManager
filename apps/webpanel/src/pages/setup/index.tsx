@@ -100,7 +100,6 @@ export function SetupApp() {
 
 	useEffect(() => {
 		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-			console.log('beforeunload', step, isExitingRef.current);
 			if (isExitingRef.current) {
 				return;
 			}
