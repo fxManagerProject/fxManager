@@ -5,11 +5,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { repo } from '@fxmanager/database';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type { ApiResponse } from '@fxmanager/shared/types';
-import {
-	COOKIE_NAME,
-	isFxManagerSetup,
-	isProduction,
-} from '../../common/utils';
+import { COOKIE_NAME, isFxManagerSetup } from '../../common/utils';
 import { ConfigManager } from '../../modules/config/manager';
 import { setupTokenManager } from '../../modules/setup/token';
 import type { RouteModule } from '../../types';
@@ -143,7 +139,7 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 			return reply
 				.setCookie(COOKIE_NAME, session.id, {
 					httpOnly: true, // not accessible from JS
-					secure: isProduction, // HTTPS only in prod
+					secure: request.protocol === 'https',
 					sameSite: 'lax',
 					path: '/',
 					maxAge: 60 * 60 * 24 * 7, // 1 week in seconds
