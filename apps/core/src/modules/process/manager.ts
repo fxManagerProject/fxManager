@@ -26,7 +26,7 @@ const KILL_GRACE_MS = 5_000;
 const SHUTDOWN_EVENT_GRACE_MS = 10_000;
 const CONSOLE_FLUSH_MS = 50;
 
-type ShutdownOpts = { author?: string; message?: string };
+type ShutdownOpts = { author?: string; message?: string; forceCrash?: boolean };
 type RawOutputLine = Omit<ProcessOutputLine, 'seq'>;
 
 export class ProcessManager {
@@ -148,24 +148,30 @@ export class ProcessManager {
 
 		const proc = this.proc;
 		const wasRunning = this.state.status === 'running';
+		const isForceCrash = opts?.forceCrash === true;
 
-		console.log(`[core] Stopping fxServer`);
-		this.setState('stopping');
-		this.clearStartupWatchdog();
+		if (isForceCrash) {
+			console.log(`[core] Force crashing fxServer due to unmet requirements`);
+			this.clearStartupWatchdog();
+		} else {
+			console.log(`[core] Stopping fxServer`);
+			this.setState('stopping');
+			this.clearStartupWatchdog();
 
-		this.injectConsoleLine({
-			payload: {
-				line:
-					'\n' +
-					'\x1b[1m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
-					'\x1b[1m\x1b[33m  🛑 fxManager is stopping the server...       \x1b[0m\n' +
-					'\x1b[1m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
-				ts: Date.now(),
-				source: 'stdout',
-			} satisfies RawOutputLine,
-		});
+			this.injectConsoleLine({
+				payload: {
+					line:
+						'\n' +
+						'\x1b[1m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
+						'\x1b[1m\x1b[33m  🛑 fxManager is stopping the server...       \x1b[0m\n' +
+						'\x1b[1m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
+					ts: Date.now(),
+					source: 'stdout',
+				} satisfies RawOutputLine,
+			});
 
-		if (wasRunning) await this.announceShutdown(opts);
+			if (wasRunning) await this.announceShutdown(opts);
+		}
 
 		await this.terminate(proc);
 
@@ -173,13 +179,17 @@ export class ProcessManager {
 
 		this.injectConsoleLine({
 			payload: {
-				line:
-					'\n' +
-					'\x1b[2m\x1b[37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
-					'\x1b[2m\x1b[37m  ⚪ fxServer has been stopped.                 \x1b[0m\n' +
-					'\x1b[2m\x1b[37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
+				line: isForceCrash
+					? '\n' +
+						'\x1b[2m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
+						'\x1b[2m\x1b[31m  ⚫ fxServer process was forcefully terminated. \x1b[0m\n' +
+						'\x1b[2m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n'
+					: '\n' +
+						'\x1b[2m\x1b[37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
+						'\x1b[2m\x1b[37m  ⚪ fxServer has been stopped.                 \x1b[0m\n' +
+						'\x1b[2m\x1b[37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
 				ts: Date.now(),
-				source: 'stdout',
+				source: isForceCrash ? 'stderr' : 'stdout',
 			} satisfies RawOutputLine,
 		});
 
@@ -461,6 +471,7 @@ export class ProcessManager {
 		try {
 			while (true) {
 				const { done, value } = await reader.read();
+				let forceCrash = false;
 				if (done) break;
 
 				// skip the fxserver empty prompt
@@ -479,11 +490,25 @@ export class ProcessManager {
 					} else {
 						this.armStartupWatchdog();
 					}
+
+					if (value.includes("Couldn't find resource fxManager")) {
+						this.injectConsoleLine({
+							process: 'fxManager',
+							value: 'The server can not run without the fxManager resource.',
+							color: '\x1b[31m',
+						});
+						forceCrash = true;
+					}
 				}
 
 				console.log(value);
 
 				this.emitLine(event);
+
+				if (forceCrash) {
+					this.stop({ forceCrash: true, message: 'The panel can not function properly without the fxManager resource.' });
+					return;
+				}
 			}
 		} catch (err) {
 			console.error(`Stream error:`, err);
