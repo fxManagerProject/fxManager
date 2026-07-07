@@ -11,6 +11,7 @@ import {
 	ChartBar,
 	FileCog,
 	UsersRound,
+	ListCheck,
 } from 'lucide-react';
 import type { NavCategory } from '@/types/sidebar';
 import { UserPermissions } from '@fxmanager/shared/constants';
@@ -97,6 +98,11 @@ const NAV_CONFIGURATION: NavCategory = {
 			title: 'Audit Logs',
 			icon: ScrollText,
 			permission: UserPermissions.AUDIT_LOG,
+		},
+		{
+			url: '/settings/credits/',
+			title: 'Credits',
+			icon: ListCheck,
 		},
 	],
 };

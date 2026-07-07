@@ -1,6 +1,7 @@
 export * from './api';
 export * from './audit';
 export * from './config';
+export * from './contributors';
 export * from './core';
 export * from './discord-manager';
 export * from './game';

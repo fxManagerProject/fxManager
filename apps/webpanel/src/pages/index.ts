@@ -16,6 +16,7 @@ import WhitelistIndex from './whitelist';
 import AuditLogPage from './settings/auditlogs';
 import ConfigEditor from './settings/configeditor';
 import PerformancePage from './performance';
+import CreditsPage from './settings/credits';
 
 type RouteConfig = {
 	path: string;
@@ -91,5 +92,9 @@ export const routes: RouteConfig[] = [
 		path: '/settings/groups',
 		element: GroupManagement,
 		permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+	},
+	{
+		path: '/settings/credits',
+		element: CreditsPage,
 	},
 ];
