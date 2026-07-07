@@ -29,7 +29,7 @@ interface RawContributor {
 	contributions: number;
 }
 
-const CORE_CONTRIBUTORS: Record<string, Contributor> = {
+export const CORE_CONTRIBUTORS: Record<string, Contributor> = {
 	Maximus7474: {
 		kofi: 'Maximus7474',
 		username: 'Maximus7474',
@@ -62,9 +62,10 @@ async function fetchContributors(): Promise<RawContributor[]> {
  * recommended-artifact fetcher: caches success, falls back to the last known
  * value (or a safe "no update" state) on failure so it never blocks callers.
  */
-export function createContributorsList(opts?: {
+export function createContributorsList(opts: {
 	ttlMs?: number;
 	now?: () => number;
+	isProd: boolean;
 }) {
 	const ttlMs = opts?.ttlMs ?? DEFAULT_TTL_MS;
 	const now = opts?.now ?? Date.now;
@@ -76,7 +77,8 @@ export function createContributorsList(opts?: {
 	});
 
 	return async function getContributors(): Promise<ContributorSummary> {
-		if (!isProduction) return noUpdate();
+		console.log('getContributors called, is in production', opts.isProd);
+		if (!opts.isProd) return noUpdate();
 		if (cache && cache.expiresAt > now()) return cache.value;
 
 		try {
@@ -116,4 +118,6 @@ export function createContributorsList(opts?: {
 	};
 }
 
-export const getContributorsList = createContributorsList();
+export const getContributorsList = createContributorsList({
+	isProd: isProduction,
+});
