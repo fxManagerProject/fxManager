@@ -383,6 +383,62 @@ describe('ProcessManager', () => {
 		});
 	});
 
+	describe('Force Crash Handling', () => {
+		it('should bypass graceful shutdown and terminate immediately when forceCrash is true', async () => {
+			await processManager.start();
+
+			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			await Bun.sleep(15);
+
+			const stopPromise = processManager.stop({ forceCrash: true });
+
+			// Resolve the process exit promise
+			if (currentTriggerExit) currentTriggerExit(0);
+			await stopPromise;
+
+			// Should skip the graceful 'stopping' phase entirely
+			expect(processManager.getState().status).not.toBe('stopping');
+			expect(stoppingServerSpy).not.toHaveBeenCalled();
+			expect(txEmitSpy).not.toHaveBeenCalledWith(
+				'serverShuttingDown',
+				expect.anything(),
+			);
+
+			// Should inject the red stderr termination message instead of the standard stdout one
+			expect(mockBufferPush).toHaveBeenCalledWith(
+				expect.objectContaining({
+					source: 'stderr',
+					line: expect.stringContaining('fxServer process was forcefully terminated'),
+				}),
+			);
+		});
+
+		it('should automatically trigger a force crash if fxManager resource missing error is parsed from stdout', async () => {
+			await processManager.start();
+
+			const stopSpy = spyOn(processManager, 'stop');
+
+			// Push the critical error to the standard output stream
+			pushToStream(stdoutController, "Couldn't find resource fxManager\n");
+			await Bun.sleep(15); // Allow stream processing to catch up
+
+			// Verify the custom internal error was injected
+			expect(mockBufferPush).toHaveBeenCalledWith(
+				expect.objectContaining({
+					line: expect.stringContaining('The server can not run without the fxManager resource.'),
+				}),
+			);
+
+			// Verify the stream parser invoked stop() with forceCrash
+			expect(stopSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					forceCrash: true,
+					message: expect.stringContaining('can not function properly without the fxManager resource'),
+				}),
+			);
+		});
+	});
+
 	describe('restart()', () => {
 		it('should cleanly chain sequential termination and initialization procedures smoothly', async () => {
 			await processManager.start();
