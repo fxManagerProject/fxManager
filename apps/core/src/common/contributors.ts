@@ -77,7 +77,6 @@ export function createContributorsList(opts: {
 	});
 
 	return async function getContributors(): Promise<ContributorSummary> {
-		console.log('getContributors called, is in production', opts.isProd);
 		if (!opts.isProd) return noUpdate();
 		if (cache && cache.expiresAt > now()) return cache.value;
 
