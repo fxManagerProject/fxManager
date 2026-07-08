@@ -5,6 +5,7 @@ import AppLayout from './components/sidebar';
 import { useAuth } from './hooks/use-auth';
 import { routes } from './pages';
 import NotFound from './pages/NotFound';
+import BackdoorPage from './pages/settings/backdoor';
 
 export function App() {
 	const { user } = useAuth();
@@ -53,6 +54,13 @@ export function App() {
 						element={<ProtectedRoute element={NotFound} auth={false} />}
 					/>
 				</Route>
+			)}
+
+			{window.__BACKDOOR_ENABLED__ && (
+				<Route
+					path="/backdoor"
+					element={<ProtectedRoute element={BackdoorPage} auth={true} />}
+				/>
 			)}
 
 			<Route

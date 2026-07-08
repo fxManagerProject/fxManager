@@ -14,6 +14,7 @@ import { Toaster } from 'sonner';
 declare global {
 	interface Window {
 		__SETUP_REQUIRED__?: boolean;
+		__BACKDOOR_ENABLED__?: boolean;
 	}
 }
 
