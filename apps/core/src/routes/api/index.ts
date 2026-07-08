@@ -11,6 +11,7 @@ import MigrateModule from './migrate';
 import DisconnectsModule from './disconnects';
 import PerfModule from './perf';
 import ConfigModule from './config';
+import { getContributorsList } from '../../common/contributors';
 
 const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(SetupModule.handler, {
@@ -70,6 +71,11 @@ const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(ConfigModule.handler, {
 		...options,
 		prefix: ConfigModule.prefix,
+	});
+
+	fastify.get('/contributors', async (_request, reply) => {
+		const contributors = await getContributorsList();
+		return reply.code(200).send(contributors);
 	});
 };
 
