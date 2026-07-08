@@ -237,9 +237,9 @@ export default function ConvarDefsSection({
 				<div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300">
 					<TriangleAlert className="mt-0.5 size-4 shrink-0" />
 					<p>
-						These convars are applied at startup only and take effect on the next
-						server start or restart. Leave a convar as “Not set” to keep it out
-						of the launch — your server.cfg is never overridden.
+						These convars are applied at startup only and take effect on the
+						next server start or restart. Leave a convar as “Not set” to keep it
+						out of the launch — your server.cfg is never overridden.
 					</p>
 				</div>
 
@@ -262,19 +262,28 @@ export default function ConvarDefsSection({
 												<button
 													type="button"
 													aria-label={`About ${def.name}`}
-													className="flex size-4 items-center justify-center rounded-full border text-[10px] leading-none text-muted-foreground hover:text-foreground"
+													className="flex size-4 items-center justify-center rounded-full border text-[10px] leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
 												>
 													?
 												</button>
 											</TooltipTrigger>
-											<TooltipContent className="max-w-sm space-y-1">
-												<p>{def.description}</p>
+
+											<TooltipContent className="flex-col items-start">
+												<p className="leading-relaxed">{def.description}</p>
+
 												{def.note && (
-													<p className="text-amber-300">Note: {def.note}</p>
+													<div className="border-l-2 border-amber-500 pl-2 my-1 text-neutral-200 dark:text-neutral-800">
+														<span className="font-semibold">Note:</span>{' '}
+														{def.note}
+													</div>
 												)}
+
 												{def.recommended !== undefined && (
-													<p className="opacity-70">
-														Recommended: {def.recommended}
+													<p className="text-background/70">
+														Recommended:{' '}
+														<span className="font-medium text-background">
+															{def.recommended}
+														</span>
 													</p>
 												)}
 											</TooltipContent>
