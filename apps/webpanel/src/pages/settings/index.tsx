@@ -190,8 +190,7 @@ export default function SettingsPage() {
 						</TabsTrigger>
 					))}
 				</TabsList>
-
-				<ScrollArea className="h-[calc(100vh-12rem)]">
+				<ScrollArea className="flex-1 min-h-0">
 					{TABS.map(({ value, label, description, component: Component }) => (
 						<TabsContent key={value} value={value}>
 							<Card>
