@@ -1,5 +1,13 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: explicit any allows testing hidden state properties & mocking frames */
-import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+	spyOn,
+} from 'bun:test';
 import path from 'node:path';
 
 const mockGetMultiple = mock<() => Record<string, unknown>>(() => ({}));
@@ -23,7 +31,10 @@ const mockStat = mock(async (targetPath: string) => {
 	const normalizedPath = path.normalize(targetPath);
 	const type = fileSystem.get(normalizedPath);
 
-	if (!type) throw new Error(`ENOENT: no such file or directory, stat '${normalizedPath}'`);
+	if (!type)
+		throw new Error(
+			`ENOENT: no such file or directory, stat '${normalizedPath}'`,
+		);
 
 	return {
 		isDirectory: () => type === 'dir',
