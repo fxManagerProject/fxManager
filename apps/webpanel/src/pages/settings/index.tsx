@@ -21,6 +21,7 @@ import WhitelistTab from './tabs/whitelist';
 import RestartsTab from './tabs/restarts';
 import { QueryService } from '@/lib/query';
 import type {
+	ApiError,
 	ApiResponse,
 	SettingsKey,
 	SettingsScope,
@@ -76,29 +77,26 @@ export default function SettingsPage() {
 	const [disabled, setDisabled] = useState(false);
 	const [cache, setCache] = useState<SettingsCache>({});
 
-	const loadTab = useCallback(
-		async (tab: string, useCache = true) => {
-			if (tab in cache && useCache) return;
+	const loadTab = useCallback(async (tab: string, useCache = true) => {
+		if (tab in cache && useCache) return;
 
-			setLoading(true);
+		setLoading(true);
 
-			try {
-				const response = await QueryService<ApiResponse<SettingsCache>>({
-					endpoint: `/settings/${tab}`,
-					method: 'GET',
-				});
+		try {
+			const response = await QueryService<ApiResponse<SettingsCache>>({
+				endpoint: `/settings/${tab}`,
+				method: 'GET',
+			});
 
-				if (response.success) {
-					setCache((prev) => ({ ...prev, [tab]: response.data }));
-				}
-			} catch {
-				toast.error('Failed to load settings.');
-			} finally {
-				setLoading(false);
+			if (response.success) {
+				setCache((prev) => ({ ...prev, [tab]: response.data }));
 			}
-		},
-		[cache],
-	);
+		} catch {
+			toast.error('Failed to load settings.');
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
 	async function updateSettings<S extends SettingsScope>(
 		scope: S,
@@ -118,7 +116,9 @@ export default function SettingsPage() {
 		setDisabled(true);
 
 		try {
-			const response = await QueryService<ApiResponse>({
+			const response = await QueryService<
+				ApiResponse<{ correctedValue?: string } | undefined>
+			>({
 				endpoint: `/settings/${scope}`,
 				method: 'POST',
 				body: { key, value },
@@ -132,9 +132,25 @@ export default function SettingsPage() {
 						[key]: previousValue,
 					},
 				}));
+			} else if (response.data?.correctedValue !== undefined) {
+				setCache((prev) => {
+					const currentScopeData = prev[scope] || {};
+					return {
+						...prev,
+						[scope]: {
+							...currentScopeData,
+							[key]: response.data?.correctedValue,
+						},
+					};
+				});
+
+				await loadTab(scope, false);
 			}
-		} catch {
-			toast.error(`Failed to update setting.`);
+		} catch (error) {
+			const err = error as ApiError;
+			toast.error(`Failed to update setting.`, {
+				description: err.message,
+			});
 
 			setCache((prev) => ({
 				...prev,
