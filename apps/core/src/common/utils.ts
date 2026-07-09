@@ -1,6 +1,7 @@
 import os from 'os';
 import { randomBytes } from 'node:crypto';
 import { repo } from '@fxmanager/database';
+import { access } from 'node:fs/promises';
 
 export const isProduction = process.env.NODE_ENV === 'production';
 export const COOKIE_NAME = 'fxm_session';
@@ -36,4 +37,13 @@ export function getIp(): string {
 		}
 	}
 	return '127.0.0.1';
+}
+
+export async function fileExists(target: string): Promise<boolean> {
+	try {
+		await access(target);
+		return true;
+	} catch {
+		return false;
+	}
 }

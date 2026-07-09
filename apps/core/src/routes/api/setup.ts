@@ -1,11 +1,10 @@
 import path from 'node:path';
-import { access } from 'node:fs/promises';
 import { Type, type Static } from '@sinclair/typebox';
 import type { FastifyPluginAsync } from 'fastify';
 import { repo } from '@fxmanager/database';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type { ApiResponse } from '@fxmanager/shared/types';
-import { COOKIE_NAME, isFxManagerSetup } from '../../common/utils';
+import { COOKIE_NAME, fileExists, isFxManagerSetup } from '../../common/utils';
 import { ConfigManager } from '../../modules/config/manager';
 import { setupTokenManager } from '../../modules/setup/token';
 import type { RouteModule } from '../../types';
@@ -15,15 +14,6 @@ interface DetectResult {
 	dataPath: string;
 	cfgPath: string;
 	found: { executable: boolean; dataPath: boolean; cfg: boolean };
-}
-
-async function fileExists(target: string): Promise<boolean> {
-	try {
-		await access(target);
-		return true;
-	} catch {
-		return false;
-	}
 }
 
 const AdminGroupSchema = Type.Object({
@@ -76,6 +66,39 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 				dataPath: cfg.serverDataPath,
 				cfgPath,
 				found: { executable, dataPath, cfg: cfgFound },
+			},
+		} satisfies ApiResponse<DetectResult>;
+	});
+
+	fastify.post('/checkfiles', async (request, reply) => {
+		if (isFxManagerSetup()) {
+			return reply.code(403).send({ success: false, error: 'Already set up' });
+		}
+
+		if (!setupTokenManager.validate(request.headers['x-setup-token'])) {
+			return reply
+				.code(401)
+				.send({ success: false, error: 'Invalid setup token' });
+		}
+
+		const body = request.body as { fxserverPath: string; dataPath: string };
+
+		const result = await ConfigManager.getInstance().checkFXServerPaths(
+			body.fxserverPath,
+			body.dataPath,
+		);
+
+		return {
+			success: true,
+			data: {
+				executable: result.files.executable,
+				dataPath: result.files.serverdata,
+				cfgPath: result.files.cfg,
+				found: {
+					executable: result.exists.executable,
+					dataPath: result.exists.serverdata,
+					cfg: result.exists.cfg,
+				},
 			},
 		} satisfies ApiResponse<DetectResult>;
 	});

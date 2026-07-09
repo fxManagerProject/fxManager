@@ -21,6 +21,7 @@ import {
 } from '@fxmanager/shared/constants';
 import { repo } from '@fxmanager/database';
 import { restartScheduler } from '../../../modules/schedule/manager';
+import { ConfigManager } from '../../../modules/config/manager';
 
 interface HookResult {
 	valid: boolean;
@@ -28,9 +29,36 @@ interface HookResult {
 }
 
 const SETTINGS_HOOKS: Partial<
-	Record<SettingsKey, (value: string) => HookResult>
+	Record<SettingsKey, (value: string) => Promise<HookResult> | HookResult>
 > = {
 	'fxserver.startupArguments': validateStartupArguments,
+	'fxserver.executablePath': async (value: string) => {
+		const config = ConfigManager.getInstance();
+		const result = await config.validateExecutablePath(value);
+
+		return {
+			valid: result.valid,
+			correctedValue: result.path,
+		};
+	},
+	'fxserver.serverDataPath': async (value: string) => {
+		const config = ConfigManager.getInstance();
+		const result = await config.validateDataPath(value);
+
+		return {
+			valid: result.valid,
+			correctedValue: result.path,
+		};
+	},
+	'fxserver.serverConfigPath': async (value: string) => {
+		const config = ConfigManager.getInstance();
+		const result = await config.validateConfigPath(value);
+
+		return {
+			valid: result.valid,
+			correctedValue: result.path,
+		};
+	},
 };
 
 const SettingsEndpoints: RouteModule['handler'] = async (
@@ -96,15 +124,22 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 		}
 
 		const hook = SETTINGS_HOOKS[key as SettingsKey];
-		if (hook && !hook(value).valid) {
+		const hookResult = hook && (await hook(value));
+		if (hookResult && !hookResult.valid) {
 			throw new Error('Invalid value');
 		}
 
-		repo.settings.set(key, value);
+		const newValue =
+			hookResult && hookResult?.correctedValue
+				? hookResult.correctedValue
+				: value;
+
+		repo.settings.set(key, newValue);
 
 		const logValue = SETTINGS_SENSITIVE_KEYS.includes(key as SettingsKey)
 			? 'REDACTED'
-			: value;
+			: newValue;
+
 		repo.audit.log({
 			adminId: admin.id,
 			action: 'settings.update',
@@ -113,7 +148,12 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 
 		if (scope === 'restarts') restartScheduler.reload();
 
-		return { success: true, data: undefined };
+		return {
+			success: true,
+			data: hookResult?.correctedValue && {
+				correctedValue: hookResult.correctedValue,
+			},
+		};
 	});
 
 	fastify.register(AdminManagementModule.handler, {
