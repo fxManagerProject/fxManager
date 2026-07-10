@@ -1,8 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
-import './index.css';
 import { isEnvBrowser } from './utils/misc.ts';
+
+import './index.css';
+import '@fxmanager/ui/globals.css';
 
 // biome-ignore lint/style/noNonNullAssertion: conventional method
 ReactDOM.createRoot(document.getElementById('root')!).render(

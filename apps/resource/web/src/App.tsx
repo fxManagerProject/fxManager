@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { isEnvBrowser } from './utils/misc';
 import { useNuiEvent } from './hooks/useNuiEvent';
 import { fetchNui } from './utils/fetchNui';
+import { Button } from '@fxmanager/ui/components/button';
 
 function App() {
 	const [visible, setVisible] = useState(isEnvBrowser());
@@ -19,21 +20,24 @@ function App() {
 	return (
 		<>
 			{visible && (
-				<div className="boilerplate-wrapper">
-					<div className="boilerplate-modal-container">
-						<h3>Boilerplate Modal</h3>
+				<div className="h-screen flex flex-col items-center justify-center bg-transparent">
+					<div className="bg-secondary p-6 text-primary-foreground w-xl">
+						<h3 className="font-bold text-lg">Boilerplate Modal</h3>
 						<p>Count: {count}</p>
 
-						<div>
-							<button type="button" onClick={() => setCount((prev) => ++prev)}>
+						<div className='space-x-4 mt-4'>
+							<Button onClick={() => setCount((prev) => ++prev)}>
 								Increment
-							</button>
-							<button type="button" onClick={() => setCount((prev) => --prev)}>
+							</Button>
+							<Button
+								onClick={() => setCount((prev) => --prev)}
+								variant="destructive"
+							>
 								Decrement
-							</button>
-							<button type="button" onClick={() => handleHideModal()}>
+							</Button>
+							<Button onClick={() => handleHideModal()} variant="outline">
 								Hide modal
-							</button>
+							</Button>
 						</div>
 					</div>
 				</div>
