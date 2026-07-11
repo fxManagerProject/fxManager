@@ -1,39 +1,39 @@
 {
-  "name": "@fxmanager/resource",
-  "version": "0.3.0",
-  "license": "",
-  "description": "",
-  "type": "module",
-  "scripts": {
-    "web:dev": "cd web && vite dev",
-    "build": "bun scripts/build.js",
-    "deploy": "bun scripts/deploy.js",
-    "dev": "bun scripts/build.js --watch",
-    "format": "biome format --write",
-    "lint": "biome lint --write"
-  },
-  "devDependencies": {
-    "@citizenfx/client": "latest",
-    "@citizenfx/server": "latest",
-    "@communityox/fx-utils": "^0.0.4",
-    "@fxmanager/shared": "workspace:*",
-    "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
-    "@types/node": "^22.13.9",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "@vitejs/plugin-react": "^4.3.4",
-    "dotenv": "^17.4.2",
-    "esbuild": "^0.25.0",
-    "fs-extra": "^11.3.4",
-    "typescript": "^5.8.2",
-    "vite": "^5.4.14"
-  },
-  "dependencies": {
-    "@communityox/ox_lib": "latest",
-    "@nativewrappers/fivem": "latest",
-    "node-fetch": "^3.3.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "zod": "^4.3.6"
-  }
+	"name": "@fxmanager/resource",
+	"version": "0.3.0",
+	"license": "",
+	"description": "",
+	"type": "module",
+	"scripts": {
+		"web:dev": "cd web && vite dev",
+		"build": "bun scripts/build.js",
+		"deploy": "bun scripts/deploy.js",
+		"dev": "bun scripts/build.js --watch",
+		"format": "biome format --write",
+		"lint": "biome lint --write"
+	},
+	"devDependencies": {
+		"@citizenfx/client": "latest",
+		"@citizenfx/server": "latest",
+		"@communityox/fx-utils": "^0.0.4",
+		"@fxmanager/shared": "workspace:*",
+		"@jgoz/esbuild-plugin-typecheck": "^4.0.3",
+		"@types/node": "^22.13.9",
+		"@types/react": "^18.3.18",
+		"@types/react-dom": "^18.3.5",
+		"@vitejs/plugin-react": "^4.3.4",
+		"dotenv": "^17.4.2",
+		"esbuild": "^0.25.0",
+		"fs-extra": "^11.3.4",
+		"typescript": "^5.8.2",
+		"vite": "^5.4.14"
+	},
+	"dependencies": {
+		"@communityox/ox_lib": "latest",
+		"@nativewrappers/fivem": "latest",
+		"node-fetch": "^3.3.2",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
+		"zod": "^4.3.6"
+	}
 }

@@ -43,5 +43,3 @@ api.get('/server/version', () => {
 api.post('/txadmin/event', { schema: txEventSchema }, ({ body }) =>
 	handleTxEvent(body),
 );
-
-console.log('Webserver initialized');

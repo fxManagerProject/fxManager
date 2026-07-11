@@ -224,6 +224,12 @@ export class ProcessManager {
 		return this.state;
 	}
 
+	setFxServerReady() {
+		if (this.state.status !== 'starting') return;
+		this.setState('running');
+		this.clearStartupWatchdog();
+	}
+
 	injectConsoleLine(params: {
 		payload?: RawOutputLine;
 		process?: string;
@@ -473,12 +479,7 @@ export class ProcessManager {
 				} satisfies RawOutputLine;
 
 				if (this.state.status === 'starting') {
-					if (value.includes('Authenticated with cfx.re Nucleus')) {
-						this.clearStartupWatchdog();
-						this.setState('running');
-					} else {
-						this.armStartupWatchdog();
-					}
+					this.armStartupWatchdog();
 				}
 
 				console.log(value);
