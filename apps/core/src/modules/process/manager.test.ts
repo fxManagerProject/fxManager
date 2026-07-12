@@ -386,7 +386,7 @@ describe('ProcessManager', () => {
 		it('should bypass graceful shutdown and terminate immediately when forceCrash is true', async () => {
 			await processManager.start();
 
-			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			processManager.setFxServerReady();
 			await Bun.sleep(15);
 
 			const stopPromise = processManager.stop({ forceCrash: true });
