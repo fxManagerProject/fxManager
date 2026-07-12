@@ -10,7 +10,7 @@ const targetArg =
 const ROOT_DIR = path.join(import.meta.dir, '..');
 const DIST_DIR = path.join(ROOT_DIR, 'dist');
 const ASSETS_DIR = path.join(DIST_DIR, 'assets');
-const RESOURCE_DIR = path.join(DIST_DIR, 'resource');
+const RESOURCE_DIR = path.join(DIST_DIR, 'fxManager');
 const CORE_ENTRY = join(ROOT_DIR, 'apps/core/src/index.ts');
 
 const targets: Record<string, Build.CompileTarget> = {
