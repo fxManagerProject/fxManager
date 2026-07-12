@@ -142,7 +142,7 @@ export class ConfigManager {
 			if (execStats.isDirectory()) {
 				const validNames =
 					process.platform === 'win32'
-						? ['FXServer.exe']
+						? ['fxserver.exe', 'FXServer.exe']
 						: ['fxserver', 'FXServer'];
 
 				for (const name of validNames) {
@@ -158,16 +158,12 @@ export class ConfigManager {
 				}
 			} else if (execStats.isFile()) {
 				const fileName = path.basename(initialPath);
-				let isValid = false;
+				const validNames =
+					process.platform === 'win32'
+						? ['fxserver.exe', 'FXServer.exe']
+						: ['fxserver', 'FXServer'];
 
-				if (process.platform === 'win32') {
-					isValid = 'fxserver.exe' === fileName.toLowerCase();
-				} else {
-					const validLinuxNames = ['fxserver', 'FXServer'];
-					isValid = validLinuxNames.includes(fileName);
-				}
-
-				if (isValid) found = true;
+				if (validNames.includes(fileName)) found = true;
 			}
 		} catch {
 			found = false;
@@ -208,7 +204,8 @@ export class ConfigManager {
 		let valid = false;
 		try {
 			const stats = await stat(cfgPath);
-			valid = stats.isFile();
+			const isCfg = path.extname(cfgPath) === '.cfg';
+			valid = stats.isFile() && isCfg;
 		} catch {
 			valid = false;
 		}
