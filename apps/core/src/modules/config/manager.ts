@@ -142,7 +142,9 @@ export class ConfigManager {
 			if (execStats.isDirectory()) {
 				const validNames =
 					process.platform === 'win32'
+						// cover both as a sanity check
 						? ['fxserver.exe', 'FXServer.exe']
+						// should only be FXServer, but just in case we do both
 						: ['fxserver', 'FXServer'];
 
 				for (const name of validNames) {
@@ -160,10 +162,12 @@ export class ConfigManager {
 				const fileName = path.basename(initialPath);
 				const validNames =
 					process.platform === 'win32'
-						? ['fxserver.exe', 'FXServer.exe']
-						: ['fxserver', 'FXServer'];
+						? /^fxserver\.exe$/i
+						: /^(fxserver|FXServer)$/;
 
-				if (validNames.includes(fileName)) found = true;
+		    if (validNames.test(fileName)) {
+	        found = true;
+		    }
 			}
 		} catch {
 			found = false;
