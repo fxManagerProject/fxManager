@@ -9,6 +9,14 @@
 
  -->
 
+<!--
+	Answer truthfully, this has it's purpose when reviewing PRs
+	and is not used to judge the contributor's work.
+	Lying on this is pointless, and we allow ourselves to not consider
+	PRs where GenAI was used and not declared.
+-->
+- [ ] Generative AI was used in the creation of the changes of this PR.
+
 ---
 
 ## Tests
