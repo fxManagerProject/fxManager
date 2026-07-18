@@ -53,19 +53,22 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 			? cfg.serverConfigFile
 			: path.join(cfg.serverDataPath, cfg.serverConfigFile);
 
-		const [executable, dataPath, cfgFound] = await Promise.all([
-			fileExists(cfg.executablePath),
-			fileExists(cfg.serverDataPath),
-			fileExists(cfgPath),
-		]);
+		const result = await ConfigManager.getInstance().checkFXServerPaths(
+			cfg.executablePath,
+			cfg.serverDataPath,
+		);
 
 		return {
 			success: true,
 			data: {
-				executable: cfg.executablePath,
-				dataPath: cfg.serverDataPath,
-				cfgPath,
-				found: { executable, dataPath, cfg: cfgFound },
+				executable: result.files.executable,
+				dataPath: result.files.serverdata,
+				cfgPath: result.files.cfg,
+				found: {
+					executable: result.exists.executable,
+					dataPath: result.exists.serverdata,
+					cfg: result.exists.cfg,
+				},
 			},
 		} satisfies ApiResponse<DetectResult>;
 	});
