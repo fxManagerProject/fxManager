@@ -236,7 +236,13 @@ describe('ConfigManager', () => {
 
 		it('auto-detects Linux fxserver inside a valid directory', async () => {
 			setPlatform('linux');
-			const dirPath = path.join(process.cwd(), 'fxserver-folder');
+			const dirPath = path.join(
+				process.cwd(),
+				'fxserver',
+				'alpine',
+				'opt',
+				'cfx-server',
+			);
 			const exePath = path.join(dirPath, 'fxserver');
 
 			fileSystem.set(dirPath, 'dir');
@@ -244,6 +250,22 @@ describe('ConfigManager', () => {
 
 			const config = ConfigManager.getInstance();
 			const res = await config.validateExecutablePath(dirPath);
+			expect(res.valid).toBe(true);
+			expect(res.path).toBe(exePath);
+		});
+
+		it('auto-detects Linux fxserver from alpine path', async () => {
+			setPlatform('linux');
+			const rootPath = path.join(process.cwd(), 'fxserver');
+			const dirPath = path.join(rootPath, 'alpine', 'opt', 'cfx-server');
+			const exePath = path.join(dirPath, 'fxserver');
+
+			fileSystem.set(rootPath, 'dir');
+			fileSystem.set(dirPath, 'dir');
+			fileSystem.set(exePath, 'file');
+
+			const config = ConfigManager.getInstance();
+			const res = await config.validateExecutablePath(rootPath);
 			expect(res.valid).toBe(true);
 			expect(res.path).toBe(exePath);
 		});
