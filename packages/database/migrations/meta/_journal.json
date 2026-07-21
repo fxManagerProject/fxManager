@@ -29,6 +29,34 @@
 			"when": 1779984612063,
 			"tag": "0003_jittery_mystique",
 			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "6",
+			"when": 1784656552906,
+			"tag": "0004_uneven_silver_sable",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "6",
+			"when": 1784656609840,
+			"tag": "0005_chubby_daredevil",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "6",
+			"when": 1784656694361,
+			"tag": "0006_productive_thor",
+			"breakpoints": true
+		},
+		{
+			"idx": 7,
+			"version": "6",
+			"when": 1784656776216,
+			"tag": "0007_petite_skrulls",
+			"breakpoints": true
 		}
 	]
 }

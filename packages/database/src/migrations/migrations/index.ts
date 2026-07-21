@@ -1,7 +1,7 @@
-import { m0007_player_sessions } from './0007_player_sessions';
-import { m0006_admin_groups } from './0006_admin_groups';
-import { m0005_disconnect_events } from './0005_disconnect_events';
-import { m0004_disconnect_sessions } from './0004_disconnect_sessions';
+import { m0007_petite_skrulls } from './0007_petite_skrulls';
+import { m0006_productive_thor } from './0006_productive_thor';
+import { m0005_chubby_daredevil } from './0005_chubby_daredevil';
+import { m0004_uneven_silver_sable } from './0004_uneven_silver_sable';
 import { m0003_jittery_mystique } from './0003_jittery_mystique';
 import { m0002_dry_molten_man } from './0002_dry_molten_man';
 import { m0001_dapper_landau } from './0001_dapper_landau';
@@ -29,8 +29,8 @@ export const migrations: Migration[] = [
 	m0001_dapper_landau,
 	m0002_dry_molten_man,
 	m0003_jittery_mystique,
-	m0004_disconnect_sessions,
-	m0005_disconnect_events,
-	m0006_admin_groups,
-	m0007_player_sessions,
+	m0004_uneven_silver_sable,
+	m0005_chubby_daredevil,
+	m0006_productive_thor,
+	m0007_petite_skrulls,
 ];
