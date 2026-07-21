@@ -301,10 +301,7 @@ export const playerSessions = sqliteTable(
 		endReason: text('end_reason'),
 	},
 	(t) => [
-		index('player_session_player_connected_idx').on(
-			t.playerId,
-			t.connectedAt,
-		),
+		index('player_session_player_connected_idx').on(t.playerId, t.connectedAt),
 	],
 );
 
