@@ -268,38 +268,6 @@ export default function AdminView() {
 		});
 	}
 
-	async function handleLinkedPlayerChange(playerId: AdminProfile['playerId']) {
-		const changePromise = QueryService<
-			ApiResponse<{ newPlayerId: AdminProfile['playerId'] }>
-		>({
-			endpoint: `/settings/admins/${params.adminId}/player`,
-			method: 'POST',
-			body: { playerId },
-		});
-
-		toast.promise(changePromise, {
-			loading: 'Updating linked player...',
-			success: (r) => {
-				if (!r.success) throw new Error(r.error);
-
-				setAdminData((prev) => {
-					if (!prev) throw new Error('Invalid Action Sequence (no admin data)');
-
-					return {
-						...prev,
-						playerId: r.data.newPlayerId,
-					};
-				});
-
-				return `Linked player has been updated.`;
-			},
-			error: (err) => {
-				console.error('Failed to update linked player', err.message);
-				return `Update failed: ${err.message}`;
-			},
-		});
-	}
-
 	async function handleIdentiferChange(data: {
 		cfxId: AdminProfile['cfxId'];
 		discordId: AdminProfile['discordId'];
@@ -308,6 +276,7 @@ export default function AdminView() {
 			ApiResponse<{
 				newCfxId: AdminProfile['cfxId'];
 				newDiscordId: AdminProfile['discordId'];
+				playerId: AdminProfile['playerId'];
 			}>
 		>({
 			endpoint: `/settings/admins/${params.adminId}/identifiers`,
@@ -320,11 +289,14 @@ export default function AdminView() {
 			success: (r) => {
 				if (!r.success) throw new Error(r.error);
 
+				console.log('Identifiers updated', r.data);
+
 				setAdminData((prev) => {
 					if (!prev) throw new Error('Invalid Action Sequence (no admin data)');
 
 					return {
 						...prev,
+						playerId: r.data.playerId,
 						cfxId: r.data.newCfxId,
 						discordId: r.data.newDiscordId,
 					};
@@ -557,18 +529,6 @@ export default function AdminView() {
 														/>
 													</div>
 												</div>
-
-												<PlayerSearch
-													value={adminData.playerId}
-													onChange={(id) => handleLinkedPlayerChange(id)}
-													align="end"
-													trigger={
-														<Button variant="outline" size="sm">
-															<UserSearch className="h-4 w-4" />
-															<span>Change Player</span>
-														</Button>
-													}
-												/>
 											</div>
 										</div>
 									)}

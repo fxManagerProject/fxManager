@@ -192,67 +192,6 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 	);
 
 	fastify.post(
-		'/:adminId/player',
-		async (
-			request,
-		): Promise<ApiResponse<{ newPlayerId: AdminProfile['playerId'] }>> => {
-			const { admin } = request as AuthedRequest;
-			const { adminId: adminIdRaw } = request.params as { adminId: string };
-			const { playerId } = request.body as {
-				playerId: AdminProfile['playerId'];
-			};
-			const adminId = parseInt(adminIdRaw, 10);
-
-			const allowed = PermissionManager.has(
-				admin.permissions,
-				UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
-			);
-
-			if (!allowed) throw new Error('Unauthorized');
-
-			try {
-				const { username, newPlayerId, previousPlayerId } =
-					await repo.admins.updateLinkedPlayer(
-						adminId,
-						playerId,
-						PermissionManager.has(admin.permissions, UserPermissions.MASTER),
-					);
-
-				repo.audit.log({
-					adminId: admin.id,
-					action: 'admin.update',
-					metadata: {
-						target: username,
-						previous_playerId: newPlayerId,
-						new_playerId: previousPlayerId,
-					},
-				});
-
-				aceSync.resync(pm);
-
-				return {
-					success: true,
-					data: { newPlayerId },
-				};
-			} catch (err) {
-				const msg = (err as Error).message;
-
-				switch (msg) {
-					case 'not_found':
-						return { success: false, error: 'Admin not found' };
-					case 'admin_is_master':
-						return {
-							success: false,
-							error: 'Can not change permissions of master account',
-						};
-					default:
-						throw err;
-				}
-			}
-		},
-	);
-
-	fastify.post(
 		'/:adminId/identifiers',
 		async (
 			request,
@@ -260,6 +199,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 			ApiResponse<{
 				newCfxId: AdminProfile['cfxId'];
 				newDiscordId: AdminProfile['discordId'];
+				playerId: AdminProfile['playerId'];
 			}>
 		> => {
 			const { admin } = request as AuthedRequest;
@@ -282,6 +222,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 			try {
 				const {
 					username,
+					playerId,
 					newCfxId,
 					newDiscordId,
 					previousCfxId,
@@ -302,7 +243,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 
 				return {
 					success: true,
-					data: { newDiscordId, newCfxId },
+					data: { newDiscordId, newCfxId, playerId },
 				};
 			} catch (err) {
 				const msg = (err as Error).message;

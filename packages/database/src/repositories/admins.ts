@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, like, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
 import type { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
 import type * as schema from '../schema';
 import {
@@ -336,10 +336,19 @@ class AdminsRepository {
 	) {
 		const admin = await this.db.query.adminUsers.findFirst({
 			where: eq(adminUsers.id, adminId),
-			columns: { permissions: true, cfxId: true, discordId: true },
+			columns: {
+				permissions: true,
+				cfxId: true,
+				discordId: true,
+				playerId: true,
+			},
 		});
 
 		if (!admin) throw new Error('not_found');
+
+		if (cfxId && !/^[0-9]+$/.test(cfxId)) throw new Error('invalid_cfx_id');
+		if (discordId && !/^[0-9]+$/.test(discordId))
+			throw new Error('invalid_discord_id');
 
 		const result = await this.db
 			.update(adminUsers)
@@ -352,8 +361,50 @@ class AdminsRepository {
 
 		if (!result[0]) throw new Error('not_found');
 
+		let foundPlayerId: number | null = null;
+
+		if (discordId || cfxId) {
+			const conditions = [];
+			if (discordId) {
+				conditions.push(
+					and(
+						eq(playerIdentifiers.type, 'discord'),
+						eq(playerIdentifiers.value, `discord:${discordId}`),
+					),
+				);
+			}
+			if (cfxId) {
+				conditions.push(
+					and(
+						eq(playerIdentifiers.type, 'fivem'),
+						eq(playerIdentifiers.value, `fivem:${cfxId}`),
+					),
+				);
+			}
+
+			const player = this.db
+				.select({ playerId: players.id })
+				.from(players)
+				.innerJoin(
+					playerIdentifiers,
+					eq(playerIdentifiers.playerId, players.id),
+				)
+				.where(or(...conditions))
+				.get();
+
+			if (player) {
+				foundPlayerId = player.playerId;
+			}
+		}
+
+		await this.db
+			.update(adminUsers)
+			.set({ playerId: foundPlayerId })
+			.where(eq(adminUsers.id, adminId));
+
 		return {
 			...result[0],
+			playerId: foundPlayerId,
 			newCfxId: cfxId,
 			newDiscordId: discordId,
 			previousCfxId: admin.cfxId,
