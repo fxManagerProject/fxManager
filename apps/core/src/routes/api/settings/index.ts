@@ -22,6 +22,7 @@ import {
 import { repo } from '@fxmanager/database';
 import { restartScheduler } from '../../../modules/schedule/manager';
 import { ConfigManager } from '../../../modules/config/manager';
+import { oauthManager } from '../../../modules/auth/manager';
 
 interface HookResult {
 	valid: boolean;
@@ -147,6 +148,9 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 		});
 
 		if (scope === 'restarts') restartScheduler.reload();
+		if (scope === 'oauth') {
+			oauthManager.reload();
+		}
 
 		return {
 			success: true,

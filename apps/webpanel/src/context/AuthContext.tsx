@@ -79,6 +79,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		[navigate],
 	);
 
+	const oauth = useCallback(async (provider: string) => {
+		try {
+			const { url } = await QueryService<{ url: string }>({
+				endpoint: `/auth/oauth/${provider}/init`,
+				method: 'POST',
+			});
+
+			if (url) {
+				// Redirect client browser to the OAuth provider consent page
+				window.location.href = url;
+			}
+		} catch (err) {
+			const apiErr = err as ApiError<{ error: string }>;
+			toast.error('OAuth Error', {
+				description: apiErr.data?.error || `Unable to user ${provider} oauth.`,
+			});
+		}
+	}, []);
+
 	const logout = useCallback(async () => {
 		await QueryService({
 			endpoint: '/auth/logout',
@@ -120,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	return (
 		<AuthContext.Provider
-			value={{ user, loading, login, logout, setup, hasPermission }}
+			value={{ user, loading, login, oauth, logout, setup, hasPermission }}
 		>
 			{loading ? <Loading /> : children}
 		</AuthContext.Provider>
