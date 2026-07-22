@@ -40,6 +40,8 @@ import {
 } from 'lucide-react';
 import { formatDate, initials } from '@/lib/utils';
 import { Button } from '@fxmanager/ui/components/button';
+import { Input } from '@fxmanager/ui/components/input';
+import { Label } from '@fxmanager/ui/components/label';
 import { Skeleton } from '@fxmanager/ui/components/skeleton';
 import type { ApiError, ApiResponse } from '@fxmanager/shared/types';
 import { StatCard } from '@/components/stat-card';
@@ -82,7 +84,7 @@ function LoadingSkeleton() {
 				))}
 			</div>
 
-			{/*  tabs*/}
+			{/* tabs */}
 			<Skeleton className="h-10 w-full rounded-md" />
 			<Skeleton className="h-48 w-full rounded-lg" />
 		</div>
@@ -107,14 +109,107 @@ function PlayerCardContent({
 		setTimeout(() => navigate(`/players/${id}`), 1_000);
 	}
 
-	if (!id || !name) return <p className="font-mono">Unlinked</p>;
+	if (!id || !name)
+		return <p className="font-mono text-muted-foreground">Unlinked</p>;
 
 	return (
 		<button
 			type="button"
 			onClick={handleClick}
-			className="font-mono cursor-pointer hover:underline"
+			className="font-mono cursor-pointer hover:underline text-foreground font-semibold"
 		>{`${name} (#${id})`}</button>
+	);
+}
+
+function IdentifiersForm({
+	cfxId: initialCfxId,
+	discordId: initialDiscordId,
+	canEdit = true,
+	onSave,
+}: {
+	cfxId: string | null;
+	discordId: string | null;
+	canEdit?: boolean;
+	onSave: (data: { cfxId: string; discordId: string }) => Promise<void>;
+}) {
+	const [cfxId, setCfxId] = useState(initialCfxId ?? '');
+	const [discordId, setDiscordId] = useState(initialDiscordId ?? '');
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	useEffect(() => {
+		setCfxId(initialCfxId ?? '');
+		setDiscordId(initialDiscordId ?? '');
+	}, [initialCfxId, initialDiscordId]);
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!canEdit) return;
+		setIsSubmitting(true);
+		try {
+			await onSave({ cfxId, discordId });
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	const isDirty =
+		cfxId !== (initialCfxId ?? '') || discordId !== (initialDiscordId ?? '');
+
+	return (
+		<form onSubmit={handleSubmit} className="space-y-6">
+			<div className="grid gap-6 sm:grid-cols-2">
+				<div className="space-y-2">
+					<div className="flex items-center gap-1.5">
+						<Label htmlFor="discordId" className="text-sm font-medium">
+							Discord ID
+						</Label>
+						<a
+							href="https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID"
+							target="_blank"
+							rel="noopener noreferrer"
+							title="How to find your Discord ID"
+							className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center"
+						>
+							<Info className="h-3.5 w-3.5" />
+						</a>
+					</div>
+					<Input
+						id="discordId"
+						value={discordId}
+						onChange={(e) => setDiscordId(e.target.value)}
+						placeholder="e.g. 123456789012345678"
+						disabled={!canEdit || isSubmitting}
+					/>
+					<p className="text-xs text-muted-foreground">
+						Used for Discord permissions and OAuth.
+					</p>
+				</div>
+
+				<div className="space-y-2">
+					<Label htmlFor="cfxId" className="text-sm font-medium">
+						Cfx ID
+					</Label>
+					<Input
+						id="cfxId"
+						value={cfxId}
+						onChange={(e) => setCfxId(e.target.value)}
+						placeholder="e.g. 123456"
+						disabled={!canEdit || isSubmitting}
+					/>
+					<p className="text-xs text-muted-foreground">
+						FiveM / RedM Cfx.re account ID.
+					</p>
+				</div>
+			</div>
+
+			{canEdit && (
+				<div className="flex justify-end pt-2">
+					<Button type="submit" disabled={isSubmitting || !isDirty}>
+						{isSubmitting ? 'Saving...' : 'Save Identifiers'}
+					</Button>
+				</div>
+			)}
+		</form>
 	);
 }
 
@@ -205,6 +300,45 @@ export default function AdminView() {
 		});
 	}
 
+	async function handleIdentiferChange(data: {
+		cfxId: AdminProfile['cfxId'];
+		discordId: AdminProfile['discordId'];
+	}) {
+		const changePromise = QueryService<
+			ApiResponse<{
+				newCfxId: AdminProfile['cfxId'];
+				newDiscordId: AdminProfile['discordId'];
+			}>
+		>({
+			endpoint: `/settings/admins/${params.adminId}/identifiers`,
+			method: 'POST',
+			body: data,
+		});
+
+		toast.promise(changePromise, {
+			loading: 'Updating player identifiers...',
+			success: (r) => {
+				if (!r.success) throw new Error(r.error);
+
+				setAdminData((prev) => {
+					if (!prev) throw new Error('Invalid Action Sequence (no admin data)');
+
+					return {
+						...prev,
+						cfxId: r.data.newCfxId,
+						discordId: r.data.newDiscordId,
+					};
+				});
+
+				return `Identifiers have been updated.`;
+			},
+			error: (err) => {
+				console.error('Failed to update identifiers', err.message);
+				return `Update failed: ${err.message}`;
+			},
+		});
+	}
+
 	if (loading) return <LoadingSkeleton />;
 
 	if (error || !adminData || !params.adminId) {
@@ -230,6 +364,9 @@ export default function AdminView() {
 	}
 
 	const isMaster = PermissionManager.isMaster(adminData.permissions);
+	const isSelf = adminData.id === user?.id;
+	const canEdit =
+		isSelf || hasPermission(UserPermissions.SETTINGS_ADMIN_MANAGEMENT);
 
 	return (
 		<div className="flex flex-col h-full p-4 gap-4">
@@ -256,19 +393,6 @@ export default function AdminView() {
 				</div>
 
 				<div className="space-x-2">
-					{(!isMaster || adminData.id === user?.id) && (
-						<PlayerSearch
-							value={adminData.playerId}
-							onChange={(id) => handleLinkedPlayerChange(id)}
-							align="end"
-							trigger={
-								<Button variant="outline">
-									<UserSearch className="h-4 w-4" />
-									<span className="hidden lg:block">Update linked player</span>
-								</Button>
-							}
-						/>
-					)}
 					{!isMaster && (
 						<AlertDialog>
 							<AlertDialogTrigger asChild>
@@ -346,8 +470,9 @@ export default function AdminView() {
 				</div>
 
 				<Tabs defaultValue="activity" className="flex-1 flex flex-col min-h-0">
-					<TabsList className="grid w-full grid-cols-2 mb-4">
+					<TabsList className="grid w-full grid-cols-3 mb-4">
 						<TabsTrigger value="activity">Recent Activity</TabsTrigger>
+						<TabsTrigger value="identifiers">Identifiers & Player</TabsTrigger>
 						<TabsTrigger value="settings">Permissions</TabsTrigger>
 					</TabsList>
 
@@ -377,7 +502,7 @@ export default function AdminView() {
 											</AlertDescription>
 										</Alert>
 									) : (
-										<div className="">
+										<div>
 											{adminData.auditLogs.length > 0 ? (
 												adminData.auditLogs.map((log) => (
 													<AuditLogRow key={log.id} log={log} />
@@ -396,6 +521,77 @@ export default function AdminView() {
 										</div>
 									)}
 								</ScrollArea>
+							</CardContent>
+						</Card>
+					</TabsContent>
+
+					<TabsContent
+						value="identifiers"
+						className="flex-1 flex flex-col min-h-0 mt-0 overflow-auto"
+					>
+						<Card className="flex-1 flex flex-col min-h-0">
+							<CardContent className="flex-1 overflow-y-auto">
+								<div className="mx-auto w-full max-w-2xl space-y-8">
+									{canEdit && (
+										<div className="space-y-3 pb-8 border-b">
+											<div>
+												<h3 className="text-sm font-semibold">
+													In-Game Player Account
+												</h3>
+												<p className="text-xs text-muted-foreground">
+													Connect this admin account to an existing in-game
+													player profile.
+												</p>
+											</div>
+
+											<div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20 gap-4">
+												<div className="flex items-center gap-3 min-w-0">
+													<FileUser className="h-5 w-5 text-muted-foreground shrink-0" />
+													<div className="min-w-0">
+														<p className="text-xs text-muted-foreground">
+															Linked Player
+														</p>
+														<PlayerCardContent
+															id={adminData.playerId}
+															name={adminData.playerName}
+														/>
+													</div>
+												</div>
+
+												<PlayerSearch
+													value={adminData.playerId}
+													onChange={(id) => handleLinkedPlayerChange(id)}
+													align="end"
+													trigger={
+														<Button variant="outline" size="sm">
+															<UserSearch className="h-4 w-4" />
+															<span>Change Player</span>
+														</Button>
+													}
+												/>
+											</div>
+										</div>
+									)}
+
+									<div className="space-y-4">
+										<div>
+											<h3 className="text-sm font-semibold">
+												External Platform Identifiers
+											</h3>
+											<p className="text-xs text-muted-foreground">
+												Configure third-party IDs linked to this account for
+												authentication and bot lookups.
+											</p>
+										</div>
+
+										<IdentifiersForm
+											cfxId={adminData.cfxId}
+											discordId={adminData.discordId}
+											canEdit={canEdit}
+											onSave={handleIdentiferChange}
+										/>
+									</div>
+								</div>
 							</CardContent>
 						</Card>
 					</TabsContent>

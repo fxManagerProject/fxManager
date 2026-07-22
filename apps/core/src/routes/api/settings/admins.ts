@@ -56,7 +56,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 
 			if (!allowed) throw new Error('Unauthorized');
 
-			const { username, permissions, groupId, playerId } =
+			const { username, permissions, groupId, playerId, cfxId, discordId } =
 				request.body as CreateAdminForm;
 			const password = generatePassword(20);
 
@@ -72,6 +72,8 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 					storedPermissions,
 					false,
 					playerId ?? null,
+					cfxId ?? null,
+					discordId ?? null,
 				);
 
 				if (groupId != null) {
@@ -231,6 +233,76 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 				return {
 					success: true,
 					data: { newPlayerId },
+				};
+			} catch (err) {
+				const msg = (err as Error).message;
+
+				switch (msg) {
+					case 'not_found':
+						return { success: false, error: 'Admin not found' };
+					case 'admin_is_master':
+						return {
+							success: false,
+							error: 'Can not change permissions of master account',
+						};
+					default:
+						throw err;
+				}
+			}
+		},
+	);
+
+	fastify.post(
+		'/:adminId/identifiers',
+		async (
+			request,
+		): Promise<
+			ApiResponse<{
+				newCfxId: AdminProfile['cfxId'];
+				newDiscordId: AdminProfile['discordId'];
+			}>
+		> => {
+			const { admin } = request as AuthedRequest;
+			const { adminId: adminIdRaw } = request.params as { adminId: string };
+			const { cfxId, discordId } = request.body as {
+				cfxId: AdminProfile['cfxId'];
+				discordId: AdminProfile['discordId'];
+			};
+			const adminId = parseInt(adminIdRaw, 10);
+
+			const allowed =
+				admin.id === adminId ||
+				PermissionManager.has(
+					admin.permissions,
+					UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+				);
+
+			if (!allowed) throw new Error('Unauthorized');
+
+			try {
+				const {
+					username,
+					newCfxId,
+					newDiscordId,
+					previousCfxId,
+					previousDiscordId,
+				} = await repo.admins.updateIdentifiers(adminId, cfxId, discordId);
+
+				repo.audit.log({
+					adminId: admin.id,
+					action: 'admin.update',
+					metadata: {
+						target: username,
+						new_cfxId: newCfxId,
+						new_discordId: newDiscordId,
+						previous_cfxId: previousCfxId,
+						previous_discordId: previousDiscordId,
+					},
+				});
+
+				return {
+					success: true,
+					data: { newDiscordId, newCfxId },
 				};
 			} catch (err) {
 				const msg = (err as Error).message;
