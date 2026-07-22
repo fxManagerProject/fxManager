@@ -84,6 +84,8 @@ class AdminsRepository {
 				username: adminUsers.username,
 				permissions: adminUsers.permissions,
 				playerId: adminUsers.playerId,
+				cfxId: adminUsers.cfxId,
+				discordId: adminUsers.discordId,
 				createdAt: adminUsers.createdAt,
 				lastLoginAt: adminUsers.lastLoginAt,
 				group: {
@@ -131,6 +133,8 @@ class AdminsRepository {
 				passwordHash: false,
 				permissions: true,
 				playerId: true,
+				cfxId: true,
+				discordId: true,
 				createdAt: true,
 				lastLoginAt: true,
 			},
@@ -322,6 +326,38 @@ class AdminsRepository {
 			...result[0],
 			previousPlayerId: admin.playerId,
 			newPlayerId: playerId,
+		};
+	}
+
+	async updateIdentifiers(
+		adminId: number,
+		cfxId: AdminProfile['cfxId'],
+		discordId: AdminProfile['discordId'],
+	) {
+		const admin = await this.db.query.adminUsers.findFirst({
+			where: eq(adminUsers.id, adminId),
+			columns: { permissions: true, cfxId: true, discordId: true },
+		});
+
+		if (!admin) throw new Error('not_found');
+
+		const result = await this.db
+			.update(adminUsers)
+			.set({
+				cfxId,
+				discordId,
+			})
+			.where(eq(adminUsers.id, adminId))
+			.returning();
+
+		if (!result[0]) throw new Error('not_found');
+
+		return {
+			...result[0],
+			newCfxId: cfxId,
+			newDiscordId: discordId,
+			previousCfxId: admin.cfxId,
+			previousDiscordId: admin.discordId,
 		};
 	}
 }
