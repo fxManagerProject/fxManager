@@ -3,6 +3,7 @@ import { sessionAuth } from '../../../middleware/session';
 import AdminManagementModule from './admins';
 import GroupManagementModule from './groups';
 import AuditLogModule from './audit';
+import ProfileModule from './profile';
 import type {
 	ApiResponse,
 	SettingsKey,
@@ -174,6 +175,12 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 
 	fastify.register(AuditLogModule.handler, {
 		prefix: AuditLogModule.prefix,
+		pm,
+		gm,
+	});
+
+	fastify.register(ProfileModule.handler, {
+		prefix: ProfileModule.prefix,
 		pm,
 		gm,
 	});
