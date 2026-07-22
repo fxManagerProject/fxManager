@@ -1,7 +1,7 @@
 import type { IOAuthProvider } from '../../types';
 import { DiscordOAuthProvider } from './providers/discord';
 
-class OAuthManager {
+export class OAuthManager {
 	private providers = new Map<string, IOAuthProvider>();
 
 	registerProvider(provider: IOAuthProvider): this {
@@ -22,11 +22,11 @@ class OAuthManager {
 	}
 
 	reload(): this {
-		this.providers.forEach((provider) => {
+		for (const provider of this.providers.values()) {
 			if (provider.initialize) {
 				provider.initialize();
 			}
-		});
+		}
 		return this;
 	}
 }
