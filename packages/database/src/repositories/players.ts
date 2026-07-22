@@ -154,7 +154,31 @@ class PlayersRepository {
 					)
 					.onConflictDoNothing();
 
-				return { ...newPlayer, isStaff: false, identifiers };
+				const discordVal = identifierRows.find(
+					(row) => row.type === 'discord',
+				)?.value;
+				const fivemVal = identifierRows.find(
+					(row) => row.type === 'fivem',
+				)?.value;
+				const conditions = [
+					discordVal ? eq(adminUsers.discordId, discordVal) : undefined,
+					fivemVal ? eq(adminUsers.cfxId, fivemVal) : undefined,
+				].filter(Boolean) as any;
+
+				const staffCheck = await tx.query.adminUsers.findFirst({
+					where: or(...conditions),
+					columns: { id: true },
+				});
+
+				const isStaff = !!staffCheck;
+
+				if (isStaff) {
+					await tx.update(adminUsers)
+						.set({ playerId: newPlayer.id })
+						.where(eq(adminUsers.id, staffCheck.id));
+				}
+
+				return { ...newPlayer, isStaff, identifiers };
 			}
 		});
 	}
@@ -270,7 +294,8 @@ class PlayersRepository {
 
 		const withIssuerName = <T extends { issuer: number | null }>(row: T) => ({
 			...row,
-			issuerName: row.issuer != null ? (adminNames.get(row.issuer) ?? null) : null,
+			issuerName:
+				row.issuer != null ? (adminNames.get(row.issuer) ?? null) : null,
 		});
 
 		return {
