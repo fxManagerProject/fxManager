@@ -8,22 +8,37 @@ import {
 	mock,
 	spyOn,
 } from 'bun:test';
-import { createContributorsList } from './contributors';
+import { createContributorsList, REPOSITORIES } from './contributors';
 
 describe('createContributorsList', () => {
+	const REPO_COUNT = REPOSITORIES.length;
 	let originalFetch: typeof globalThis.fetch;
 	let errorSpy: ReturnType<typeof spyOn>;
 
 	// Helper to mock successful GitHub Contributors responses
 	const mockGitHubContributors = (contributors: any[], status = 200) => {
-		globalThis.fetch = mock(() =>
-			Promise.resolve(
-				new Response(JSON.stringify(contributors), {
+		let callCount = 0;
+		globalThis.fetch = mock(() => {
+			const data = callCount === 0 ? contributors : [];
+			callCount++;
+
+			if (status !== 200) {
+				// Simulating a failed fetch response
+				return Promise.resolve(
+					new Response(JSON.stringify(data), {
+						status,
+						statusText: 'Internal Server Error',
+					}),
+				);
+			}
+
+			return Promise.resolve(
+				new Response(JSON.stringify(data), {
 					status,
-					statusText: status === 200 ? 'OK' : 'Internal Server Error',
+					statusText: 'OK',
 				}),
-			),
-		) as any;
+			);
+		}) as any;
 	};
 
 	// Helper data fixtures
@@ -62,7 +77,7 @@ describe('createContributorsList', () => {
 	});
 
 	it('should return a default core list when NOT in production', async () => {
-		globalThis.fetch = mock(() => Promise.resolve(new Response('[]'))) as any;
+		mockGitHubContributors([]);
 
 		const getContributors = createContributorsList({ isProd: false });
 		const result = await getContributors();
@@ -102,6 +117,27 @@ describe('createContributorsList', () => {
 		expect(allReturnedLogins).not.toContain('dependabot[bot]');
 	});
 
+	it('should aggregate contributions for users existing across multiple repositories', async () => {
+		let callCount = 0;
+		globalThis.fetch = mock(() => {
+			let data: any[] = [];
+			// GhostCoder contributes 10 to repo 1, and 5 to repo 2
+			if (callCount === 0) data = [{ ...mockRawExternal, contributions: 10 }];
+			if (callCount === 1) data = [{ ...mockRawExternal, contributions: 5 }];
+			callCount++;
+			return Promise.resolve(
+				new Response(JSON.stringify(data), { status: 200, statusText: 'OK' }),
+			);
+		}) as any;
+
+		const getContributors = createContributorsList({ isProd: true });
+		const result = await getContributors();
+
+		expect(globalThis.fetch).toHaveBeenCalledTimes(REPO_COUNT);
+		expect(result.external).toHaveLength(1);
+		expect(result.external[0].contributions).toBe(15); // 10 + 5
+	});
+
 	it('should use cached value and avoid network calls before TTL expires', async () => {
 		let mockTime = 1000;
 		const timeMock = () => mockTime;
@@ -113,14 +149,13 @@ describe('createContributorsList', () => {
 			now: timeMock,
 		});
 
-		// First call hits the network
 		const firstResult = await getContributors();
-		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+		expect(globalThis.fetch).toHaveBeenCalledTimes(REPO_COUNT);
 
 		// Second call within TTL returns cached data without calling fetch again
 		mockTime = 4000; // +3000ms elapsed (TTL is 5000)
 		const secondResult = await getContributors();
-		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+		expect(globalThis.fetch).toHaveBeenCalledTimes(REPO_COUNT);
 		expect(secondResult).toEqual(firstResult);
 	});
 
@@ -135,17 +170,19 @@ describe('createContributorsList', () => {
 			now: timeMock,
 		});
 
-		await getContributors(); // Fetch #1
+		await getContributors();
 
 		// Advance time past expiration
 		mockTime = 7000; // +6000ms elapsed
 		await getContributors(); // Fetch #2
 
-		expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+		expect(globalThis.fetch).toHaveBeenCalledTimes(REPO_COUNT * 2);
 	});
 
-	it('should gracefully return fallback empty arrays if first network request fails', async () => {
-		mockGitHubContributors([], 500);
+	it('should gracefully return fallback empty arrays if first network request fails completely', async () => {
+		globalThis.fetch = mock(() =>
+			Promise.reject(new Error('Network error')),
+		) as any;
 		const getContributors = createContributorsList({ isProd: true });
 
 		const result = await getContributors();
@@ -169,7 +206,9 @@ describe('createContributorsList', () => {
 		await getContributors();
 
 		mockTime = 3000;
-		mockGitHubContributors([], 500);
+		globalThis.fetch = mock(() =>
+			Promise.reject(new Error('Network error')),
+		) as any;
 
 		const fallbackResult = await getContributors();
 
