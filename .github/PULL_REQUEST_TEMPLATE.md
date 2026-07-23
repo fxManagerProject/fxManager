@@ -9,13 +9,15 @@
 
  -->
 
-<!--
-	Answer truthfully, this has it's purpose when reviewing PRs
-	and is not used to judge the contributor's work.
-	Lying on this is pointless, and we allow ourselves to not consider
-	PRs where GenAI was used and not declared.
--->
-- [ ] Generative AI was used in the creation of the changes of this PR.
+### Generative AI Disclosure
+> [!NOTE]
+> Be honest—using GenAI does not penalize your PR, but failing to declare its use may result in the PR not being considered.
+
+* [ ] **No**, Generative AI was **not** used in the creation of this PR.
+* [ ] **Yes**, Generative AI **was** used in the creation of this PR. 
+  *(If yes, please briefly describe what tools were used and for what purpose below)*:
+  * **Tools used:** <!-- (e.g., ChatGPT, GitHub Copilot, Claude) -->
+  * **Purpose / What it was used for:** <!-- (e.g., drafted documentation, generated unit tests, refactored function X) -->
 
 ---
 
