@@ -270,7 +270,8 @@ class PlayersRepository {
 
 		const withIssuerName = <T extends { issuer: number | null }>(row: T) => ({
 			...row,
-			issuerName: row.issuer != null ? (adminNames.get(row.issuer) ?? null) : null,
+			issuerName:
+				row.issuer != null ? (adminNames.get(row.issuer) ?? null) : null,
 		});
 
 		return {
