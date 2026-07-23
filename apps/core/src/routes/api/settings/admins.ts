@@ -233,11 +233,12 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 					adminId: admin.id,
 					action: 'admin.update',
 					metadata: {
-						target: username,
-						new_cfxId: newCfxId,
-						new_discordId: newDiscordId,
-						previous_cfxId: previousCfxId,
-						previous_discordId: previousDiscordId,
+						target: `${username} (#${adminId})`,
+						new_cfxId: newCfxId ?? (previousCfxId ? 'removed' : undefined),
+						new_discordId:
+							newDiscordId ?? (previousDiscordId ? 'removed' : undefined),
+						previous_cfxId: previousCfxId ?? undefined,
+						previous_discordId: previousDiscordId ?? undefined,
 					},
 				});
 

@@ -350,6 +350,9 @@ class AdminsRepository {
 		if (discordId && !/^[0-9]+$/.test(discordId))
 			throw new Error('invalid_discord_id');
 
+		cfxId = cfxId?.trim() || null;
+		discordId = discordId?.trim() || null;
+
 		const result = await this.db
 			.update(adminUsers)
 			.set({
