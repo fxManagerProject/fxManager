@@ -455,43 +455,48 @@ export default function AdminView() {
 						<Card className="flex-1 flex flex-col min-h-0">
 							<CardHeader>
 								<CardTitle className="text-lg font-bold">
-									Action Recap
+									Action Recap{' '}
+									{hasPermission(UserPermissions.AUDIT_LOG) &&
+										`(${adminData.auditLogs.length})`}
 								</CardTitle>
 							</CardHeader>
-							<CardContent>
-								<ScrollArea className="h-full">
-									{!hasPermission(UserPermissions.AUDIT_LOG) ? (
-										<Alert
-											variant="destructive"
-											className="bg-destructive/5 border-destructive/20"
-										>
-											<AlertCircle className="h-4 w-4" />
-											<AlertTitle className="font-bold">
-												Access Restricted
-											</AlertTitle>
-											<AlertDescription>
-												You do not have permissions to view an admins audit log.
-											</AlertDescription>
-										</Alert>
-									) : (
-										<div>
-											{adminData.auditLogs.length > 0 ? (
-												adminData.auditLogs.map((log) => (
-													<AuditLogRow key={log.id} log={log} />
-												))
-											) : (
-												<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">
-													<Info className="h-8 w-8 text-muted-foreground/60 mb-2" />
-													<p className="text-sm font-medium text-muted-foreground">
-														No recent activity logs
-													</p>
-													<p className="text-xs text-muted-foreground/70">
-														Actions performed by this admin will appear here.
-													</p>
-												</div>
-											)}
-										</div>
-									)}
+							<CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
+								<ScrollArea className="flex-1 min-h-0 h-full pr-4">
+									<div className="flex flex-col gap-2">
+										{!hasPermission(UserPermissions.AUDIT_LOG) ? (
+											<Alert
+												variant="destructive"
+												className="bg-destructive/5 border-destructive/20"
+											>
+												<AlertCircle className="h-4 w-4" />
+												<AlertTitle className="font-bold">
+													Access Restricted
+												</AlertTitle>
+												<AlertDescription>
+													You do not have permissions to view an admins audit
+													log.
+												</AlertDescription>
+											</Alert>
+										) : (
+											<div>
+												{adminData.auditLogs.length > 0 ? (
+													adminData.auditLogs.map((log) => (
+														<AuditLogRow key={log.id} log={log} />
+													))
+												) : (
+													<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">
+														<Info className="h-8 w-8 text-muted-foreground/60 mb-2" />
+														<p className="text-sm font-medium text-muted-foreground">
+															No recent activity logs
+														</p>
+														<p className="text-xs text-muted-foreground/70">
+															Actions performed by this admin will appear here.
+														</p>
+													</div>
+												)}
+											</div>
+										)}
+									</div>
 								</ScrollArea>
 							</CardContent>
 						</Card>

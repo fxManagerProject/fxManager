@@ -21,6 +21,7 @@ import {
 	FileUser,
 	Info,
 	Loader2,
+	Lock,
 	UserPlus,
 	UsersRound,
 } from 'lucide-react';
@@ -40,6 +41,8 @@ import {
 	type LucidIconName,
 } from '@fxmanager/ui/components/dynamic-icon';
 import { AuditLogRow } from './components/auditlog-row';
+import { useAuth } from '@/hooks/use-auth';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 function LoadingSkeleton() {
 	return (
@@ -297,6 +300,7 @@ function PasswordChangeForm() {
 }
 
 export default function ProfilePage() {
+	const { hasPermission } = useAuth();
 	const navigate = useNavigate();
 	const [profileData, setProfileData] = useState<AdminProfile | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -463,24 +467,39 @@ export default function ProfilePage() {
 						<Card className="flex-1 flex flex-col min-h-0">
 							<CardHeader>
 								<CardTitle className="text-lg font-bold">
-									Action Recap
+									Action Recap{' '}
+									{hasPermission(UserPermissions.AUDIT_LOG) &&
+										`(${profileData.auditLogs.length})`}
 								</CardTitle>
 							</CardHeader>
-							<CardContent>
-								<ScrollArea className="h-full">
-									<div>
-										{profileData.auditLogs.length > 0 ? (
-											profileData.auditLogs.map((log) => (
-												<AuditLogRow key={log.id} log={log} />
-											))
+							<CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
+								<ScrollArea className="flex-1 min-h-0 h-full pr-4">
+									<div className="flex flex-col gap-2">
+										{hasPermission(UserPermissions.AUDIT_LOG) ? (
+											profileData.auditLogs.length > 0 ? (
+												profileData.auditLogs.map((log) => (
+													<AuditLogRow key={log.id} log={log} />
+												))
+											) : (
+												<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">
+													<Info className="h-8 w-8 text-muted-foreground/60 mb-2" />
+													<p className="text-sm font-medium text-muted-foreground">
+														No recent activity logs
+													</p>
+													<p className="text-xs text-muted-foreground/70">
+														Actions performed by you will appear here.
+													</p>
+												</div>
+											)
 										) : (
 											<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">
-												<Info className="h-8 w-8 text-muted-foreground/60 mb-2" />
+												<Lock className="h-8 w-8 text-muted-foreground/60 mb-2" />
 												<p className="text-sm font-medium text-muted-foreground">
-													No recent activity logs
+													Access Restricted
 												</p>
-												<p className="text-xs text-muted-foreground/70">
-													Actions performed by you will appear here.
+												<p className="text-xs text-muted-foreground/70 text-center">
+													You do not have the required permissions to view audit
+													logs.
 												</p>
 											</div>
 										)}
