@@ -17,6 +17,7 @@ import AuditLogPage from './settings/auditlogs';
 import ConfigEditor from './settings/configeditor';
 import PerformancePage from './performance';
 import CreditsPage from './settings/credits';
+import ProfilePage from './settings/selfprofile';
 
 type RouteConfig = {
 	path: string;
@@ -97,4 +98,7 @@ export const routes: RouteConfig[] = [
 		path: '/settings/credits',
 		element: CreditsPage,
 	},
+
+	// Profile
+	{ path: '/profile', element: ProfilePage },
 ];

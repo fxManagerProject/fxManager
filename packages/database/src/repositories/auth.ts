@@ -38,6 +38,8 @@ class AuthRepository {
 		permissions: number = 0,
 		updateLoggedIn: boolean = false,
 		playerId: number | null = null,
+		cfxId: string | null = null,
+		discordId: string | null = null,
 	) {
 		const passwordHash = await Bun.password.hash(password, {
 			algorithm: 'bcrypt',
@@ -58,6 +60,8 @@ class AuthRepository {
 				lastLoginAt: updateLoggedIn ? new Date() : null,
 				permissions: sanitizedPerms,
 				playerId,
+				cfxId,
+				discordId,
 			})
 			.returning()
 			.get();
@@ -124,6 +128,18 @@ class AuthRepository {
 		return user;
 	}
 
+	async updatePassword(adminId: number, newPassword: string) {
+		const passwordHash = await Bun.password.hash(newPassword, {
+			algorithm: 'bcrypt',
+		});
+
+		return this.db
+			.update(adminUsers)
+			.set({ passwordHash })
+			.where(eq(adminUsers.id, adminId))
+			.run();
+	}
+
 	createSession(adminId: number) {
 		const id = crypto.randomUUID();
 		const now = new Date();
@@ -158,6 +174,28 @@ class AuthRepository {
 
 	deleteSession(sessionId: string) {
 		return this.db.delete(sessions).where(eq(sessions.id, sessionId)).run();
+	}
+
+	findOAuthUser(data: {
+		provider: string;
+		providerId: string;
+		username?: string;
+		email?: string;
+	}) {
+		const column =
+			data.provider === 'discord'
+				? adminUsers.discordId
+				: data.provider === 'cfx'
+					? adminUsers.cfxId
+					: undefined;
+
+		if (!column) return null;
+
+		return this.db
+			.select()
+			.from(adminUsers)
+			.where(eq(column, data.providerId))
+			.get();
 	}
 }
 

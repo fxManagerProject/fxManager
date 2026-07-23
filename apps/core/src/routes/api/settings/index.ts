@@ -3,6 +3,7 @@ import { sessionAuth } from '../../../middleware/session';
 import AdminManagementModule from './admins';
 import GroupManagementModule from './groups';
 import AuditLogModule from './audit';
+import ProfileModule from './profile';
 import type {
 	ApiResponse,
 	SettingsKey,
@@ -22,6 +23,7 @@ import {
 import { repo } from '@fxmanager/database';
 import { restartScheduler } from '../../../modules/schedule/manager';
 import { ConfigManager } from '../../../modules/config/manager';
+import { oauthManager } from '../../../modules/auth/manager';
 
 interface HookResult {
 	valid: boolean;
@@ -147,6 +149,9 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 		});
 
 		if (scope === 'restarts') restartScheduler.reload();
+		if (scope === 'oauth') {
+			oauthManager.reload();
+		}
 
 		return {
 			success: true,
@@ -170,6 +175,12 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 
 	fastify.register(AuditLogModule.handler, {
 		prefix: AuditLogModule.prefix,
+		pm,
+		gm,
+	});
+
+	fastify.register(ProfileModule.handler, {
+		prefix: ProfileModule.prefix,
 		pm,
 		gm,
 	});

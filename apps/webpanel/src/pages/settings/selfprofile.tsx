@@ -1,6 +1,6 @@
 import { QueryService } from '@/lib/query';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '@fxmanager/ui/components/avatar';
 import {
 	Card,
@@ -15,25 +15,13 @@ import {
 	TabsTrigger,
 } from '@fxmanager/ui/components/tabs';
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger,
-} from '@fxmanager/ui/components/alert-dialog';
-import {
-	AlertCircle,
 	AlertTriangle,
 	ArrowLeft,
 	Clock,
 	FileUser,
 	Info,
 	Loader2,
-	Trash,
+	Lock,
 	UserPlus,
 	UsersRound,
 } from 'lucide-react';
@@ -47,20 +35,14 @@ import { StatCard } from '@/components/stat-card';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import type { AdminProfile } from '@fxmanager/database/types';
 import PermissionEditor from './components/permissioneditor';
-import { UserPermissions } from '@fxmanager/shared/constants';
-import { PermissionManager } from '@fxmanager/shared/utils';
-import {
-	Alert,
-	AlertDescription,
-	AlertTitle,
-} from '@fxmanager/ui/components/alert';
-import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 import {
 	DynamicIcon,
 	type LucidIconName,
 } from '@fxmanager/ui/components/dynamic-icon';
 import { AuditLogRow } from './components/auditlog-row';
+import { useAuth } from '@/hooks/use-auth';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 function LoadingSkeleton() {
 	return (
@@ -211,60 +193,138 @@ function IdentifiersForm({
 	);
 }
 
-export default function AdminView() {
+function PasswordChangeForm() {
+	const [currentPassword, setCurrentPassword] = useState('');
+	const [newPassword, setNewPassword] = useState('');
+	const [confirmPassword, setConfirmPassword] = useState('');
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		if (newPassword !== confirmPassword) {
+			toast.error('New passwords do not match.');
+			return;
+		}
+
+		setIsSubmitting(true);
+		const passwordPromise = QueryService<ApiResponse<undefined>>({
+			endpoint: `/settings/profile/password`,
+			method: 'POST',
+			body: { currentPassword, newPassword },
+		});
+
+		toast.promise(passwordPromise, {
+			loading: 'Updating password...',
+			success: (r) => {
+				if (!r.success) throw new Error(r.error);
+				setCurrentPassword('');
+				setNewPassword('');
+				setConfirmPassword('');
+				return 'Password has been successfully updated.';
+			},
+			error: (err) => {
+				console.error('Failed to update password', err.message);
+				return `Password update failed: ${err.message}`;
+			},
+		});
+
+		try {
+			await passwordPromise;
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	const isDirty =
+		currentPassword.length > 0 ||
+		newPassword.length > 0 ||
+		confirmPassword.length > 0;
+
+	return (
+		<form onSubmit={handleSubmit} className="space-y-6">
+			<div className="space-y-4">
+				<div>
+					<h3 className="text-sm font-semibold">Change Password</h3>
+					<p className="text-xs text-muted-foreground">
+						Update your panel login password securely.
+					</p>
+				</div>
+
+				<div className="space-y-4 max-w-xl">
+					<div className="space-y-2">
+						<Label htmlFor="currentPassword">Current Password</Label>
+						<Input
+							id="currentPassword"
+							type="password"
+							value={currentPassword}
+							onChange={(e) => setCurrentPassword(e.target.value)}
+							placeholder="••••••••••••"
+							disabled={isSubmitting}
+						/>
+					</div>
+
+					<div className="space-y-2">
+						<Label htmlFor="newPassword">New Password</Label>
+						<Input
+							id="newPassword"
+							type="password"
+							value={newPassword}
+							onChange={(e) => setNewPassword(e.target.value)}
+							placeholder="••••••••••••"
+							disabled={isSubmitting}
+						/>
+					</div>
+
+					<div className="space-y-2">
+						<Label htmlFor="confirmPassword">Confirm New Password</Label>
+						<Input
+							id="confirmPassword"
+							type="password"
+							value={confirmPassword}
+							onChange={(e) => setConfirmPassword(e.target.value)}
+							placeholder="••••••••••••"
+							disabled={isSubmitting}
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div className="flex justify-end pt-2">
+				<Button type="submit" disabled={isSubmitting || !isDirty}>
+					{isSubmitting ? 'Updating...' : 'Update Password'}
+				</Button>
+			</div>
+		</form>
+	);
+}
+
+export default function ProfilePage() {
+	const { hasPermission } = useAuth();
 	const navigate = useNavigate();
-	const { user, hasPermission } = useAuth();
-	const params = useParams<{ adminId: string }>();
-	const [adminData, setAdminData] = useState<AdminProfile | null>(null);
+	const [profileData, setProfileData] = useState<AdminProfile | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		if (!params.adminId) return;
-
 		QueryService<ApiResponse<AdminProfile>>({
-			endpoint: `/settings/admins/${params.adminId}`,
+			endpoint: `/settings/profile`,
 			method: 'GET',
 		})
 			.then((res) => {
 				setError(null);
 				if (res.success) {
-					setAdminData(res.data);
+					setProfileData(res.data);
 				} else {
 					setError(res.error);
 				}
 			})
 			.catch((err) => {
-				console.error('Loading admin failed', err.status, err.message);
-				setError((err as ApiError).message ?? 'Failed to load admin data.');
+				console.error('Loading profile failed', err.status, err.message);
+				setError((err as ApiError).message ?? 'Failed to load profile data.');
 			})
 			.finally(() => setLoading(false));
-	}, [params.adminId]);
-
-	async function handleDelete() {
-		const deletePromise = QueryService<ApiResponse<undefined>>({
-			endpoint: `/settings/admins/${params.adminId}/delete`,
-			method: 'POST',
-		});
-
-		toast.promise(deletePromise, {
-			loading: 'Deleting admin account...',
-			success: (r) => {
-				if (!r.success) throw new Error(r.error);
-
-				setTimeout(
-					() => navigate('/settings/admins', { replace: true }),
-					1_500,
-				);
-
-				return `Admin has been successfully removed.`;
-			},
-			error: (err) => {
-				console.error('Failed to delete admin', err.message);
-				return `Deletion failed: ${err.message}`;
-			},
-		});
-	}
+	}, []);
 
 	async function handleIdentiferChange(data: {
 		cfxId: AdminProfile['cfxId'];
@@ -274,10 +334,9 @@ export default function AdminView() {
 			ApiResponse<{
 				newCfxId: AdminProfile['cfxId'];
 				newDiscordId: AdminProfile['discordId'];
-				playerId: AdminProfile['playerId'];
 			}>
 		>({
-			endpoint: `/settings/admins/${params.adminId}/identifiers`,
+			endpoint: `/settings/profile/identifiers`,
 			method: 'POST',
 			body: data,
 		});
@@ -287,14 +346,12 @@ export default function AdminView() {
 			success: (r) => {
 				if (!r.success) throw new Error(r.error);
 
-				console.log('Identifiers updated', r.data);
-
-				setAdminData((prev) => {
-					if (!prev) throw new Error('Invalid Action Sequence (no admin data)');
+				setProfileData((prev) => {
+					if (!prev)
+						throw new Error('Invalid Action Sequence (no profile data)');
 
 					return {
 						...prev,
-						playerId: r.data.playerId,
 						cfxId: r.data.newCfxId,
 						discordId: r.data.newDiscordId,
 					};
@@ -311,32 +368,25 @@ export default function AdminView() {
 
 	if (loading) return <LoadingSkeleton />;
 
-	if (error || !adminData || !params.adminId) {
+	if (error || !profileData) {
 		return (
 			<Card className="w-full mt-12">
 				<CardContent className="py-6 flex flex-col items-center gap-3 text-center">
 					<AlertTriangle className="h-8 w-8 text-destructive" />
 
-					<p className="font-semibold">Failed to load admin</p>
+					<p className="font-semibold">Failed to load profile</p>
 					<p className="text-sm text-muted-foreground">
-						{error ?? 'Admin not found.'}
+						{error ?? 'Profile not found.'}
 					</p>
 
-					<Button variant="outline" size="sm" asChild>
-						<Link to="/settings/admins">
-							<ArrowLeft className="h-4 w-4" />
-							Back to Admins
-						</Link>
+					<Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+						<ArrowLeft className="h-4 w-4" />
+						Go Back
 					</Button>
 				</CardContent>
 			</Card>
 		);
 	}
-
-	const isMaster = PermissionManager.isMaster(adminData.permissions);
-	const isSelf = adminData.id === user?.id;
-	const canEdit =
-		isSelf || hasPermission(UserPermissions.SETTINGS_ADMIN_MANAGEMENT);
 
 	return (
 		<div className="flex flex-col h-full p-4 gap-4">
@@ -347,56 +397,19 @@ export default function AdminView() {
 					</Button>
 
 					<Avatar className="h-12 w-12 text-base shrink-0">
-						<AvatarFallback>{initials(adminData.username)}</AvatarFallback>
+						<AvatarFallback>{initials(profileData.username)}</AvatarFallback>
 					</Avatar>
 
 					<div className="flex-1 min-w-0">
 						<div className="flex flex-wrap items-center gap-2">
 							<h1 className="text-lg font-bold truncate">
-								{adminData.username}
+								{profileData.username}
 							</h1>
 						</div>
 						<p className="text-xs text-muted-foreground">
-							Admin #{adminData.id}
+							Profile #{profileData.id}
 						</p>
 					</div>
-				</div>
-
-				<div className="space-x-2">
-					{!isMaster && (
-						<AlertDialog>
-							<AlertDialogTrigger asChild>
-								<Button variant="destructive">
-									<Trash />
-									<span className="hidden md:block">Delete User</span>
-								</Button>
-							</AlertDialogTrigger>
-
-							<AlertDialogContent>
-								<AlertDialogHeader>
-									<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-									<AlertDialogDescription>
-										This action cannot be undone. This will permanently delete
-										the admin account for{' '}
-										<span className="font-bold text-foreground">
-											{adminData.username}{' '}
-										</span>
-										and remove their access from the panel.
-									</AlertDialogDescription>
-								</AlertDialogHeader>
-
-								<AlertDialogFooter>
-									<AlertDialogCancel>Cancel</AlertDialogCancel>
-									<AlertDialogAction
-										onClick={handleDelete}
-										variant="destructive"
-									>
-										Delete User
-									</AlertDialogAction>
-								</AlertDialogFooter>
-							</AlertDialogContent>
-						</AlertDialog>
-					)}
 				</div>
 			</div>
 
@@ -407,42 +420,43 @@ export default function AdminView() {
 						label="Linked Player"
 						value={
 							<PlayerCardContent
-								id={adminData.playerId}
-								name={adminData.playerName}
+								id={profileData.playerId}
+								name={profileData.playerName}
 							/>
 						}
 					/>
 					<StatCard
 						icon={UserPlus}
 						label="Created On"
-						value={formatDate(adminData.createdAt)}
+						value={formatDate(profileData.createdAt)}
 					/>
 					<StatCard
 						icon={Clock}
 						label="Last Login"
-						value={formatDate(adminData.lastLoginAt)}
+						value={formatDate(profileData.lastLoginAt)}
 					/>
 					<StatCard
 						icon={
-							adminData.group?.icon
+							profileData.group?.icon
 								? () => (
 										<DynamicIcon
-											name={adminData.group?.icon as LucidIconName}
-											color={adminData.group?.colour}
+											name={profileData.group?.icon as LucidIconName}
+											color={profileData.group?.colour}
 										/>
 									)
 								: UsersRound
 						}
 						className="hidden lg:block"
 						label={`Staff Group`}
-						value={adminData.group?.name ?? 'Custom'}
+						value={profileData.group?.name ?? 'Custom'}
 					/>
 				</div>
 
 				<Tabs defaultValue="activity" className="flex-1 flex flex-col min-h-0">
-					<TabsList className="grid w-full grid-cols-3 mb-4">
+					<TabsList className="grid w-full grid-cols-4 mb-4">
 						<TabsTrigger value="activity">Recent Activity</TabsTrigger>
 						<TabsTrigger value="identifiers">Identifiers & Player</TabsTrigger>
+						<TabsTrigger value="security">Security</TabsTrigger>
 						<TabsTrigger value="settings">Permissions</TabsTrigger>
 					</TabsList>
 
@@ -455,43 +469,38 @@ export default function AdminView() {
 								<CardTitle className="text-lg font-bold">
 									Action Recap{' '}
 									{hasPermission(UserPermissions.AUDIT_LOG) &&
-										`(${adminData.auditLogs.length})`}
+										`(${profileData.auditLogs.length})`}
 								</CardTitle>
 							</CardHeader>
 							<CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
 								<ScrollArea className="flex-1 min-h-0 h-full pr-4">
 									<div className="flex flex-col gap-2">
-										{!hasPermission(UserPermissions.AUDIT_LOG) ? (
-											<Alert
-												variant="destructive"
-												className="bg-destructive/5 border-destructive/20"
-											>
-												<AlertCircle className="h-4 w-4" />
-												<AlertTitle className="font-bold">
-													Access Restricted
-												</AlertTitle>
-												<AlertDescription>
-													You do not have permissions to view an admins audit
-													log.
-												</AlertDescription>
-											</Alert>
+										{hasPermission(UserPermissions.AUDIT_LOG) ? (
+											profileData.auditLogs.length > 0 ? (
+												profileData.auditLogs.map((log) => (
+													<AuditLogRow key={log.id} log={log} />
+												))
+											) : (
+												<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">
+													<Info className="h-8 w-8 text-muted-foreground/60 mb-2" />
+													<p className="text-sm font-medium text-muted-foreground">
+														No recent activity logs
+													</p>
+													<p className="text-xs text-muted-foreground/70">
+														Actions performed by you will appear here.
+													</p>
+												</div>
+											)
 										) : (
-											<div>
-												{adminData.auditLogs.length > 0 ? (
-													adminData.auditLogs.map((log) => (
-														<AuditLogRow key={log.id} log={log} />
-													))
-												) : (
-													<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">
-														<Info className="h-8 w-8 text-muted-foreground/60 mb-2" />
-														<p className="text-sm font-medium text-muted-foreground">
-															No recent activity logs
-														</p>
-														<p className="text-xs text-muted-foreground/70">
-															Actions performed by this admin will appear here.
-														</p>
-													</div>
-												)}
+											<div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed rounded-lg bg-muted/30">
+												<Lock className="h-8 w-8 text-muted-foreground/60 mb-2" />
+												<p className="text-sm font-medium text-muted-foreground">
+													Access Restricted
+												</p>
+												<p className="text-xs text-muted-foreground/70 text-center">
+													You do not have the required permissions to view audit
+													logs.
+												</p>
 											</div>
 										)}
 									</div>
@@ -507,34 +516,32 @@ export default function AdminView() {
 						<Card className="flex-1 flex flex-col min-h-0">
 							<CardContent className="flex-1 overflow-y-auto">
 								<div className="mx-auto w-full max-w-2xl space-y-8">
-									{canEdit && (
-										<div className="space-y-3 pb-8 border-b">
-											<div>
-												<h3 className="text-sm font-semibold">
-													In-Game Player Account
-												</h3>
-												<p className="text-xs text-muted-foreground">
-													Connect this admin account to an existing in-game
-													player profile.
-												</p>
-											</div>
+									<div className="space-y-3 pb-8 border-b">
+										<div>
+											<h3 className="text-sm font-semibold">
+												In-Game Player Account
+											</h3>
+											<p className="text-xs text-muted-foreground">
+												Connect your account to an existing in-game player
+												profile.
+											</p>
+										</div>
 
-											<div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20 gap-4">
-												<div className="flex items-center gap-3 min-w-0">
-													<FileUser className="h-5 w-5 text-muted-foreground shrink-0" />
-													<div className="min-w-0">
-														<p className="text-xs text-muted-foreground">
-															Linked Player
-														</p>
-														<PlayerCardContent
-															id={adminData.playerId}
-															name={adminData.playerName}
-														/>
-													</div>
+										<div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20 gap-4">
+											<div className="flex items-center gap-3 min-w-0">
+												<FileUser className="h-5 w-5 text-muted-foreground shrink-0" />
+												<div className="min-w-0">
+													<p className="text-xs text-muted-foreground">
+														Linked Player
+													</p>
+													<PlayerCardContent
+														id={profileData.playerId}
+														name={profileData.playerName}
+													/>
 												</div>
 											</div>
 										</div>
-									)}
+									</div>
 
 									<div className="space-y-4">
 										<div>
@@ -542,18 +549,31 @@ export default function AdminView() {
 												External Platform Identifiers
 											</h3>
 											<p className="text-xs text-muted-foreground">
-												Configure third-party IDs linked to this account for
+												Configure third-party IDs linked to your account for
 												authentication and bot lookups.
 											</p>
 										</div>
 
 										<IdentifiersForm
-											cfxId={adminData.cfxId}
-											discordId={adminData.discordId}
-											canEdit={canEdit}
+											cfxId={profileData.cfxId}
+											discordId={profileData.discordId}
+											canEdit={true}
 											onSave={handleIdentiferChange}
 										/>
 									</div>
+								</div>
+							</CardContent>
+						</Card>
+					</TabsContent>
+
+					<TabsContent
+						value="security"
+						className="flex-1 flex flex-col min-h-0 mt-0 overflow-auto"
+					>
+						<Card className="flex-1 flex flex-col min-h-0">
+							<CardContent className="flex-1 overflow-y-auto py-6">
+								<div className="mx-auto w-full max-w-2xl">
+									<PasswordChangeForm />
 								</div>
 							</CardContent>
 						</Card>
@@ -566,46 +586,19 @@ export default function AdminView() {
 						<Card className="flex-1 flex flex-col min-h-0">
 							<CardHeader className="shrink-0">
 								<CardTitle className="text-lg font-bold">
-									Permissions Editor
+									Assigned Permissions
 								</CardTitle>
 							</CardHeader>
 
 							<CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
-								{isMaster ? (
-									<Alert
-										variant="destructive"
-										className="bg-destructive/5 border-destructive/20"
-									>
-										<AlertCircle className="h-4 w-4" />
-										<AlertTitle className="font-bold">
-											Access Restricted
-										</AlertTitle>
-										<AlertDescription>
-											This is a <strong>Master Account</strong>. Permissions are
-											hardcoded and cannot be modified via the dashboard for
-											security reasons.
-										</AlertDescription>
-									</Alert>
-								) : (
-									<PermissionEditor
-										editable={adminData.id !== user?.id}
-										adminId={params.adminId}
-										value={adminData.permissions}
-										group={adminData.group}
-										updatePerms={(permissions) =>
-											setAdminData((prev) => {
-												if (!prev) return null;
-												return { ...prev, permissions };
-											})
-										}
-										updateGroup={(group) =>
-											setAdminData((prev) => {
-												if (!prev) return null;
-												return { ...prev, group };
-											})
-										}
-									/>
-								)}
+								<PermissionEditor
+									editable={false}
+									adminId={String(profileData.id)}
+									value={profileData.permissions}
+									group={profileData.group}
+									updatePerms={() => {}}
+									updateGroup={() => {}}
+								/>
 							</CardContent>
 						</Card>
 					</TabsContent>

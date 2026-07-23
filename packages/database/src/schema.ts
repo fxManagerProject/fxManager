@@ -79,6 +79,8 @@ export const adminUsers = sqliteTable(
 		playerId: integer('player_id').references(() => players.id, {
 			onDelete: 'set null',
 		}),
+		cfxId: text('cfx_id').unique(),
+		discordId: text('discord_id').unique(),
 		permissions: integer('permissions').default(0).notNull(),
 		groupId: integer('group_id').references(() => adminGroups.id, {
 			onDelete: 'set null',
@@ -86,7 +88,11 @@ export const adminUsers = sqliteTable(
 		createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 		lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
 	},
-	(t) => [index('admin_username_idx').on(t.username)],
+	(t) => [
+		index('admin_username_idx').on(t.username),
+		index('admin_cfx_id_idx').on(t.cfxId),
+		index('admin_discord_id_idx').on(t.discordId),
+	],
 );
 
 export const sessions = sqliteTable(

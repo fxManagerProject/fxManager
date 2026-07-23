@@ -10,6 +10,7 @@ export const SETTINGS_SCOPES = {
 		'serverConfigPath',
 		'autostart',
 	],
+	oauth: ['discordEnabled', 'discordSecret', 'discordClientId'],
 	whitelist: ['mode', 'discordBotToken', 'discordGuildId', 'discordRoleIds'],
 	restarts: ['enabled', 'times'],
 } as const;
@@ -30,10 +31,14 @@ export const SETTINGS_DEFAULTS = {
 	'whitelist.mode': 'none',
 	'restarts.enabled': 'false',
 	'restarts.times': '',
+	'oauth.discordEnabled': 'false',
+	'oauth.discordClientId': '',
+	'oauth.discordSecret': '',
 } satisfies Partial<Record<SettingsKey, string>>;
 
 export const SETTINGS_SENSITIVE_KEYS: SettingsKey[] = [
 	'whitelist.discordBotToken',
+	'oauth.discordSecret',
 ];
 
 export const SETTINGS_MASTER_ONLY_KEYS: SettingsKey[] = [
