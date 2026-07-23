@@ -13,15 +13,17 @@ export class DiscordOAuthProvider implements IOAuthProvider {
 	}
 
 	initialize() {
-		const settings = repo.settings.getMultiple([
-			'oauth.discordClientId',
-			'oauth.discordSecret',
-			'oauth.discordEnabled',
-		]);
+		try {
+			const settings = repo.settings.getMultiple([
+				'oauth.discordClientId',
+				'oauth.discordSecret',
+				'oauth.discordEnabled',
+			]);
 
-		this.clientId = settings['oauth.discordClientId'];
-		this.clientSecret = settings['oauth.discordSecret'];
-		this.enabled = settings['oauth.discordEnabled'] == 'true' ? true : false;
+			this.clientId = settings['oauth.discordClientId'];
+			this.clientSecret = settings['oauth.discordSecret'];
+			this.enabled = settings['oauth.discordEnabled'] == 'true' ? true : false;
+		} catch {}
 	}
 
 	isConfigured(): boolean {
