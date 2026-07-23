@@ -197,6 +197,38 @@ describe('PlayersRepository', () => {
 				.all();
 			expect(dbIdentifiers.length).toBe(2); // Retains original license and appends discord row safely
 		});
+
+		it('should detect if a new player matches an admin user identifier and link them as staff', async () => {
+			const [admin] = testDb
+				.insert(adminUsers)
+				.values({
+					username: 'admin_test',
+					passwordHash: 'hash',
+					createdAt: new Date(),
+					discordId: '123456789',
+					cfxId: '987654321',
+				})
+				.returning()
+				.all();
+
+			const created = await playersRepo.upsert('admin_player', {
+				license: 'license:admin_key',
+				discord: 'discord:123456789',
+				fivem: 'fivem:987654321',
+			});
+
+			expect(created.id).toBeTypeOf('number');
+			expect(created.name).toBe('admin_player');
+			expect(created.isStaff).toBe(true);
+
+			const updatedAdmin = testDb
+				.select()
+				.from(adminUsers)
+				.where(eq(adminUsers.id, admin.id))
+				.get();
+
+			expect(updatedAdmin?.playerId).toBe(created.id);
+		});
 	});
 
 	// region ban validation
