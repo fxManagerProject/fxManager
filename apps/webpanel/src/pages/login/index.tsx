@@ -8,11 +8,6 @@ import {
 	FieldSeparator,
 } from '@fxmanager/ui/components/field';
 import { Input } from '@fxmanager/ui/components/input';
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from '@fxmanager/ui/components/tooltip';
 import { cn } from '@fxmanager/ui/lib/utils';
 import { Server } from 'lucide-react';
 import { useEffect, useState } from 'react';
