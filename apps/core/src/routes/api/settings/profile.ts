@@ -66,10 +66,11 @@ const ProfileEndpoints: RouteModule['handler'] = async (fastify, { pm }) => {
 					adminId: admin.id,
 					action: 'admin.update',
 					metadata: {
-						new_cfxId: newCfxId,
-						new_discordId: newDiscordId,
-						previous_cfxId: previousCfxId,
-						previous_discordId: previousDiscordId,
+						new_cfxId: newCfxId ?? (previousCfxId ? 'removed' : undefined),
+						new_discordId:
+							newDiscordId ?? (previousDiscordId ? 'removed' : undefined),
+						previous_cfxId: previousCfxId ?? undefined,
+						previous_discordId: previousDiscordId ?? undefined,
 					},
 				});
 
@@ -82,8 +83,25 @@ const ProfileEndpoints: RouteModule['handler'] = async (fastify, { pm }) => {
 
 				switch (msg) {
 					case 'not_found':
-						return { success: false, error: 'Profile not found' };
+						return { success: false, error: 'Admin not found' };
+					case 'UNIQUE constraint failed: admin_users.discord_id':
+					case 'UNIQUE constraint failed: admin_users.cfx_id':
+						return {
+							success: false,
+							error: 'Identifier already registered',
+						};
+					case 'invalid_cfx_id':
+					case 'invalid_discord_id':
+						return {
+							success: false,
+							error: 'Identifier format is invalid',
+						};
 					default:
+						console.error('Failed to update profile identifier:', {
+							by: admin,
+							data: { cfxId, discordId },
+							error: msg,
+						});
 						throw err;
 				}
 			}
