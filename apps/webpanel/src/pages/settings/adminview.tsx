@@ -35,7 +35,6 @@ import {
 	Loader2,
 	Trash,
 	UserPlus,
-	UserSearch,
 	UsersRound,
 } from 'lucide-react';
 import { formatDate, initials } from '@/lib/utils';
@@ -61,7 +60,6 @@ import {
 	DynamicIcon,
 	type LucidIconName,
 } from '@fxmanager/ui/components/dynamic-icon';
-import { PlayerSearch } from './components/player-search';
 import { AuditLogRow } from './components/auditlog-row';
 
 function LoadingSkeleton() {
