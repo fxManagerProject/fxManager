@@ -116,7 +116,10 @@ class PlayersRepository {
 				.map(([type, value]) => ({
 					type,
 					value,
-				}));
+				})) as {
+				type: 'fivem' | 'discord' | 'license' | 'steam';
+				value: string;
+			}[];
 
 			if (existingIdentifier) {
 				const playerId = existingIdentifier.playerId;
@@ -161,8 +164,12 @@ class PlayersRepository {
 					(row) => row.type === 'fivem',
 				)?.value;
 				const conditions = [
-					discordVal ? eq(adminUsers.discordId, discordVal) : undefined,
-					fivemVal ? eq(adminUsers.cfxId, fivemVal) : undefined,
+					discordVal
+						? eq(adminUsers.discordId, discordVal.replace(/\D/g, ''))
+						: undefined,
+					fivemVal
+						? eq(adminUsers.cfxId, fivemVal.replace(/\D/g, ''))
+						: undefined,
 				].filter(Boolean) as any;
 
 				const staffCheck = await tx.query.adminUsers.findFirst({
@@ -173,7 +180,8 @@ class PlayersRepository {
 				const isStaff = !!staffCheck;
 
 				if (isStaff) {
-					await tx.update(adminUsers)
+					await tx
+						.update(adminUsers)
 						.set({ playerId: newPlayer.id })
 						.where(eq(adminUsers.id, staffCheck.id));
 				}
