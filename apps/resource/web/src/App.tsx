@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { isEnvBrowser } from './utils/misc';
 import { useNuiEvent } from './hooks/useNuiEvent';
 import { fetchNui } from './utils/fetchNui';
+import { Button } from '@fxmanager/ui/components/button';
 
 function App() {
 	const [visible, setVisible] = useState(isEnvBrowser());
@@ -19,21 +20,30 @@ function App() {
 	return (
 		<>
 			{visible && (
-				<div className="boilerplate-wrapper">
-					<div className="boilerplate-modal-container">
-						<h3>Boilerplate Modal</h3>
-						<p>Count: {count}</p>
+				<div className="flex h-screen flex-col items-center justify-center">
 
-						<div>
-							<button type="button" onClick={() => setCount((prev) => ++prev)}>
+					<div className="min-w-[300px] rounded-lg bg-[#22232c] p-6 text-white shadow-xl">
+						<h3 className="mb-1 text-xl font-semibold">Boilerplate Modal</h3>
+						<p className="mb-6 text-sm text-gray-300">Count: {count}</p>
+
+						<div className="flex gap-2">
+							<Button
+								onClick={() => setCount((prev) => ++prev)}
+							>
 								Increment
-							</button>
-							<button type="button" onClick={() => setCount((prev) => --prev)}>
+							</Button>
+							<Button
+								variant="outline"
+								onClick={() => setCount((prev) => --prev)}
+							>
 								Decrement
-							</button>
-							<button type="button" onClick={() => handleHideModal()}>
+							</Button>
+							<Button
+								variant="destructive"
+								onClick={() => handleHideModal()}
+							>
 								Hide modal
-							</button>
+							</Button>
 						</div>
 					</div>
 				</div>
