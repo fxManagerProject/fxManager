@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@fxmanager/ui/components/button';
 import { Switch } from '@fxmanager/ui/components/switch';
 import {
@@ -13,8 +13,14 @@ import {
 	Trash2,
 	type LucideIcon,
 	Server,
+	ChevronLeft,
+	ChevronRight,
 } from 'lucide-react';
 import { useRovingFocus } from '~/hooks/useRovingFocus';
+import { useNuiEvent } from '~/hooks/useNuiEvent';
+import { isEnvBrowser } from '~/utils/misc';
+
+type NavigationDirection = 'up' | 'down' | 'left' | 'right' | 'select' | 'back' | 'reset';
 
 type QuickActionItem =
 	| {
@@ -41,8 +47,6 @@ export function QuickMenu({ onClose }: { onClose: () => void }) {
 	const [tags, setTags] = useState(true);
 	const [blips, setBlips] = useState(false);
 
-	// Flat, ordered list of every interactive control in the menu.
-	// Order here is the order arrow-key navigation follows.
 	const items: QuickActionItem[] = [
 		{
 			type: 'button',
@@ -138,71 +142,136 @@ export function QuickMenu({ onClose }: { onClose: () => void }) {
 		},
 	];
 
-	const { getItemProps } = useRovingFocus({
-		itemCount: items.length,
+	const groups = useMemo(() => Array.from(new Set(items.map((i) => i.group))), [items]);
+	const [activeGroupIndex, setActiveGroupIndex] = useState(0);
+	const activeGroup = groups[activeGroupIndex];
+
+	const activeItems = useMemo(
+		() => items.filter((i) => i.group === activeGroup),
+		[items, activeGroup]
+	);
+
+	const nextGroup = () => setActiveGroupIndex((prev) => (prev + 1) % groups.length);
+	const prevGroup = () => setActiveGroupIndex((prev) => (prev - 1 + groups.length) % groups.length);
+
+	const {
+		activeIndex,
+		moveUp,
+		moveDown,
+		moveLeft,
+		moveRight,
+		activateCurrent,
+		resetFocus,
+	} = useRovingFocus({
+		itemCount: activeItems.length,
 		onActivate: (index) => {
-			const item = items[index];
+			const item = activeItems[index];
+			if (!item) return;
 			if (item.type === 'button') item.onSelect();
 			if (item.type === 'toggle') item.onChange(!item.checked);
 		},
+		onNextCategory: nextGroup,
+		onPrevCategory: prevGroup,
 	});
 
-	let lastGroup = '';
+	// Listen for native NUI messages sent from client JS Scrt
+	useNuiEvent<NavigationDirection>('navigate', (direction) => {
+		switch (direction) {
+			case 'up':
+				moveUp();
+				break;
+			case 'down':
+				moveDown();
+				break;
+			case 'left':
+				moveLeft();
+				break;
+			case 'right':
+				moveRight();
+				break;
+			case 'select':
+				activateCurrent();
+				break;
+			case 'reset':
+				resetFocus();
+				break;
+			case 'back':
+				onClose();
+				break;
+		}
+	});
 
 	return (
 		<div
 			role="menu"
 			aria-label="Quick actions"
-			className="w-72 rounded-md border bg-card text-card-foreground shadow-sm"
-			onKeyDown={(e) => {
-				if (e.key === 'Escape') onClose();
-			}}
+			className="w-72 rounded-lg border bg-card/95 text-card-foreground shadow-2xl backdrop-blur-md overflow-hidden"
 		>
-			<header className="flex items-center justify-between gap-2 px-4 py-3 border-b">
-				<div
-					className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"
-				>
-					<Server />
-				</div>
-				<div className="grid flex-1 text-left text-sm leading-tight">
-					<span className="text-base font-bold">
-						<span className="text-primary">fx</span>Manager Panel
+			<header className="flex items-center justify-between gap-2 px-3 py-2 border-b">
+				<div className="flex items-center gap-2">
+					<div className="flex aspect-square size-6 items-center justify-center rounded bg-primary text-primary-foreground">
+						<Server className="h-3.5 w-3.5" />
+					</div>
+					<span className="text-md font-bold">
+						<span className="text-primary">fx</span>Manager
 					</span>
 				</div>
-				<kbd className="text-xs text-muted-foreground">F6</kbd>
+				{isEnvBrowser() ? (
+					<span className="text-[10px] text-muted-foreground bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20">
+						DEV BROWSER
+					</span>
+				) : (
+					<kbd className="text-[10px] text-muted-foreground px-1.5 py-0.5">
+						F6
+					</kbd>
+				)}
 			</header>
 
-			<div className="p-2 flex flex-col gap-1">
-				{items.map((item, index) => {
-					const showGroupLabel = item.group !== lastGroup;
-					lastGroup = item.group;
-					const itemProps = getItemProps(index);
+			<div
+				className={`flex items-center justify-between border-b px-2.5 py-1.5 text-xs transition-colors ${
+					activeIndex === -1
+						? 'bg-primary text-primary-foreground font-bold'
+						: 'bg-muted/40 text-muted-foreground'
+				}`}
+			>
+				<ChevronLeft className="h-4 w-4" />
+				<span className="tracking-wider uppercase text-[11px]">
+					{activeGroup}
+				</span>
+				<ChevronRight className="h-4 w-4" />
+			</div>
+
+			<div className="p-1.5 flex flex-col gap-1 min-h-[160px]">
+				{activeItems.map((item, index) => {
+					const isFocused = activeIndex === index;
 
 					return (
 						<div key={item.key}>
-							{showGroupLabel && (
-								<p className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-									{item.group}
-								</p>
-							)}
 							{item.type === 'toggle' ? (
-								<div className="flex items-center justify-between rounded-sm px-2 py-1.5 text-sm">
+								<div
+									className={`flex items-center justify-between rounded px-2.5 py-2 text-xs transition-colors ${
+										isFocused
+											? 'bg-primary text-primary-foreground font-semibold'
+											: 'text-foreground hover:bg-muted/50'
+									}`}
+								>
 									<div className="flex items-center gap-2">
-										<item.icon className="h-4 w-4 text-muted-foreground" />
-										{item.label}
+										<item.icon className={`h-4 w-4 ${isFocused ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+										<span>{item.label}</span>
 									</div>
 									<Switch
 										checked={item.checked}
 										onCheckedChange={item.onChange}
-										{...itemProps}
+										tabIndex={-1}
 									/>
 								</div>
 							) : (
 								<Button
-									variant={item.variant ?? 'ghost'}
-									className="w-full justify-start gap-2"
-									onClick={item.onSelect}
-									{...itemProps}
+									variant={isFocused ? 'default' : (item.variant ?? 'ghost')}
+									size="sm"
+									className={`w-full justify-start gap-2 text-xs h-9 ${
+										isFocused ? 'bg-primary text-primary-foreground shadow' : ''
+									}`}
 								>
 									<item.icon className="h-4 w-4" />
 									{item.label}
@@ -212,6 +281,11 @@ export function QuickMenu({ onClose }: { onClose: () => void }) {
 					);
 				})}
 			</div>
+
+			<footer className="flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground bg-muted/20">
+				<span><kbd className="font-mono">↑</kbd> Category Bar</span>
+				<span><kbd className="font-mono">← →</kbd> Switch Tab</span>
+			</footer>
 		</div>
 	);
 }

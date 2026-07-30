@@ -1,71 +1,113 @@
-import { useCallback, useRef, useState, type KeyboardEvent } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { isEnvBrowser } from '~/utils/misc';
 
 interface UseRovingFocusOptions {
 	itemCount: number;
-	orientation?: 'vertical' | 'horizontal';
 	onActivate?: (index: number) => void;
+	onNextCategory?: () => void;
+	onPrevCategory?: () => void;
 }
 
-// Implements the roving-tabindex pattern: only the active item is tab-stoppable,
-// arrow keys move focus between items, Enter/Space activates the focused one.
 export function useRovingFocus({
 	itemCount,
-	orientation = 'vertical',
 	onActivate,
+	onNextCategory,
+	onPrevCategory,
 }: UseRovingFocusOptions) {
+	// index -1 = Category Header Bar, 0 to itemCount - 1 = Action items
 	const [activeIndex, setActiveIndex] = useState(0);
-	const itemRefs = useRef<(HTMLElement | null)[]>([]);
 
-	const focusItem = useCallback(
-		(index: number) => {
-			if (itemCount === 0) return;
-			const next = (index + itemCount) % itemCount;
-			setActiveIndex(next);
-			itemRefs.current[next]?.focus();
-		},
-		[itemCount],
-	);
+	const moveDown = useCallback(() => {
+		setActiveIndex((prev) => {
+			if (prev < itemCount - 1) return prev + 1;
+			return 0;
+		});
+	}, [itemCount]);
 
-	const handleKeyDown = useCallback(
-		(e: KeyboardEvent, index: number) => {
-			const nextKey = orientation === 'vertical' ? 'ArrowDown' : 'ArrowRight';
-			const prevKey = orientation === 'vertical' ? 'ArrowUp' : 'ArrowLeft';
+	const moveUp = useCallback(() => {
+		setActiveIndex((prev) => {
+			if (prev >= 0) return prev - 1;
+			return itemCount - 1;
+		});
+	}, []);
 
+	const moveLeft = useCallback(() => {
+		setActiveIndex((prev) => {
+			if (prev === -1) {
+				onPrevCategory?.();
+			}
+			return prev;
+		});
+	}, [onPrevCategory]);
+
+	const moveRight = useCallback(() => {
+		setActiveIndex((prev) => {
+			if (prev === -1) {
+				onNextCategory?.();
+			}
+			return prev;
+		});
+	}, [onNextCategory]);
+
+	const activateCurrent = useCallback(() => {
+		setActiveIndex((prev) => {
+			if (prev >= 0) {
+				onActivate?.(prev);
+			} else if (prev === -1) {
+				// Pressing Enter/Select on header drops focus to item 0
+				return 0;
+			}
+			return prev;
+		});
+	}, [onActivate]);
+
+	// Dev-only fallback keyboard listener when testing in standard web browser
+	useEffect(() => {
+		if (!isEnvBrowser()) return;
+
+		const handleKeyDown = (e: KeyboardEvent) => {
 			switch (e.key) {
-				case nextKey:
+				case 'ArrowDown':
 					e.preventDefault();
-					focusItem(index + 1);
+					moveDown();
 					break;
-				case prevKey:
+				case 'ArrowUp':
 					e.preventDefault();
-					focusItem(index - 1);
+					moveUp();
 					break;
-				case 'Home':
+				case 'ArrowLeft':
 					e.preventDefault();
-					focusItem(0);
+					moveLeft();
 					break;
-				case 'End':
+				case 'ArrowRight':
 					e.preventDefault();
-					focusItem(itemCount - 1);
+					moveRight();
 					break;
 				case 'Enter':
 				case ' ':
 					e.preventDefault();
-					onActivate?.(index);
+					activateCurrent();
 					break;
+				case 'Tab':
+					e.preventDefault();
+					setActiveIndex(-1);
+					break;
+				default:
+					console.log('[DEV] Unknown key', e.key);
 			}
-		},
-		[orientation, focusItem, itemCount, onActivate],
-	);
+		};
 
-	const getItemProps = (index: number) => ({
-		ref: (el: HTMLElement | null) => {
-			itemRefs.current[index] = el;
-		},
-		tabIndex: index === activeIndex ? 0 : -1,
-		onKeyDown: (e: KeyboardEvent) => handleKeyDown(e, index),
-		onFocus: () => setActiveIndex(index),
-	});
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [moveDown, moveUp, moveLeft, moveRight, activateCurrent]);
 
-	return { activeIndex, getItemProps, focusItem };
+	return {
+		activeIndex,
+		moveDown,
+		moveUp,
+		moveLeft,
+		moveRight,
+		activateCurrent,
+		resetFocus: () => setActiveIndex(-1),
+	};
 }
