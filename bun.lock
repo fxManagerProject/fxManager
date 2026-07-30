@@ -38,8 +38,10 @@
       "version": "0.3.2",
       "dependencies": {
         "@communityox/ox_lib": "latest",
+        "@fxmanager/shared": "workspace:*",
         "@fxmanager/ui": "workspace:*",
         "@nativewrappers/fivem": "latest",
+        "lucide-react": "^1.27.0",
         "node-fetch": "^3.3.2",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
@@ -49,7 +51,6 @@
         "@citizenfx/client": "latest",
         "@citizenfx/server": "latest",
         "@communityox/fx-utils": "^0.0.4",
-        "@fxmanager/shared": "workspace:*",
         "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
         "@types/node": "^22.13.9",
         "@types/react": "^18.3.18",
@@ -228,7 +229,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.4.8", "", { "os": "win32", "cpu": "x64" }, "sha512-vAn7iXDoUbqFXqVocuq1sMYAd33p8+mmurqJkWl6CtIhobd/O6moe4rY5AJvzbunn/qZCdiDVcveqtkFh1e7Hg=="],
 
-    "@citizenfx/client": ["@citizenfx/client@2.0.33230-1", "", {}, "sha512-RAQzWsc257nvZpc7OMy1OHWjCKpSemR6oLn5x9T7ZZJhQ9koVGVEeF3WjRCz/z7F72Yhfvf5gbmDHir61feYTA=="],
+    "@citizenfx/client": ["@citizenfx/client@2.0.33864-1", "", {}, "sha512-nl6bIOSOofvO7P9EuAT7ZaZr7Pw/wyVNO+sy2XLKKGLfzMqa6kQUbMhGN0pxJzXv65UQBWNPLxuvgAJly04zIQ=="],
 
     "@citizenfx/server": ["@citizenfx/server@2.0.32561-1", "", {}, "sha512-2V76aX67pvB00mCbkMIPsTLWsXRJUHhTCVXuEYKm5jSaVh21ZnNN7t2AzRhNOEovBnllXDDHKcVaNzvzwN1fMA=="],
 
@@ -1170,7 +1171,7 @@
 
     "lru-cache": ["lru-cache@11.2.7", "", {}, "sha512-aY/R+aEsRelme17KGQa/1ZSIpLpNYYrhcrepKTZgE+W3WM16YMCaPwOHLHsmopZHELU0Ojin1lPVxKR0MihncA=="],
 
-    "lucide-react": ["lucide-react@1.0.1", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-lih7tKEczCYOQjVEzpFuxEuNzlwf+1yhvlMlEkGWJM3va8Pugv8bYXc/pRtcjPncaP7k84X0Pt/71ufxvqEPtQ=="],
+    "lucide-react": ["lucide-react@1.27.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-rJicGl/3Fly/E0rOH1YmPZ6e49JCnKknh1ox1vpHnkfjujAkKA6sqUZvH3MTAaXXjgexyUwgNwTJzTtYuAFYJw=="],
 
     "magic-bytes.js": ["magic-bytes.js@1.13.0", "", {}, "sha512-afO2mnxW7GDTXMm5/AoN1WuOcdoKhtgXjIvHmobqTD1grNplhGdv3PFOyjCVmrnOZBIT/gD/koDKpYG+0mvHcg=="],
 
@@ -1643,6 +1644,8 @@
     "@fxmanager/webpanel/@types/react-dom": ["@types/react-dom@19.2.3", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ=="],
 
     "@fxmanager/webpanel/@vitejs/plugin-react": ["@vitejs/plugin-react@5.2.0", "", { "dependencies": { "@babel/core": "^7.29.0", "@babel/plugin-transform-react-jsx-self": "^7.27.1", "@babel/plugin-transform-react-jsx-source": "^7.27.1", "@rolldown/pluginutils": "1.0.0-rc.3", "@types/babel__core": "^7.20.5", "react-refresh": "^0.18.0" }, "peerDependencies": { "vite": "^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0" } }, "sha512-YmKkfhOAi3wsB1PhJq5Scj3GXMn3WvtQ/JC0xoopuHoXSdmtdStOpFrYaT1kie2YgFBcIe64ROzMYRjCrYOdYw=="],
+
+    "@fxmanager/webpanel/lucide-react": ["lucide-react@1.0.1", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-lih7tKEczCYOQjVEzpFuxEuNzlwf+1yhvlMlEkGWJM3va8Pugv8bYXc/pRtcjPncaP7k84X0Pt/71ufxvqEPtQ=="],
 
     "@fxmanager/webpanel/react": ["react@19.2.4", "", {}, "sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ=="],
 
