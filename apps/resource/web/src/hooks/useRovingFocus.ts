@@ -3,6 +3,7 @@ import { isEnvBrowser } from '~/utils/misc';
 
 interface UseRovingFocusOptions {
 	itemCount: number;
+	disabled?: boolean;
 	onActivate?: (index: number) => void;
 	onNextCategory?: () => void;
 	onPrevCategory?: () => void;
@@ -10,6 +11,7 @@ interface UseRovingFocusOptions {
 
 export function useRovingFocus({
 	itemCount,
+	disabled = false,
 	onActivate,
 	onNextCategory,
 	onPrevCategory,
@@ -66,6 +68,8 @@ export function useRovingFocus({
 		if (!isEnvBrowser()) return;
 
 		const handleKeyDown = (e: KeyboardEvent) => {
+			if (disabled) return;
+
 			switch (e.key) {
 				case 'ArrowDown':
 					e.preventDefault();
