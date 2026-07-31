@@ -41,9 +41,7 @@ export function MainPanel({ role, onClose }: MainPanelProps) {
 	return (
 		<div className="fixed inset-4 flex flex-col rounded-md border bg-card text-card-foreground shadow-sm">
 			<header className="flex items-center justify-start gap-2 border-b px-5 py-3">
-				<div
-					className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"
-				>
+				<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
 					<Server />
 				</div>
 				<div className="grid flex-1 text-left text-sm leading-tight">

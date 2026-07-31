@@ -9,16 +9,18 @@ import { DevTools } from './components/devtools';
 
 type Mode = 'quick' | 'panel' | null;
 
-debugData([{
-	action: 'visibility',
-	data: { tab: 'quick' } as { tab: Mode },
-}]);
+debugData([
+	{
+		action: 'visibility',
+		data: { tab: 'quick' } as { tab: Mode },
+	},
+]);
 
 export default function App() {
 	const [mode, setMode] = useState<Mode>(null);
 	const [permissions] = useState<Permissions>(['MASTER']);
 
-	useNuiEvent<{ tab: 'quick' | 'panel'; }>('visibility', ({ tab }) => {
+	useNuiEvent<{ tab: 'quick' | 'panel' }>('visibility', ({ tab }) => {
 		setMode((m) => (m === tab ? null : tab));
 	});
 

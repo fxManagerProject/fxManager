@@ -9,7 +9,7 @@ interface ModifierKeys {
 export function useHotkey(
 	targetKey: string,
 	callback: () => void,
-	modifiers: ModifierKeys = {}
+	modifiers: ModifierKeys = {},
 ) {
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
@@ -24,7 +24,9 @@ export function useHotkey(
 			}
 
 			const matchesKey = event.key.toLowerCase() === targetKey.toLowerCase();
-			const matchesCtrl = modifiers.ctrl ? event.ctrlKey || event.metaKey : true;
+			const matchesCtrl = modifiers.ctrl
+				? event.ctrlKey || event.metaKey
+				: true;
 			const matchesAlt = modifiers.alt ? event.altKey : true;
 			const matchesShift = modifiers.shift ? event.shiftKey : true;
 

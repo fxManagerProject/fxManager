@@ -17,15 +17,27 @@ export const DevTools: React.FC = () => {
 		]);
 	};
 
-	useHotkey('F6', () => {
-		sendVisibilityEvent('quick');
-	}, { });
-	useHotkey('F7', () => {
-		sendVisibilityEvent('panel');
-	}, { });
-	useHotkey('D', () => {
-		setIsOpen(prev => !prev);
-	}, { alt: true, shift: true });
+	useHotkey(
+		'F6',
+		() => {
+			sendVisibilityEvent('quick');
+		},
+		{},
+	);
+	useHotkey(
+		'F7',
+		() => {
+			sendVisibilityEvent('panel');
+		},
+		{},
+	);
+	useHotkey(
+		'D',
+		() => {
+			setIsOpen((prev) => !prev);
+		},
+		{ alt: true, shift: true },
+	);
 
 	return (
 		<div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2 font-sans select-none">
@@ -42,7 +54,9 @@ export const DevTools: React.FC = () => {
 						className="px-2.5 py-1.5 rounded text-left hover:bg-zinc-800 hover:text-white transition-colors flex items-center justify-between"
 					>
 						<span>Open Quick Tab</span>
-						<span className="text-[10px] bg-zinc-800 text-zinc-400 px-1 rounded">Quick</span>
+						<span className="text-[10px] bg-zinc-800 text-zinc-400 px-1 rounded">
+							Quick
+						</span>
 					</button>
 
 					<button
@@ -50,7 +64,9 @@ export const DevTools: React.FC = () => {
 						className="px-2.5 py-1.5 rounded text-left hover:bg-zinc-800 hover:text-white transition-colors flex items-center justify-between"
 					>
 						<span>Open Panel</span>
-						<span className="text-[10px] bg-zinc-800 text-zinc-400 px-1 rounded">Panel</span>
+						<span className="text-[10px] bg-zinc-800 text-zinc-400 px-1 rounded">
+							Panel
+						</span>
 					</button>
 
 					<button
