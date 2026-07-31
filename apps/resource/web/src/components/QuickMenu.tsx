@@ -18,9 +18,17 @@ import {
 } from 'lucide-react';
 import { useRovingFocus } from '~/hooks/useRovingFocus';
 import { useNuiEvent } from '~/hooks/useNuiEvent';
+import { PromptDialog, type PromptDialogProps } from './DialogPrompt';
 import { isEnvBrowser } from '~/utils/misc';
 
-type NavigationDirection = 'up' | 'down' | 'left' | 'right' | 'select' | 'back' | 'reset';
+type NavigationDirection =
+	| 'up'
+	| 'down'
+	| 'left'
+	| 'right'
+	| 'select'
+	| 'back'
+	| 'reset';
 
 type QuickActionItem =
 	| {
@@ -42,19 +50,46 @@ type QuickActionItem =
 			onChange: (value: boolean) => void;
 	  };
 
+type DialogConfig = Omit<PromptDialogProps, 'isOpen' | 'onClose'>;
+
 export function QuickMenu({ onClose }: { onClose: () => void }) {
 	const [noclip, setNoclip] = useState(false);
 	const [tags, setTags] = useState(true);
 	const [blips, setBlips] = useState(false);
+	const [activeDialog, setActiveDialog] = useState<DialogConfig | null>(null);
 
 	const items: QuickActionItem[] = [
 		{
 			type: 'button',
-			key: 'teleport',
+			key: 'teleport_marker',
 			group: 'Movement',
 			label: 'Teleport to marker',
 			icon: MapPin,
 			onSelect: () => console.log('teleport to marker'),
+		},
+		{
+			type: 'button',
+			key: 'teleport_coords',
+			group: 'Movement',
+			label: 'Teleport to coordinates',
+			icon: MapPin,
+			onSelect: () => {
+				setActiveDialog({
+					title: 'Teleport to Coordinates',
+					description: 'Enter world coordinates in X, Y, Z format.',
+					placeholder: '0.0, 0.0, 70.0',
+					// Regex for comma-separated numbers (floats or integers)
+					pattern:
+						/^\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*$/,
+					errorMessage: 'Format must be X, Y, Z (e.g., 215.1, -810.4, 30.7)',
+					presets: [
+						{ label: 'Legion Square', value: '215.1, -810.4, 30.7' },
+						{ label: 'LS Airport', value: '-1037.6, -2737.8, 13.8' },
+						{ label: 'Sandy Shores', value: '1850.1, 3686.2, 33.8' },
+					],
+					onConfirm: (val) => console.log('Teleporting to:', val),
+				});
+			},
 		},
 		{
 			type: 'toggle',
@@ -85,11 +120,29 @@ export function QuickMenu({ onClose }: { onClose: () => void }) {
 		},
 		{
 			type: 'button',
-			key: 'heal',
+			key: 'heal_self',
+			group: 'Medical',
+			label: 'Heal self',
+			icon: HeartPulse,
+			onSelect: () => console.log('healed self'),
+		},
+		{
+			type: 'button',
+			key: 'heal_other',
 			group: 'Medical',
 			label: 'Heal player',
-			icon: HeartPulse,
-			onSelect: () => console.log('heal player'),
+			icon: Zap,
+			onSelect: () => {
+				setActiveDialog({
+					title: 'Heal Player',
+					description: 'Enter the target player Server ID.',
+					placeholder: 'Server ID (e.g. 12)',
+					// Regex for numeric Server IDs
+					pattern: /^\d+$/,
+					errorMessage: 'Must be a valid numeric Server ID',
+					onConfirm: (val) => console.log('Healing player ID:', val),
+				});
+			},
 		},
 		{
 			type: 'button',
@@ -101,27 +154,28 @@ export function QuickMenu({ onClose }: { onClose: () => void }) {
 		},
 		{
 			type: 'button',
-			key: 'revive',
-			group: 'Medical',
-			label: 'Revive player',
-			icon: Zap,
-			onSelect: () => console.log('revive player'),
-		},
-		{
-			type: 'button',
-			key: 'revive-all',
-			group: 'Medical',
-			label: 'Revive all',
-			icon: Zap,
-			onSelect: () => console.log('revive all'),
-		},
-		{
-			type: 'button',
 			key: 'spawn',
 			group: 'Vehicle',
 			label: 'Spawn vehicle',
 			icon: Car,
-			onSelect: () => console.log('spawn vehicle'),
+			onSelect: () => {
+				setActiveDialog({
+					title: 'Spawn Vehicle',
+					description: 'Enter a valid vehicle spawn model name.',
+					placeholder: 'e.g. adder, t20, sultan',
+					// Regex for alphanumeric + underscore model names
+					pattern: /^[a-zA-Z0-9_]+$/,
+					errorMessage:
+						'Model name can only contain letters, numbers, and underscores',
+					presets: [
+						{ label: 'Sultan', value: 'sultan' },
+						{ label: 'Adder', value: 'adder' },
+						{ label: 'Police Car', value: 'police' },
+					],
+					confirmLabel: 'Spawn',
+					onConfirm: (val) => console.log('Spawning vehicle:', val),
+				});
+			},
 		},
 		{
 			type: 'button',
@@ -142,17 +196,22 @@ export function QuickMenu({ onClose }: { onClose: () => void }) {
 		},
 	];
 
-	const groups = useMemo(() => Array.from(new Set(items.map((i) => i.group))), [items]);
+	const groups = useMemo(
+		() => Array.from(new Set(items.map((i) => i.group))),
+		[items],
+	);
 	const [activeGroupIndex, setActiveGroupIndex] = useState(0);
 	const activeGroup = groups[activeGroupIndex];
 
 	const activeItems = useMemo(
 		() => items.filter((i) => i.group === activeGroup),
-		[items, activeGroup]
+		[items, activeGroup],
 	);
 
-	const nextGroup = () => setActiveGroupIndex((prev) => (prev + 1) % groups.length);
-	const prevGroup = () => setActiveGroupIndex((prev) => (prev - 1 + groups.length) % groups.length);
+	const nextGroup = () =>
+		setActiveGroupIndex((prev) => (prev + 1) % groups.length);
+	const prevGroup = () =>
+		setActiveGroupIndex((prev) => (prev - 1 + groups.length) % groups.length);
 
 	const {
 		activeIndex,
@@ -164,6 +223,7 @@ export function QuickMenu({ onClose }: { onClose: () => void }) {
 		resetFocus,
 	} = useRovingFocus({
 		itemCount: activeItems.length,
+		disabled: activeDialog !== null,
 		onActivate: (index) => {
 			const item = activeItems[index];
 			if (!item) return;
@@ -174,8 +234,9 @@ export function QuickMenu({ onClose }: { onClose: () => void }) {
 		onPrevCategory: prevGroup,
 	});
 
-	// Listen for native NUI messages sent from client JS Scrt
 	useNuiEvent<NavigationDirection>('navigate', (direction) => {
+		if (activeDialog) return;
+
 		switch (direction) {
 			case 'up':
 				moveUp();
@@ -202,90 +263,108 @@ export function QuickMenu({ onClose }: { onClose: () => void }) {
 	});
 
 	return (
-		<div
-			role="menu"
-			aria-label="Quick actions"
-			className="w-72 rounded-lg border bg-card/95 text-card-foreground shadow-2xl backdrop-blur-md overflow-hidden"
-		>
-			<header className="flex items-center justify-between gap-2 px-3 py-2 border-b">
-				<div className="flex items-center gap-2">
-					<div className="flex aspect-square size-6 items-center justify-center rounded bg-primary text-primary-foreground">
-						<Server className="h-3.5 w-3.5" />
-					</div>
-					<span className="text-md font-bold">
-						<span className="text-primary">fx</span>Manager
-					</span>
-				</div>
-				{isEnvBrowser() ? (
-					<span className="text-[10px] text-muted-foreground bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20">
-						DEV BROWSER
-					</span>
-				) : (
-					<kbd className="text-[10px] text-muted-foreground px-1.5 py-0.5">
-						F6
-					</kbd>
-				)}
-			</header>
-
+		<>
 			<div
-				className={`flex items-center justify-between border-b px-2.5 py-1.5 text-xs transition-colors ${
-					activeIndex === -1
-						? 'bg-primary text-primary-foreground font-bold'
-						: 'bg-muted/40 text-muted-foreground'
-				}`}
+				role="menu"
+				aria-label="Quick actions"
+				className="w-72 rounded-lg border bg-card/95 text-card-foreground shadow-2xl backdrop-blur-md overflow-hidden"
 			>
-				<ChevronLeft className="h-4 w-4" />
-				<span className="tracking-wider uppercase text-[11px]">
-					{activeGroup}
-				</span>
-				<ChevronRight className="h-4 w-4" />
-			</div>
-
-			<div className="p-1.5 flex flex-col gap-1 min-h-[160px]">
-				{activeItems.map((item, index) => {
-					const isFocused = activeIndex === index;
-
-					return (
-						<div key={item.key}>
-							{item.type === 'toggle' ? (
-								<div
-									className={`flex items-center justify-between rounded px-2.5 py-2 text-xs transition-colors ${
-										isFocused
-											? 'bg-primary text-primary-foreground font-semibold'
-											: 'text-foreground hover:bg-muted/50'
-									}`}
-								>
-									<div className="flex items-center gap-2">
-										<item.icon className={`h-4 w-4 ${isFocused ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-										<span>{item.label}</span>
-									</div>
-									<Switch
-										checked={item.checked}
-										onCheckedChange={item.onChange}
-										tabIndex={-1}
-									/>
-								</div>
-							) : (
-								<Button
-									variant={isFocused ? 'default' : (item.variant ?? 'ghost')}
-									size="sm"
-									className={`w-full justify-start gap-2 text-xs h-9 ${
-										isFocused ? 'bg-primary text-primary-foreground shadow' : ''
-									}`}
-								>
-									<item.icon className="h-4 w-4" />
-									{item.label}
-								</Button>
-							)}
+				<header className="flex items-center justify-between gap-2 px-3 py-2 border-b">
+					<div className="flex items-center gap-2">
+						<div className="flex aspect-square size-6 items-center justify-center rounded bg-primary text-primary-foreground">
+							<Server className="h-3.5 w-3.5" />
 						</div>
-					);
-				})}
+						<span className="text-md font-bold">
+							<span className="text-primary">fx</span>Manager
+						</span>
+					</div>
+					{isEnvBrowser() ? (
+						<span className="text-[10px] text-muted-foreground bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20">
+							DEV BROWSER
+						</span>
+					) : (
+						<kbd className="text-[10px] text-muted-foreground px-1.5 py-0.5">
+							F6
+						</kbd>
+					)}
+				</header>
+
+				<div
+					className={`flex items-center justify-between border-b px-2.5 py-1.5 text-xs transition-colors ${
+						activeIndex === -1
+							? 'bg-primary text-primary-foreground font-bold'
+							: 'bg-muted/40 text-muted-foreground'
+					}`}
+				>
+					<ChevronLeft className="h-4 w-4" />
+					<span className="tracking-wider uppercase text-[11px]">
+						{activeGroup}
+					</span>
+					<ChevronRight className="h-4 w-4" />
+				</div>
+
+				<div className="p-1.5 flex flex-col min-h-[160px]">
+					{activeItems.map((item, index) => {
+						const isFocused = activeIndex === index;
+
+						return (
+							<div key={item.key}>
+								{item.type === 'toggle' ? (
+									<div
+										className={`flex items-center justify-between rounded px-2.5 py-2 text-xs transition-colors ${
+											isFocused
+												? 'bg-primary text-primary-foreground font-semibold'
+												: 'text-foreground hover:bg-muted/50'
+										}`}
+									>
+										<div className="flex items-center gap-2">
+											<item.icon
+												className={`h-4 w-4 ${isFocused ? 'text-primary-foreground' : 'text-muted-foreground'}`}
+											/>
+											<span>{item.label}</span>
+										</div>
+										<Switch
+											checked={item.checked}
+											onCheckedChange={item.onChange}
+											tabIndex={-1}
+										/>
+									</div>
+								) : (
+									<Button
+										variant={isFocused ? 'default' : (item.variant ?? 'ghost')}
+										size="sm"
+										className={`w-full justify-start gap-2 text-xs h-9 ${
+											isFocused
+												? 'bg-primary text-primary-foreground shadow'
+												: ''
+										}`}
+									>
+										<item.icon className="h-4 w-4" />
+										{item.label}
+									</Button>
+								)}
+							</div>
+						);
+					})}
+				</div>
+
+				<footer className="flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground bg-muted/20">
+					<span>
+						<kbd className="font-mono">↑</kbd> Category Bar
+					</span>
+					<span>
+						<kbd className="font-mono">← →</kbd> Switch Tab
+					</span>
+				</footer>
 			</div>
 
-			<footer className="flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground bg-muted/20">
-				<span><kbd className="font-mono">↑</kbd> Category Bar</span>
-				<span><kbd className="font-mono">← →</kbd> Switch Tab</span>
-			</footer>
-		</div>
+			{activeDialog && (
+				<PromptDialog
+					isOpen={Boolean(activeDialog)}
+					{...activeDialog}
+					onClose={() => setActiveDialog(null)}
+				/>
+			)}
+		</>
 	);
 }
