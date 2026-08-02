@@ -287,8 +287,6 @@ export default function AdminView() {
 			success: (r) => {
 				if (!r.success) throw new Error(r.error);
 
-				console.log('Identifiers updated', r.data);
-
 				setAdminData((prev) => {
 					if (!prev) throw new Error('Invalid Action Sequence (no admin data)');
 
