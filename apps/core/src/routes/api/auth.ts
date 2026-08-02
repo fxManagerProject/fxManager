@@ -1,10 +1,12 @@
 import { Type, type Static } from '@sinclair/typebox';
 import type { FastifyPluginAsync } from 'fastify';
+import crypto from 'node:crypto';
 import { repo } from '@fxmanager/database';
 
 import { COOKIE_NAME } from '../../common/utils';
 import { loginRateLimiter } from '../../modules/auth/rate-limiter';
 import type { RouteModule } from '../../types';
+import { oauthManager } from '../../modules/auth/manager';
 
 const LoginBody = Type.Object({
 	username: Type.String(),
@@ -12,6 +14,12 @@ const LoginBody = Type.Object({
 });
 
 type LoginBodyType = Static<typeof LoginBody>;
+
+function getCallbackUri(request: any, provider: string): string {
+	const protocol = request.headers['x-forwarded-proto'] || request.protocol;
+	const host = request.headers['x-forwarded-host'] || request.headers.host;
+	return `${protocol}://${host}/api/auth/oauth/${provider}/callback`;
+}
 
 const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
 	fastify.post(
@@ -92,6 +100,110 @@ const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
 					}
 				: null,
 		};
+	});
+
+	fastify.post('/oauth/:provider/init', async (request, reply) => {
+		const { provider: providerName } = request.params as { provider: string };
+
+		if (!oauthManager.hasProvider(providerName)) {
+			return reply
+				.code(404)
+				.send({ error: `Provider '${providerName}' not found.` });
+		}
+
+		const provider = oauthManager.getProvider(providerName);
+
+		if (!provider.isConfigured()) {
+			return reply.code(400).send({
+				error: `${providerName} login is currently unavailable or unconfigured.`,
+			});
+		}
+
+		const state = crypto.randomBytes(16).toString('hex');
+		try {
+			const redirectUri = getCallbackUri(request, providerName);
+			const url = provider.getAuthUrl(state, redirectUri);
+
+			return reply
+				.setCookie('oauth_state', state, {
+					httpOnly: true,
+					secure: request.protocol === 'https',
+					sameSite: 'lax',
+					path: '/',
+					maxAge: 60 * 10, // 10 minutes
+				})
+				.send({ url });
+		} catch (error) {
+			return reply.code(500).send({
+				error: error instanceof Error ? error.message : String(error),
+			});
+		}
+	});
+
+	fastify.get('/oauth/:provider/callback', async (request, reply) => {
+		const { provider: providerName } = request.params as { provider: string };
+		const {
+			code,
+			state,
+			error: providerError,
+		} = request.query as {
+			code?: string;
+			state?: string;
+			error?: string;
+		};
+
+		const savedState = request.cookies.oauth_state;
+		reply.clearCookie('oauth_state', { path: '/' });
+
+		if (providerError) {
+			return reply.redirect(`/?error=${encodeURIComponent(providerError)}`);
+		}
+
+		if (!state || !savedState || state !== savedState) {
+			return reply
+				.code(400)
+				.send({ error: 'Invalid or expired CSRF state token.' });
+		}
+
+		if (!code) {
+			return reply.code(400).send({ error: 'Missing authorization code.' });
+		}
+
+		try {
+			const provider = oauthManager.getProvider(providerName);
+			const redirectUri = getCallbackUri(request, providerName);
+
+			const oauthUser = await provider.handleCallback(code, redirectUri);
+
+			const user = repo.auth.findOAuthUser({
+				provider: providerName,
+				providerId: oauthUser.id,
+				username: oauthUser.username,
+				email: oauthUser.email,
+			});
+
+			if (!user) {
+				return reply.redirect(
+					`/?error=${encodeURIComponent('OAuth authentication failed.')}`,
+				);
+			}
+
+			const session = repo.auth.createSession(user.id);
+
+			return reply
+				.setCookie(COOKIE_NAME, session.id, {
+					httpOnly: true,
+					secure: request.protocol === 'https',
+					sameSite: 'lax',
+					path: '/',
+					maxAge: 60 * 60 * 24 * 7,
+				})
+				.redirect('/');
+		} catch (err: any) {
+			return reply.redirect(
+				`/?error=${encodeURIComponent(err.message || 'OAuth authentication failed.')}`,
+			);
+		}
 	});
 };
 

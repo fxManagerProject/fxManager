@@ -56,7 +56,7 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 
 			if (!allowed) throw new Error('Unauthorized');
 
-			const { username, permissions, groupId, playerId } =
+			const { username, permissions, groupId, playerId, cfxId, discordId } =
 				request.body as CreateAdminForm;
 			const password = generatePassword(20);
 
@@ -72,6 +72,8 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 					storedPermissions,
 					false,
 					playerId ?? null,
+					cfxId ?? null,
+					discordId ?? null,
 				);
 
 				if (groupId != null) {
@@ -190,47 +192,59 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 	);
 
 	fastify.post(
-		'/:adminId/player',
+		'/:adminId/identifiers',
 		async (
 			request,
-		): Promise<ApiResponse<{ newPlayerId: AdminProfile['playerId'] }>> => {
+		): Promise<
+			ApiResponse<{
+				newCfxId: AdminProfile['cfxId'];
+				newDiscordId: AdminProfile['discordId'];
+				playerId: AdminProfile['playerId'];
+			}>
+		> => {
 			const { admin } = request as AuthedRequest;
 			const { adminId: adminIdRaw } = request.params as { adminId: string };
-			const { playerId } = request.body as {
-				playerId: AdminProfile['playerId'];
+			const { cfxId, discordId } = request.body as {
+				cfxId: AdminProfile['cfxId'];
+				discordId: AdminProfile['discordId'];
 			};
 			const adminId = parseInt(adminIdRaw, 10);
 
-			const allowed = PermissionManager.has(
-				admin.permissions,
-				UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
-			);
+			const allowed =
+				admin.id === adminId ||
+				PermissionManager.has(
+					admin.permissions,
+					UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+				);
 
 			if (!allowed) throw new Error('Unauthorized');
 
 			try {
-				const { username, newPlayerId, previousPlayerId } =
-					await repo.admins.updateLinkedPlayer(
-						adminId,
-						playerId,
-						PermissionManager.has(admin.permissions, UserPermissions.MASTER),
-					);
+				const {
+					username,
+					playerId,
+					newCfxId,
+					newDiscordId,
+					previousCfxId,
+					previousDiscordId,
+				} = await repo.admins.updateIdentifiers(adminId, cfxId, discordId);
 
 				repo.audit.log({
 					adminId: admin.id,
 					action: 'admin.update',
 					metadata: {
-						target: username,
-						previous_playerId: newPlayerId,
-						new_playerId: previousPlayerId,
+						target: `${username} (#${adminId})`,
+						new_cfxId: newCfxId ?? (previousCfxId ? 'removed' : undefined),
+						new_discordId:
+							newDiscordId ?? (previousDiscordId ? 'removed' : undefined),
+						previous_cfxId: previousCfxId ?? undefined,
+						previous_discordId: previousDiscordId ?? undefined,
 					},
 				});
 
-				aceSync.resync(pm);
-
 				return {
 					success: true,
-					data: { newPlayerId },
+					data: { newDiscordId, newCfxId, playerId },
 				};
 			} catch (err) {
 				const msg = (err as Error).message;
@@ -238,12 +252,25 @@ const AdminManagementEndpoints: RouteModule['handler'] = async (
 				switch (msg) {
 					case 'not_found':
 						return { success: false, error: 'Admin not found' };
-					case 'admin_is_master':
+					case 'UNIQUE constraint failed: admin_users.discord_id':
+					case 'UNIQUE constraint failed: admin_users.cfx_id':
 						return {
 							success: false,
-							error: 'Can not change permissions of master account',
+							error: 'Identifier already registered',
+						};
+					case 'invalid_cfx_id':
+					case 'invalid_discord_id':
+						return {
+							success: false,
+							error: 'Identifier format is invalid',
 						};
 					default:
+						console.error('Failed to update identifier for admin:', {
+							by: admin,
+							target: adminId,
+							data: { cfxId, discordId },
+							error: msg,
+						});
 						throw err;
 				}
 			}

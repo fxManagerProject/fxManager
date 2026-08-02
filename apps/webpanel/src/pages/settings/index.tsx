@@ -32,6 +32,7 @@ import { cn } from '@fxmanager/ui/lib/utils';
 import { Skeleton } from '@fxmanager/ui/components/skeleton';
 import type { SettingsTabProps } from '@/types/settings';
 import { toast } from 'sonner';
+import OAuthTab from './tabs/oauth';
 
 interface Tab {
 	value: SettingsScope;
@@ -64,6 +65,12 @@ const TABS = [
 		label: 'Restarts',
 		description: 'Schedule automatic server restarts and warn players.',
 		component: RestartsTab,
+	},
+	{
+		value: 'oauth',
+		label: 'Authentication',
+		description: 'Configure authentication providers for your server.',
+		component: OAuthTab,
 	},
 ] satisfies Tab[];
 

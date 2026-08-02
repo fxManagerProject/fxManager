@@ -1,3 +1,4 @@
+import { m0008_vengeful_microbe } from './0008_vengeful_microbe';
 import { m0007_petite_skrulls } from './0007_petite_skrulls';
 import { m0006_productive_thor } from './0006_productive_thor';
 import { m0005_chubby_daredevil } from './0005_chubby_daredevil';
@@ -33,4 +34,5 @@ export const migrations: Migration[] = [
 	m0005_chubby_daredevil,
 	m0006_productive_thor,
 	m0007_petite_skrulls,
+	m0008_vengeful_microbe,
 ];

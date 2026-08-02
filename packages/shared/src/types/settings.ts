@@ -23,6 +23,8 @@ export interface BaseAdminUser {
 	effectivePermissions: number;
 	group: AdminGroup | null;
 	playerId: number | null;
+	cfxId: string | null;
+	discordId: string | null;
 	createdAt: Date;
 	lastLoginAt: Date | null;
 }
@@ -32,6 +34,8 @@ export interface CreateAdminForm {
 	permissions: UserPermissionsType;
 	groupId: number | null;
 	playerId: number | null;
+	cfxId: string | null;
+	discordId: string | null;
 }
 
 export type SettingsScope = keyof typeof SETTINGS_SCOPES;
