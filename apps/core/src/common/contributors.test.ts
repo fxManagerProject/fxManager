@@ -135,7 +135,7 @@ describe('createContributorsList', () => {
 
 		expect(globalThis.fetch).toHaveBeenCalledTimes(REPO_COUNT);
 		expect(result.external).toHaveLength(1);
-		expect(result.external[0].contributions).toBe(15); // 10 + 5
+		expect(result.external[0]?.contributions).toBe(15); // 10 + 5
 	});
 
 	it('should use cached value and avoid network calls before TTL expires', async () => {
