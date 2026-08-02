@@ -12,7 +12,7 @@
 	<a href="https://fxmanager.dev/docs" target="_blank" style="text-decoration: none;">
 		<img alt="Documentation" src="https://img.shields.io/badge/view-documentation-orange?logo=readthedocs&logoColor=white">
 	</a>
-	<a href="https://discord.gg/WxFGydWfhP" target="_blank" style="text-decoration: none;">
+	<a href="https://discord.gg/5K6CTkFKJR" target="_blank" style="text-decoration: none;">
 		<img alt="Documentation" src="https://img.shields.io/badge/join-discord-5865F2?logo=discord&logoColor=white">
 	</a>
 </p>

@@ -85,8 +85,7 @@ class GroupsRepository {
 	}
 
 	update(groupId: number, patch: Partial<AdminGroupForm>) {
-		if (patch.name !== undefined)
-			this.assertSlugAvailable(patch.name, groupId);
+		if (patch.name !== undefined) this.assertSlugAvailable(patch.name, groupId);
 
 		const updated = this.db
 			.update(adminGroups)

@@ -560,6 +560,65 @@ export default function AdminView() {
 					</TabsContent>
 
 					<TabsContent
+						value="identifiers"
+						className="flex-1 flex flex-col min-h-0 mt-0 overflow-auto"
+					>
+						<Card className="flex-1 flex flex-col min-h-0">
+							<CardContent className="flex-1 overflow-y-auto">
+								<div className="mx-auto w-full max-w-2xl space-y-8">
+									{canEdit && (
+										<div className="space-y-3 pb-8 border-b">
+											<div>
+												<h3 className="text-sm font-semibold">
+													In-Game Player Account
+												</h3>
+												<p className="text-xs text-muted-foreground">
+													Connect this admin account to an existing in-game
+													player profile.
+												</p>
+											</div>
+
+											<div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20 gap-4">
+												<div className="flex items-center gap-3 min-w-0">
+													<FileUser className="h-5 w-5 text-muted-foreground shrink-0" />
+													<div className="min-w-0">
+														<p className="text-xs text-muted-foreground">
+															Linked Player
+														</p>
+														<PlayerCardContent
+															id={adminData.playerId}
+															name={adminData.playerName}
+														/>
+													</div>
+												</div>
+											</div>
+										</div>
+									)}
+
+									<div className="space-y-4">
+										<div>
+											<h3 className="text-sm font-semibold">
+												External Platform Identifiers
+											</h3>
+											<p className="text-xs text-muted-foreground">
+												Configure third-party IDs linked to this account for
+												authentication and bot lookups.
+											</p>
+										</div>
+
+										<IdentifiersForm
+											cfxId={adminData.cfxId}
+											discordId={adminData.discordId}
+											canEdit={canEdit}
+											onSave={handleIdentiferChange}
+										/>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+					</TabsContent>
+
+					<TabsContent
 						value="settings"
 						className="flex-1 flex flex-col min-h-0 mt-0"
 					>

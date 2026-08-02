@@ -101,7 +101,11 @@ describe('GroupsRepository', () => {
 			insertGroup('Head Admin');
 
 			expect(() =>
-				groupsRepo.create({ name: 'Head-Admin', permissions: 0, colour: '#fff' }),
+				groupsRepo.create({
+					name: 'Head-Admin',
+					permissions: 0,
+					colour: '#fff',
+				}),
 			).toThrow('slug_conflict');
 		});
 
@@ -136,9 +140,9 @@ describe('GroupsRepository', () => {
 			insertGroup('Moderator');
 			const devs = insertGroup('Developers');
 
-			expect(() =>
-				groupsRepo.update(devs.id, { name: 'moderator' }),
-			).toThrow('slug_conflict');
+			expect(() => groupsRepo.update(devs.id, { name: 'moderator' })).toThrow(
+				'slug_conflict',
+			);
 		});
 
 		it('should allow a rename that keeps the same slug for the same group', () => {
