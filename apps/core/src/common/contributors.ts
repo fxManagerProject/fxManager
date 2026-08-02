@@ -1,8 +1,15 @@
 import type { Contributor, ContributorSummary } from '@fxmanager/shared/types';
 import { isProduction } from './utils';
 
+export const REPOSITORIES = [
+	'fxManager',
+	'cli-installer',
+	'pterodactyl-egg',
+	'fxmanager-docker',
+	'docs',
+];
 const GITHUB_CONTRIBUTORS =
-	'https://api.github.com/repos/fxManagerProject/fxManager/contributors';
+	'https://api.github.com/repos/fxManagerProject/{repository}/contributors';
 const DEFAULT_TTL_MS = 60 * 60 * 1000; // 1 hour
 const REQUEST_TIMEOUT_MS = 5_000;
 
@@ -44,17 +51,47 @@ export const CORE_CONTRIBUTORS: Record<string, Contributor> = {
 };
 
 async function fetchContributors(): Promise<RawContributor[]> {
-	const response = await fetch(GITHUB_CONTRIBUTORS, {
-		headers: { 'User-Agent': 'fxManager-Updater' },
-		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-	});
+	const contributors: RawContributor[] = [];
+	let successfulFetches = 0;
 
-	if (!response.ok)
-		throw new Error(`${response.status} - ${response.statusText}`);
+	for (const repo of REPOSITORIES) {
+		try {
+			const response = await fetch(
+				GITHUB_CONTRIBUTORS.replace('{repository}', repo),
+				{
+					headers: { 'User-Agent': 'fxManager-Updater' },
+					signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+				},
+			);
 
-	const data = (await response.json()) as RawContributor[];
+			if (!response.ok)
+				throw new Error(`${response.status} - ${response.statusText}`);
 
-	return data;
+			const data = (await response.json()) as RawContributor[];
+			successfulFetches++;
+
+			for (const contributor of data) {
+				const idx = contributors.findIndex((c) => c.id === contributor.id);
+
+				if (idx !== -1) {
+					const existing = contributors[idx]!;
+
+					contributors[idx] = {
+						...existing,
+						contributions: existing.contributions + contributor.contributions,
+					};
+				} else {
+					contributors.push(contributor);
+				}
+			}
+		} catch {}
+	}
+
+	if (successfulFetches === 0 && REPOSITORIES.length > 0) {
+		throw new Error('Failed to fetch contributors from all repositories');
+	}
+
+	return contributors;
 }
 
 /**
@@ -77,7 +114,7 @@ export function createContributorsList(opts: {
 	});
 
 	return async function getContributors(): Promise<ContributorSummary> {
-		if (!opts.isProd) return noUpdate();
+		// if (!opts.isProd) return noUpdate();
 		if (cache && cache.expiresAt > now()) return cache.value;
 
 		try {
