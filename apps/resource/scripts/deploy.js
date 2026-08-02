@@ -16,6 +16,7 @@ const DEPLOY_PATH = process.env.DEPLOY_PATH;
 	}
 
 	try {
+		await fs.remove(DEPLOY_PATH);
 		await fs.ensureDir(DEPLOY_PATH);
 
 		const targets = [
