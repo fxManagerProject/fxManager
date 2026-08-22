@@ -290,6 +290,32 @@ export const disconnectEvents = sqliteTable(
 	(t) => [index('disconnect_event_session_ts_idx').on(t.sessionId, t.ts)],
 );
 
+export const eventLogs = sqliteTable(
+	'event_logs',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		event: text('event').notNull(),
+		timestamp: integer('timestamp').notNull(),
+		playerId: integer('player_id').references(() => players.id, {
+			onDelete: 'set null',
+		}),
+		playerName: text('player_name'),
+		serverSessionId: integer('server_session_id').references(
+			() => serverSessions.id,
+			{ onDelete: 'set null' },
+		),
+		data: text('data', { mode: 'json' })
+			.notNull()
+			.$type<Record<string, unknown>>(),
+	},
+	(t) => [
+		index('event_logs_event_idx').on(t.event),
+		index('event_logs_player_idx').on(t.playerId),
+		index('event_logs_ts_idx').on(t.timestamp),
+		index('event_logs_session_idx').on(t.serverSessionId),
+	],
+);
+
 export const playerSessions = sqliteTable(
 	'player_sessions',
 	{
@@ -429,6 +455,17 @@ export const playerSessionsRelations = relations(playerSessions, ({ one }) => ({
 	}),
 	serverSession: one(serverSessions, {
 		fields: [playerSessions.serverSessionId],
+		references: [serverSessions.id],
+	}),
+}));
+
+export const eventLogsRelations = relations(eventLogs, ({ one }) => ({
+	player: one(players, {
+		fields: [eventLogs.playerId],
+		references: [players.id],
+	}),
+	serverSession: one(serverSessions, {
+		fields: [eventLogs.serverSessionId],
 		references: [serverSessions.id],
 	}),
 }));

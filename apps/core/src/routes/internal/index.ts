@@ -2,6 +2,7 @@ import PlayerModule from './players';
 import ResourceModule from './resources';
 import IngameModule from './ingame';
 import ServerModule from './server';
+import EventLogModule from './event-log';
 import { requireLoopback } from '../../middleware/loopback';
 import type { RouteModule } from '../../types';
 
@@ -26,6 +27,11 @@ const internalRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(ServerModule.handler, {
 		...options,
 		prefix: ServerModule.prefix,
+	});
+
+	fastify.register(EventLogModule.handler, {
+		...options,
+		prefix: EventLogModule.prefix,
 	});
 };
 

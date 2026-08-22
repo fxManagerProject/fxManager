@@ -17,6 +17,7 @@ import AuditLogPage from './settings/auditlogs';
 import ConfigEditor from './settings/configeditor';
 import PerformancePage from './performance';
 import CreditsPage from './settings/credits';
+import EventLogsPage from './settings/eventlogs';
 
 type RouteConfig = {
 	path: string;
@@ -96,5 +97,10 @@ export const routes: RouteConfig[] = [
 	{
 		path: '/settings/credits',
 		element: CreditsPage,
+	},
+	{
+		path: '/settings/eventlogs',
+		element: EventLogsPage,
+		permission: UserPermissions.EVENT_LOG,
 	},
 ];

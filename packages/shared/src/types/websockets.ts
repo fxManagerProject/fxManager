@@ -6,6 +6,7 @@ export type Channel =
 	| 'perf'
 	| 'sessions'
 	| 'disconnects'
+	| 'eventlogs'
 	| `report:general`
 	| `report:${number}`;
 

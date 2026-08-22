@@ -51,3 +51,13 @@ export interface ResourceInitialData {
 	status: boolean | 'errored';
 	resourcelist: ResourceData[];
 }
+
+/** A single game event log entry — event types are dynamic, not enumerated */
+export interface EventLogEntry {
+	id: string;
+	event: string;
+	timestamp: number;
+	playerId?: number;
+	playerName?: string;
+	data: Record<string, unknown>;
+}

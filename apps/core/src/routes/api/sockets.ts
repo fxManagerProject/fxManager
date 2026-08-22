@@ -3,6 +3,7 @@ import { repo } from '@fxmanager/database';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type {
 	DisconnectSession,
+	EventLogEntry,
 	OnlinePlayer,
 	PerfSnapshot,
 	ProcessOutputLine,
@@ -17,6 +18,7 @@ import type { AuthedRequest, RouteModule } from '../../types';
 import { resourceManager } from '../../modules/resource/manager';
 import { perfManager } from '../../modules/perf/manager';
 import { disconnectManager } from '../../modules/disconnect/manager';
+import { eventLogManager } from '../../modules/game/event-logs';
 
 wsManager.addCheck('console', (admin) => {
 	return PermissionManager.has(
@@ -30,6 +32,10 @@ wsManager.addCheck('resourcelist', (admin) => {
 		admin.permissions,
 		UserPermissions.RESOURCE_LIST,
 	);
+});
+
+wsManager.addCheck('eventlogs', (admin) => {
+	return PermissionManager.has(admin.permissions, UserPermissions.EVENT_LOG);
 });
 
 const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
@@ -113,6 +119,10 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 
 	wsManager.setInitialData<DisconnectSession | null>('disconnects', () => {
 		return disconnectManager.getLiveSession();
+	});
+
+	wsManager.setInitialData<EventLogEntry[]>('eventlogs', () => {
+		return eventLogManager.getRecent();
 	});
 };
 

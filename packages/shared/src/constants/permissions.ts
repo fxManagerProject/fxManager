@@ -30,6 +30,8 @@ export const UserPermissions = {
 
 	CONFIG_EDITOR: 1 << 19, // 524288 - access & edit server.cfg files
 
+	EVENT_LOG: 1 << 20, // 1048576 - view game event logs
+
 	MASTER: 1 << 30, // 1073741824
 } as const;
 
@@ -58,6 +60,7 @@ export const PERMISSION_ACE_KEYS: Record<number, string> = {
 	[UserPermissions.AUDIT_LOG]: 'system.audit_log',
 	[UserPermissions.PERFORMANCE]: 'system.performance',
 	[UserPermissions.CONFIG_EDITOR]: 'server.cfg_editor',
+	[UserPermissions.EVENT_LOG]: 'system.event_log',
 };
 
 export const PERMISSION_LABELS: Record<
@@ -166,6 +169,11 @@ export const PERMISSION_LABELS: Record<
 	[UserPermissions.SETTINGS_ADMIN_MANAGEMENT]: {
 		label: 'Manage Admins',
 		desc: 'Create, edit, and delete admin users.',
+		category: 'Administration',
+	},
+	[UserPermissions.EVENT_LOG]: {
+		label: 'Event Log',
+		desc: 'View game event logs (player joins, deaths, teleports, etc.).',
 		category: 'Administration',
 	},
 };

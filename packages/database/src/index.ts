@@ -19,6 +19,7 @@ import { createDisconnectsRepository } from './repositories/disconnects';
 import { createServerSessionsRepository } from './repositories/server-sessions';
 import { createPerfSnapshotsRepository } from './repositories/perf-snapshots';
 import { createPlayerSessionsRepository } from './repositories/player-sessions';
+import { createEventLogsRepository } from './repositories/event-logs';
 
 export type { Migration } from './migrations/types';
 export type { ImportSummary } from './import/txadmin.importer';
@@ -90,4 +91,5 @@ export const repo = {
 	disconnects: createDisconnectsRepository(db),
 	perfSnapshots: createPerfSnapshotsRepository(db),
 	playerSessions: createPlayerSessionsRepository(db),
+	eventLogs: createEventLogsRepository(db),
 };
