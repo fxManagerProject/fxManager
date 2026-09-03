@@ -5,7 +5,7 @@ import type { ApiResponse } from '@fxmanager/shared/types';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import type { AuthedRequest, RouteModule } from '../../../types';
 
-const ProfileEndpoints: RouteModule['handler'] = async (fastify, { pm }) => {
+const ProfileEndpoints: RouteModule['handler'] = async (fastify) => {
 	fastify.get('/', async (request) => {
 		const { admin } = request as AuthedRequest;
 
