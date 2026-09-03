@@ -1,10 +1,9 @@
-import path from 'node:path';
 import { Type, type Static } from '@sinclair/typebox';
 import type { FastifyPluginAsync } from 'fastify';
 import { repo } from '@fxmanager/database';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type { ApiResponse } from '@fxmanager/shared/types';
-import { COOKIE_NAME, fileExists, isFxManagerSetup } from '../../common/utils';
+import { COOKIE_NAME, isFxManagerSetup } from '../../common/utils';
 import { ConfigManager } from '../../modules/config/manager';
 import { setupTokenManager } from '../../modules/setup/token';
 import type { RouteModule } from '../../types';
@@ -49,10 +48,6 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 		}
 
 		const cfg = ConfigManager.getInstance().getFxServerValues();
-		const cfgPath = path.isAbsolute(cfg.serverConfigFile)
-			? cfg.serverConfigFile
-			: path.join(cfg.serverDataPath, cfg.serverConfigFile);
-
 		const result = await ConfigManager.getInstance().checkFXServerPaths(
 			cfg.executablePath,
 			cfg.serverDataPath,

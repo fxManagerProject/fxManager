@@ -39,7 +39,7 @@ describe('BansRepository', () => {
 
 	// Helper utility to seed standard player relational parents
 	const seedPlayerWithLicense = (name: string, licenseValue: string) => {
-		const [player] = testDb.insert(players).values({ name }).returning().all();
+		const player = testDb.insert(players).values({ name }).returning().get()!;
 
 		testDb
 			.insert(playerIdentifiers)
@@ -79,7 +79,7 @@ describe('BansRepository', () => {
 				'Reformed_Gamer',
 				'license:clean999',
 			);
-			const [initialBan] = testDb
+			const initialBan = testDb
 				.insert(bans)
 				.values({
 					playerId: player.id,
@@ -87,7 +87,7 @@ describe('BansRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			const revokedBan = bansRepo.revoke(initialBan.id);
 
@@ -105,7 +105,7 @@ describe('BansRepository', () => {
 
 		it('should return undefined when the ban is already revoked', () => {
 			const player = seedPlayerWithLicense('Repeat_Appeal', 'license:appeal1');
-			const [initialBan] = testDb
+			const initialBan = testDb
 				.insert(bans)
 				.values({
 					playerId: player.id,
@@ -113,7 +113,7 @@ describe('BansRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			bansRepo.revoke(initialBan.id);
 
@@ -127,7 +127,7 @@ describe('BansRepository', () => {
 		it('should not revoke when the scoped playerId does not own the ban', () => {
 			const owner = seedPlayerWithLicense('Owner', 'license:owner1');
 			const other = seedPlayerWithLicense('Other', 'license:other1');
-			const [ban] = testDb
+			const ban = testDb
 				.insert(bans)
 				.values({
 					playerId: owner.id,
@@ -135,7 +135,7 @@ describe('BansRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			expect(bansRepo.revoke(ban.id, other.id)).toBeUndefined();
 
@@ -250,13 +250,13 @@ describe('BansRepository', () => {
 
 			// Verify Drizzle-ORM default nested mapping behavior for unselected multi-table queries
 			// Shape must match: Array<{ bans: typeof bans.$inferSelect, players: typeof players.$inferSelect }>
-			expect(executionList[0].bans).toBeDefined();
-			expect(executionList[0].players).toBeDefined();
+			expect(executionList[0]!.bans).toBeDefined();
+			expect(executionList[0]!.players).toBeDefined();
 
-			expect(executionList[0].players.name).toBe('User_A');
-			expect(executionList[0].bans.reason).toBe('Rule 1');
+			expect(executionList[0]!.players.name).toBe('User_A');
+			expect(executionList[0]!.bans.reason).toBe('Rule 1');
 
-			expect(executionList[1].players.name).toBe('User_B');
+			expect(executionList[1]!.players.name).toBe('User_B');
 		});
 
 		it('should calculate layout limits and offsets accurately during pagination calls', () => {
@@ -287,7 +287,7 @@ describe('BansRepository', () => {
 			const pageResult = bansRepo.list(2, 1);
 
 			expect(pageResult.length).toBe(1);
-			expect(pageResult[0].bans.reason).toBe('Ban 2');
+			expect(pageResult[0]!.bans.reason).toBe('Ban 2');
 		});
 	});
 
@@ -316,9 +316,9 @@ describe('BansRepository', () => {
 
 			expect(result.length).toBe(2);
 			// newest first
-			expect(result[0].reason).toBe('second');
-			expect(result[0].name).toBe('Bob');
-			expect(result[1].reason).toBe('first');
+			expect(result[0]!.reason).toBe('second');
+			expect(result[0]!.name).toBe('Bob');
+			expect(result[1]!.reason).toBe('first');
 			// flat shape
 			expect(result[0]).toMatchObject({
 				id: expect.any(Number),
@@ -328,7 +328,7 @@ describe('BansRepository', () => {
 				issuer: null,
 				revokedAt: null,
 			});
-			expect(result[0].createdAt).toBeInstanceOf(Date);
+			expect(result[0]!.createdAt).toBeInstanceOf(Date);
 		});
 
 		it('should filter by player name', () => {
@@ -345,7 +345,7 @@ describe('BansRepository', () => {
 			const result = bansRepo.search({ query: 'Ali' });
 
 			expect(result.length).toBe(1);
-			expect(result[0].name).toBe('Alice');
+			expect(result[0]!.name).toBe('Alice');
 		});
 
 		it('should filter by identifier value without duplicating rows for multi-identifier players', () => {
@@ -365,7 +365,7 @@ describe('BansRepository', () => {
 
 			const byLicense = bansRepo.search({ query: 'ccc' });
 			expect(byLicense.length).toBe(1);
-			expect(byLicense[0].name).toBe('Charlie');
+			expect(byLicense[0]!.name).toBe('Charlie');
 
 			const byName = bansRepo.search({ query: 'Charlie' });
 			expect(byName.length).toBe(1);
@@ -388,7 +388,7 @@ describe('BansRepository', () => {
 			const result = bansRepo.search({ query: 'aimbot' });
 
 			expect(result.length).toBe(1);
-			expect(result[0].reason).toBe('aimbot detected');
+			expect(result[0]!.reason).toBe('aimbot detected');
 		});
 	});
 });

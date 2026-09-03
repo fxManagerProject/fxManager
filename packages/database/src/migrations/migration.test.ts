@@ -75,10 +75,10 @@ describe('Database Migration Runner', () => {
 			// Assert that migrations were tracked and documented chronologically by version number
 			const history = getTrackedVersions(testSqlite);
 			expect(history.length).toBe(2);
-			expect(history[0].version).toBe(1);
-			expect(history[0].description).toBe('Create users table');
-			expect(history[1].version).toBe(2);
-			expect(history[1].description).toBe('Create logs table');
+			expect(history[0]!.version).toBe(1);
+			expect(history[0]!.description).toBe('Create users table');
+			expect(history[1]!.version).toBe(2);
+			expect(history[1]!.description).toBe('Create logs table');
 		});
 
 		it('should gracefully perform a no-op if the database is already fully up-to-date', () => {

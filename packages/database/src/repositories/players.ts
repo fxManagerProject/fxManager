@@ -523,6 +523,8 @@ class PlayersRepository {
 				})
 				.returning();
 
+			if (!newBan) throw new Error('Failed to insert ban');
+
 			const player = tx
 				.select()
 				.from(players)
@@ -558,6 +560,8 @@ class PlayersRepository {
 				})
 				.returning();
 
+			if (!newKick) throw new Error('Failed to insert kick');
+
 			return {
 				...newKick,
 				player,
@@ -586,6 +590,8 @@ class PlayersRepository {
 					issuedAt: new Date(),
 				})
 				.returning();
+
+			if (!newWarn) throw new Error('Failed to insert warn');
 
 			return {
 				...newWarn,

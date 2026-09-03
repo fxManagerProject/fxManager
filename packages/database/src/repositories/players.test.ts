@@ -47,7 +47,7 @@ describe('PlayersRepository', () => {
 
 	// Helper utility to quickly build an admin staff account
 	const seedAdminStaff = (username: string, playerId?: number) => {
-		const [admin] = testDb
+		const admin = testDb
 			.insert(adminUsers)
 			.values({
 				username,
@@ -56,7 +56,7 @@ describe('PlayersRepository', () => {
 				createdAt: new Date(),
 			})
 			.returning()
-			.all();
+			.get()!;
 		return admin;
 	};
 
@@ -64,11 +64,11 @@ describe('PlayersRepository', () => {
 
 	describe('isStaff()', () => {
 		it('should accurately return true if player mapping matches an admin account row', () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Staff_Member' })
 				.returning()
-				.all();
+				.get()!;
 			seedAdminStaff('admin_one', player.id);
 
 			expect(playersRepo.isStaff(player.id)).toBe(true);
@@ -83,11 +83,11 @@ describe('PlayersRepository', () => {
 
 	describe('findByLicense()', () => {
 		it('should resolve comprehensive player information matching a designated license string', () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Target_User' })
 				.returning()
-				.all();
+				.get()!;
 			testDb
 				.insert(playerIdentifiers)
 				.values([
@@ -114,11 +114,11 @@ describe('PlayersRepository', () => {
 
 	describe('findByIdentifier()', () => {
 		it('should resolve a player by a non-license identifier type', () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Discord_User' })
 				.returning()
-				.all();
+				.get()!;
 			testDb
 				.insert(playerIdentifiers)
 				.values({
@@ -167,11 +167,11 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should mutate active properties and append missing attributes if license lookup succeeds', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Old_Name' })
 				.returning()
-				.all();
+				.get()!;
 
 			testDb
 				.insert(playerIdentifiers)
@@ -199,7 +199,7 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should detect if a new player matches an admin user identifier and link them as staff', async () => {
-			const [admin] = testDb
+			const admin = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'admin_test',
@@ -209,7 +209,7 @@ describe('PlayersRepository', () => {
 					cfxId: '987654321',
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			const created = await playersRepo.upsert('admin_player', {
 				license: 'license:admin_key',
@@ -235,11 +235,11 @@ describe('PlayersRepository', () => {
 
 	describe('checkBanned()', () => {
 		it('should locate a restrictive footprint match using any linked profile identifier', () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Banned_Everywhere' })
 				.returning()
-				.all();
+				.get()!;
 			testDb
 				.insert(playerIdentifiers)
 				.values({ playerId: player.id, type: 'steam', value: 'steam:dirty_id' })
@@ -263,11 +263,11 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should ignore expired or explicitly revoked blocks during active validation passes', () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Pardoned_User' })
 				.returning()
-				.all();
+				.get()!;
 			testDb
 				.insert(playerIdentifiers)
 				.values({
@@ -296,11 +296,11 @@ describe('PlayersRepository', () => {
 
 	describe('updatePlaytime()', () => {
 		it('should adjust tracking fields and touch access markers directly inside data rows', () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Gamer' })
 				.returning()
-				.all();
+				.get()!;
 
 			playersRepo.updatePlaytime(player.id, 500000);
 
@@ -318,16 +318,16 @@ describe('PlayersRepository', () => {
 
 	describe('list()', () => {
 		it('should filter across diverse records using global text fuzzy parameters', () => {
-			const [p1] = testDb
+			const p1 = testDb
 				.insert(players)
 				.values({ name: 'Alpha_Player' })
 				.returning()
-				.all();
-			const [p2] = testDb
+				.get()!;
+			const p2 = testDb
 				.insert(players)
 				.values({ name: 'Beta_User' })
 				.returning()
-				.all();
+				.get()!;
 
 			testDb
 				.insert(playerIdentifiers)
@@ -340,7 +340,7 @@ describe('PlayersRepository', () => {
 			// Search using a parameter that matches an identifier value instead of a name string
 			const response = playersRepo.list(1, 10, { search: 'keyword' });
 			expect(response.total).toBe(1);
-			expect(response.items[0].id).toBe(p2.id);
+			expect(response.items[0]!.id).toBe(p2.id);
 		});
 
 		it('should dynamically sort outputs based on specified structural criteria styles', () => {
@@ -356,7 +356,7 @@ describe('PlayersRepository', () => {
 				sortBy: 'playtime',
 				sortOrder: 'desc',
 			});
-			expect(response.items[0].name).toBe('High_Playtime');
+			expect(response.items[0]!.name).toBe('High_Playtime');
 		});
 	});
 
@@ -364,11 +364,11 @@ describe('PlayersRepository', () => {
 
 	describe('updatePlayerNotes()', () => {
 		it('should append structured feedback logs when processing unfamiliar content strings', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Suspect_User' })
 				.returning()
-				.all();
+				.get()!;
 			const admin = seedAdminStaff('moderator_bob');
 
 			const note = await playersRepo.updatePlayerNotes(
@@ -387,11 +387,11 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should clean out existing rows if an update parameter arrives empty', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Logged_User' })
 				.returning()
-				.all();
+				.get()!;
 			const admin = seedAdminStaff('moderator_jack');
 
 			testDb
@@ -420,11 +420,11 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should reject changes and throw if the note content length falls below strict thresholds', () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'User' })
 				.returning()
-				.all();
+				.get()!;
 			const admin = seedAdminStaff('mod');
 
 			expect(
@@ -435,11 +435,11 @@ describe('PlayersRepository', () => {
 
 	describe('addBan() Lifecycle Upgrades', () => {
 		it('should intercept operations and return false if a permanent ban currently restricts the user profile', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Permanently_Restricted' })
 				.returning()
-				.all();
+				.get()!;
 			const admin = seedAdminStaff('root_system');
 
 			testDb
@@ -463,11 +463,11 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should soft-expire active sub-bans if an administrative action escalates the duration penalty', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Escalation_Target' })
 				.returning()
-				.all();
+				.get()!;
 			const admin = seedAdminStaff('senior_mod');
 
 			const originalExpiry = new Date('2026-06-20T00:00:00Z');
@@ -498,11 +498,11 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should record a null issuer for external (ingame API) bans', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Ingame_Banned' })
 				.returning()
-				.all();
+				.get()!;
 
 			const result = await playersRepo.addBan(
 				player.id,
@@ -521,11 +521,11 @@ describe('PlayersRepository', () => {
 
 	describe('addKick() and addWarn() Standard Logging', () => {
 		it('should successfully commit warning entries linked directly to active records', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Warned_User' })
 				.returning()
-				.all();
+				.get()!;
 			const admin = seedAdminStaff('helper_mod');
 
 			const warning = await playersRepo.addWarn(
@@ -545,11 +545,11 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should successfully commit kick entries linked directly to active records', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Kicked_User' })
 				.returning()
-				.all();
+				.get()!;
 			const admin = seedAdminStaff('helper_mod_2');
 
 			const kick = await playersRepo.addKick(
@@ -569,11 +569,11 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should record warns and kicks with a null issuer for external actions', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'External_Actioned' })
 				.returning()
-				.all();
+				.get()!;
 
 			const warn = await playersRepo.addWarn(player.id, 'ingame warn', null);
 			const kick = await playersRepo.addKick(player.id, 'ingame kick', null);
@@ -585,11 +585,11 @@ describe('PlayersRepository', () => {
 
 	describe('revokeWarn()', () => {
 		it('should flag an active warn as revoked and return the updated row', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Warned_User' })
 				.returning()
-				.all();
+				.get()!;
 			const warn = await playersRepo.addWarn(player.id, 'Spamming', null);
 
 			const revoked = playersRepo.revokeWarn(warn.id);
@@ -608,11 +608,11 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should return undefined when the warn is already revoked', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Warned_User' })
 				.returning()
-				.all();
+				.get()!;
 			const warn = await playersRepo.addWarn(player.id, 'Spamming', null);
 			playersRepo.revokeWarn(warn.id);
 
@@ -624,16 +624,16 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should not revoke when the scoped playerId does not own the warn', async () => {
-			const [owner] = testDb
+			const owner = testDb
 				.insert(players)
 				.values({ name: 'Owner' })
 				.returning()
-				.all();
-			const [other] = testDb
+				.get()!;
+			const other = testDb
 				.insert(players)
 				.values({ name: 'Other' })
 				.returning()
-				.all();
+				.get()!;
 			const warn = await playersRepo.addWarn(owner.id, 'Spamming', null);
 
 			expect(playersRepo.revokeWarn(warn.id, other.id)).toBeUndefined();
@@ -649,11 +649,11 @@ describe('PlayersRepository', () => {
 
 	describe('revokeKick()', () => {
 		it('should flag an active kick as revoked and return the updated row', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Kicked_User' })
 				.returning()
-				.all();
+				.get()!;
 			const kick = await playersRepo.addKick(player.id, 'AFK', null);
 
 			const revoked = playersRepo.revokeKick(kick.id);
@@ -672,11 +672,11 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should return undefined when the kick is already revoked', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Kicked_User' })
 				.returning()
-				.all();
+				.get()!;
 			const kick = await playersRepo.addKick(player.id, 'AFK', null);
 			playersRepo.revokeKick(kick.id);
 
@@ -688,16 +688,16 @@ describe('PlayersRepository', () => {
 		});
 
 		it('should not revoke when the scoped playerId does not own the kick', async () => {
-			const [owner] = testDb
+			const owner = testDb
 				.insert(players)
 				.values({ name: 'Owner' })
 				.returning()
-				.all();
-			const [other] = testDb
+				.get()!;
+			const other = testDb
 				.insert(players)
 				.values({ name: 'Other' })
 				.returning()
-				.all();
+				.get()!;
 			const kick = await playersRepo.addKick(owner.id, 'AFK', null);
 
 			expect(playersRepo.revokeKick(kick.id, other.id)).toBeUndefined();
