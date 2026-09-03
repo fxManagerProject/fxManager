@@ -120,8 +120,18 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 
 			const { username, password, server, customGroups } = request.body;
 
-			repo.settings.set('fxserver.executablePath', server.fxserverPath);
-			repo.settings.set('fxserver.serverDataPath', server.resourcePath);
+			// Normalise the supplied paths before persisting, mirroring what the
+			// /detect + /checkfiles endpoints return
+			const execResult =
+				await ConfigManager.getInstance().validateExecutablePath(
+					server.fxserverPath,
+				);
+			const dataResult = await ConfigManager.getInstance().validateDataPath(
+				server.resourcePath,
+			);
+
+			repo.settings.set('fxserver.executablePath', execResult.path);
+			repo.settings.set('fxserver.serverDataPath', dataResult.path);
 
 			if (customGroups.length > 0) {
 				try {
