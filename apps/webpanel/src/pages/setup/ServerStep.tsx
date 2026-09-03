@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	InfoIcon,
 	ArrowRight,
@@ -22,6 +22,9 @@ import {
 } from '@fxmanager/ui/components/dialog';
 import type { SetupFormData } from './types';
 import { getSetupToken } from './setup-token';
+
+// Auto-detection runs once per page load
+let autoDetected = false;
 
 interface ServerStepProps {
 	formData: SetupFormData;
@@ -183,8 +186,18 @@ export function ServerStep({ formData, onChange, onNext }: ServerStepProps) {
 
 	function selectAutomatic() {
 		onChange('serverSetupMethod', 'installer');
+		if (autoDetected) return;
+		autoDetected = true;
 		if (!detecting) runDetect();
 	}
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: mount-only auto-detect; re-runs happen via the re-scan button.
+	useEffect(() => {
+		if (formData.serverSetupMethod !== 'installer') return;
+		if (autoDetected) return;
+		autoDetected = true;
+		void runDetect();
+	}, []);
 
 	return (
 		<>
@@ -203,22 +216,22 @@ export function ServerStep({ formData, onChange, onNext }: ServerStepProps) {
 					<Button
 						type="button"
 						variant={
+							formData.serverSetupMethod === 'installer' ? 'default' : 'ghost'
+						}
+						size="sm"
+						onClick={selectAutomatic}
+					>
+						Auto-detect (Docker/Installer)
+					</Button>
+					<Button
+						type="button"
+						variant={
 							formData.serverSetupMethod === 'manual' ? 'default' : 'ghost'
 						}
 						size="sm"
 						onClick={selectManual}
 					>
 						Local Directory Binding
-					</Button>
-					<Button
-						type="button"
-						variant={
-							formData.serverSetupMethod === 'installer' ? 'default' : 'ghost'
-						}
-						size="sm"
-						onClick={selectAutomatic}
-					>
-						Auto-detect (Docker)
 					</Button>
 				</div>
 
