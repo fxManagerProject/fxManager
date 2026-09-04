@@ -81,7 +81,7 @@ export default function Console() {
 	}, [lines, filter]);
 
 	useEffect(() => {
-		lastSeqRef.current = lines.length > 0 ? lines[lines.length - 1].seq : -1;
+		lastSeqRef.current = lines.length > 0 ? lines[lines.length - 1]!.seq : -1;
 	}, [lines]);
 
 	useEffect(() => {
@@ -126,7 +126,7 @@ export default function Console() {
 		if (e.key === 'ArrowDown') {
 			const idx = Math.max(histIdx - 1, -1);
 			setHistIdx(idx);
-			setInput(idx === -1 ? '' : history[idx]);
+			setInput(idx === -1 ? '' : (history[idx] ?? ''));
 		}
 	};
 

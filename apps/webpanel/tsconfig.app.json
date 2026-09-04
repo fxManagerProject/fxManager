@@ -20,9 +20,11 @@
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"erasableSyntaxOnly": true,
 		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
 		"noUncheckedSideEffectImports": true,
+		"allowUnreachableCode": false,
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"],

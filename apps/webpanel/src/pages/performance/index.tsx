@@ -61,7 +61,7 @@ export default function PerformancePage() {
 			kind: 'range',
 			snapshots,
 			start: selected.startedAt,
-			end: selected.endedAt ?? snapshots[snapshots.length - 1].ts,
+			end: selected.endedAt ?? snapshots[snapshots.length - 1]!.ts,
 		};
 	}, [inspect, selected, isLive, snapshots]);
 

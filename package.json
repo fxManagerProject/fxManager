@@ -10,6 +10,7 @@
     "lint": "turbo lint",
     "format": "turbo format && biome format --write ./scripts/*.ts",
     "typecheck": "turbo typecheck",
+    "test": "bun ./scripts/test.ts",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit generate && bun ./scripts/migrate.ts && bun biome format --write ./packages/database"
   },
