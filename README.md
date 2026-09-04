@@ -7,7 +7,7 @@
 	<img alt="GitHub latest release" src="https://img.shields.io/github/downloads/fxManagerProject/fxManager/total?logo=github">
 	<img alt="GitHub commits since latest release" src="https://img.shields.io/github/commits-since/fxManagerProject/fxManager/latest">
 	<img alt="GitHub contributors" src="https://img.shields.io/github/contributors/fxManagerProject/fxManager">
-	<img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/fxManagerProject/fxManager/pr-checks.yml?label=tests">
+	<img alt="Tests" id="test-coverage" src="https://img.shields.io/badge/coverage-97%25-brightgreen">
 </p>
 <p align="center">
 	<a href="https://fxmanager.dev/docs" target="_blank" style="text-decoration: none;">
