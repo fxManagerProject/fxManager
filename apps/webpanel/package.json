@@ -8,7 +8,7 @@
 		"build": "tsc -b && vite build",
 		"lint": "biome check .",
 		"format": "biome format --write .",
-		"typecheck": "tsc --noEmit",
+		"typecheck": "bunx tsc -b",
 		"preview": "vite preview"
 	},
 	"dependencies": {

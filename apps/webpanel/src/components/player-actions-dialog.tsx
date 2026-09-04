@@ -481,7 +481,10 @@ export function PlayerActionDialog({
 					>
 						{(['ban', 'kick', 'warn', 'note'] as const)
 							.filter((value) => {
-								const permissionMap: Record<string, number> = {
+								const permissionMap: Record<
+									'warn' | 'kick' | 'ban' | 'note',
+									number
+								> = {
 									ban: UserPermissions.BAN,
 									kick: UserPermissions.KICK,
 									warn: UserPermissions.WARN,

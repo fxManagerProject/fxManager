@@ -3,7 +3,7 @@ import { icons, type LucideIcon } from 'lucide-react';
 export const lucideIconMap = Object.entries(icons).reduce<
 	Record<string, LucideIcon>
 >((acc, [key, value]) => {
-	if (key[0] === key[0].toUpperCase()) {
+	if (key.charAt(0) === key.charAt(0).toUpperCase()) {
 		acc[key] = value as LucideIcon;
 	}
 	return acc;
