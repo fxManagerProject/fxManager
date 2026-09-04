@@ -54,8 +54,8 @@ describe('importTxAdmin - players', () => {
 
 		const players = db.select().from(schema.players).all();
 		expect(players).toHaveLength(1);
-		expect(players[0].name).toBe('CaliChris');
-		expect(players[0].playtime).toBe(1_440_000);
+		expect(players[0]!.name).toBe('CaliChris');
+		expect(players[0]!.playtime).toBe(1_440_000);
 
 		const ids = db.select().from(schema.playerIdentifiers).all();
 		expect(ids.map((i) => i.value).sort()).toEqual(['123', 'abc']);
@@ -66,8 +66,8 @@ describe('importTxAdmin - players', () => {
 
 		const notes = db.select().from(schema.playerNotes).all();
 		expect(notes).toHaveLength(1);
-		expect(notes[0].content).toBe('a note');
-		expect(notes[0].issuer).toBeNull();
+		expect(notes[0]!.content).toBe('a note');
+		expect(notes[0]!.issuer).toBeNull();
 	});
 
 	it('is idempotent: re-running creates no duplicate players, ids or notes', () => {
@@ -124,9 +124,9 @@ describe('importTxAdmin - actions matched to existing players', () => {
 
 		const bans = db.select().from(schema.bans).all();
 		expect(bans).toHaveLength(1);
-		expect(bans[0].playerId).toBe(1);
-		expect(bans[0].reason).toBe('Cheating');
-		expect(bans[0].issuer).toBeNull();
+		expect(bans[0]!.playerId).toBe(1);
+		expect(bans[0]!.reason).toBe('Cheating');
+		expect(bans[0]!.issuer).toBeNull();
 	});
 });
 
@@ -152,15 +152,15 @@ describe('importTxAdmin - orphan actions', () => {
 
 		const players = db.select().from(schema.players).all();
 		expect(players).toHaveLength(1);
-		expect(players[0].name).toBe('GhostBanned');
+		expect(players[0]!.name).toBe('GhostBanned');
 		expect(summary.stubPlayers).toBe(1);
 
 		const ids = db.select().from(schema.playerIdentifiers).all();
 		expect(ids).toHaveLength(1);
-		expect(ids[0].value).toBe('orphan');
+		expect(ids[0]!.value).toBe('orphan');
 
 		const bans = db.select().from(schema.bans).all();
-		expect(bans[0].playerId).toBe(players[0].id);
+		expect(bans[0]!.playerId).toBe(players[0]!.id);
 	});
 
 	it('reuses the same stub player for two actions sharing an identifier', () => {
@@ -207,7 +207,7 @@ describe('importTxAdmin - ban fields', () => {
 			],
 		};
 		importTxAdmin(localDb, data);
-		return localDb.select().from(schema.bans).all()[0];
+		return localDb.select().from(schema.bans).all()[0]!;
 	}
 
 	it('stores a permanent ban with null expiresAt', () => {
@@ -245,7 +245,7 @@ describe('importTxAdmin - warn fields', () => {
 			],
 		};
 		importTxAdmin(localDb, data);
-		return localDb.select().from(schema.warns).all()[0];
+		return localDb.select().from(schema.warns).all()[0]!;
 	}
 
 	it('marks an acked warn as read', () => {

@@ -59,7 +59,7 @@ describe('APITokensRepository', () => {
 	describe('validate()', () => {
 		it('should return the token row and update the lastUsed timestamp field for valid tokens', () => {
 			// Seed an active token directly into the database
-			const [seeded] = testDb
+			const seeded = testDb
 				.insert(apiTokens)
 				.values({
 					name: 'Grafana Hook',
@@ -67,7 +67,7 @@ describe('APITokensRepository', () => {
 					createdAt: new Date(Date.now() - 5000), // Created 5s ago
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			expect(seeded.lastUsed).toBeNull();
 
@@ -93,7 +93,7 @@ describe('APITokensRepository', () => {
 		});
 
 		it('should return null and reject verification if the target token has been explicitly revoked', () => {
-			const [revokedToken] = testDb
+			const revokedToken = testDb
 				.insert(apiTokens)
 				.values({
 					name: 'Deprecated App',
@@ -102,7 +102,7 @@ describe('APITokensRepository', () => {
 					revokedAt: new Date(), // Already flagged as revoked
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			const result = tokensRepo.validate(revokedToken.token);
 
@@ -112,7 +112,7 @@ describe('APITokensRepository', () => {
 
 	describe('revoke()', () => {
 		it('should stamp a revokedAt timestamp onto a token row using its identifier', () => {
-			const [target] = testDb
+			const target = testDb
 				.insert(apiTokens)
 				.values({
 					name: 'Temporary Script',
@@ -120,7 +120,7 @@ describe('APITokensRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			const revokedRow = tokensRepo.revoke(target.id);
 
