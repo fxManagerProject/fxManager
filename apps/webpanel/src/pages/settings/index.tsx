@@ -79,7 +79,7 @@ type SettingsCache = {
 };
 
 export default function SettingsPage() {
-	const [currentTab, setCurrentTab] = useState<string>(TABS[0].value);
+	const [currentTab, setCurrentTab] = useState<string>(TABS[0]!.value);
 	const [loading, setLoading] = useState(true);
 	const [disabled, setDisabled] = useState(false);
 	const [cache, setCache] = useState<SettingsCache>({});

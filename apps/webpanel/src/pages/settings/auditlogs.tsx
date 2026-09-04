@@ -303,7 +303,7 @@ export default function AuditLogPage() {
 																	onCheckedChange={() => {}}
 																/>
 																<span className="capitalize">
-																	{act.split('.')[1].replace('_', ' ')}
+																	{act.split('.')[1]!.replace('_', ' ')}
 																</span>
 															</CommandItem>
 														);
