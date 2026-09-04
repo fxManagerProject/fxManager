@@ -18,8 +18,9 @@ export function aggregateBuckets(
 		if (!c) continue;
 		let prev = 0;
 		for (let b = 0; b < BANDS; b++) {
-			const cum = c.buckets[b] ?? prev;
-			ticks[b] += cum - prev;
+			const val = c.buckets[b];
+			const cum = typeof val === 'number' ? val : prev;
+			ticks[b]! += cum - prev;
 			prev = cum;
 		}
 		total += c.count || 0;
@@ -51,8 +52,8 @@ export function snapshotIdxAt(
 ): number {
 	if (ts < min || ts > max) return -1;
 	let idx = -1;
-	for (let i = 0; i < snapshots.length; i++) {
-		if (snapshots[i].ts > ts) break;
+	for (const [i, snapshot] of snapshots.entries()) {
+		if (snapshot.ts > ts) break;
 		idx = i;
 	}
 	return idx;

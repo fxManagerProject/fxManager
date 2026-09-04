@@ -20,17 +20,25 @@ const HEAT: Array<[number, [number, number, number]]> = [
 
 function heatColor(t: number): string {
 	const x = Math.max(0, Math.min(1, Math.sqrt(t)));
+	let prev = HEAT[0];
+	if (!prev) return 'rgb(252,253,191)';
+
 	for (let i = 1; i < HEAT.length; i++) {
 		const stop = HEAT[i];
-		if (x <= stop[0]) {
-			const prev = HEAT[i - 1];
-			const f = (x - prev[0]) / (stop[0] - prev[0] || 1);
-			const r = Math.round(prev[1][0] + (stop[1][0] - prev[1][0]) * f);
-			const g = Math.round(prev[1][1] + (stop[1][1] - prev[1][1]) * f);
-			const b = Math.round(prev[1][2] + (stop[1][2] - prev[1][2]) * f);
+		if (!stop) break;
+
+		const [stopPos, [sR, sG, sB]] = stop;
+		if (x <= stopPos) {
+			const [prevPos, [pR, pG, pB]] = prev;
+			const f = (x - prevPos) / (stopPos - prevPos || 1);
+			const r = Math.round(pR + (sR - pR) * f);
+			const g = Math.round(pG + (sG - pG) * f);
+			const b = Math.round(pB + (sB - pB) * f);
 			return `rgb(${r},${g},${b})`;
 		}
+		prev = stop;
 	}
+
 	return 'rgb(252,253,191)';
 }
 
@@ -112,7 +120,7 @@ export function PerfHeatmap({
 		const cb = onInspectRef.current;
 		if (!cb) return;
 		if (hoverIdx !== null && hoverIdx < snapshots.length) {
-			cb({ kind: 'point', snapshot: snapshots[hoverIdx] });
+			cb({ kind: 'point', snapshot: snapshots[hoverIdx]! });
 		} else if (zoom) {
 			const inRange = snapshots.filter(
 				(s) => s.ts >= zoom.start && s.ts <= zoom.end,
@@ -157,18 +165,20 @@ export function PerfHeatmap({
 		ctx.rect(x0, y0, plotW, plotH);
 		ctx.clip();
 
-		for (let i = 0; i < n; i++) {
-			const ts = snapshots[i].ts;
-			// a cell spans [ts, next ts) — skip it only when that interval
-			// misses the view window entirely
-			const nextTs = i < n - 1 ? snapshots[i + 1].ts : Infinity;
+		for (const [i, s] of snapshots.entries()) {
+			const ts = s.ts;
+			const nextSnapshot = snapshots[i + 1];
+			const nextTs = nextSnapshot ? nextSnapshot.ts : Infinity;
+
 			if (nextTs < view.min || ts > view.max) continue;
+
 			const cx = xOf(ts);
-			const nx = i < n - 1 ? xOf(nextTs) : x0 + plotW;
+			const nx = nextSnapshot ? xOf(nextTs) : x0 + plotW;
 			const cw = Math.max(1, nx - cx);
 			const fr = model.fractions[i];
+
 			for (let b = 0; b < BANDS; b++) {
-				const f = fr[b] ?? 0;
+				const f = fr?.[b] ?? 0;
 				if (f <= 0) continue;
 				ctx.fillStyle = heatColor(f);
 				ctx.fillRect(cx, yTop(b), cw + 0.75, bandH + 0.75);
@@ -181,10 +191,10 @@ export function PerfHeatmap({
 		ctx.beginPath();
 		let started = false;
 		for (let i = 0; i < n; i++) {
-			const cx = xOf(snapshots[i].ts);
-			const nx = i < n - 1 ? xOf(snapshots[i + 1].ts) : x0 + plotW;
+			const cx = xOf(snapshots[i]!.ts);
+			const nx = i < n - 1 ? xOf(snapshots[i + 1]!.ts) : x0 + plotW;
 			const mid = (cx + nx) / 2;
-			const y = yOfP(model.players[i]);
+			const y = yOfP(model.players[i]!);
 			if (!started) {
 				ctx.moveTo(mid, y);
 				started = true;
@@ -253,9 +263,9 @@ export function PerfHeatmap({
 			ctx.lineWidth = 1;
 			ctx.strokeRect(a + 0.5, y0 + 0.5, b - a, plotH);
 		} else if (hoverIdx !== null && hoverIdx < n) {
-			const cx = xOf(snapshots[hoverIdx].ts);
+			const cx = xOf(snapshots[hoverIdx]!.ts);
 			const nx =
-				hoverIdx < n - 1 ? xOf(snapshots[hoverIdx + 1].ts) : x0 + plotW;
+				hoverIdx < n - 1 ? xOf(snapshots[hoverIdx + 1]!.ts) : x0 + plotW;
 			ctx.strokeStyle = 'rgba(255,255,255,0.7)';
 			ctx.lineWidth = 1;
 			ctx.strokeRect(cx + 0.5, y0 + 0.5, Math.max(1, nx - cx), plotH);
@@ -345,11 +355,12 @@ export function PerfHeatmap({
 			? {
 					s: snapshots[hover.idx],
 					players: model.players[hover.idx],
-					rows: model.fractions[hover.idx]
-						.map((f, b) => ({ b, f }))
-						.filter((r) => r.f >= 0.005)
-						.sort((a, b) => b.f - a.f)
-						.slice(0, 5),
+					rows:
+						model.fractions[hover.idx]
+							?.map((f, b) => ({ b, f }))
+							.filter((r) => r.f >= 0.005)
+							.sort((a, b) => b.f - a.f)
+							.slice(0, 5) ?? [],
 				}
 			: null;
 
@@ -381,7 +392,7 @@ export function PerfHeatmap({
 					}}
 				>
 					<div className="font-medium">
-						{format(new Date(tip.s.ts), 'MMM d HH:mm')}
+						{tip.s ? format(new Date(tip.s.ts), 'MMM d HH:mm') : 'N/A'}
 					</div>
 					<div className="text-muted-foreground">Players: {tip.players}</div>
 					{tip.rows.map((r) => (

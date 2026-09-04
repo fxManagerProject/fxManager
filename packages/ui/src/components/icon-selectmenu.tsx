@@ -72,7 +72,9 @@ export function IconPicker({
 						<CommandEmpty>No icon found.</CommandEmpty>
 						<CommandGroup>
 							{filteredIcons.map((iconName) => {
-								const IconComponent = lucideIconMap[iconName as IconName] ?? FileQuestion;
+								const IconComponent =
+									lucideIconMap[iconName as IconName] ?? FileQuestion;
+
 								return (
 									<CommandItem
 										key={iconName}

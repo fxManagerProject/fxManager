@@ -115,8 +115,9 @@ describe('AuthRepository', () => {
 				'p',
 				UserPermissions.KICK,
 			);
-			const session = authRepo.createSession(user.id);				const deleted = (await authRepo.deleteUser(user.id))!;
-				expect(deleted.id).toBe(user.id);
+			const session = authRepo.createSession(user.id);
+			const deleted = (await authRepo.deleteUser(user.id))!;
+			expect(deleted.id).toBe(user.id);
 
 			// Verify cascading rules removed active sessions from the database
 			const lookupSession = testDb
