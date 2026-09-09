@@ -4,7 +4,7 @@ let newVersion = process.argv[2];
 
 if (!newVersion) {
 	console.error(
-		'Please provide a version (e.g., bun run sync-versions.ts 1.0.0-b)',
+		'Please provide the new version to release (e.g., bun ./scripts/bump-version.ts v0.3.3)',
 	);
 	process.exit(1);
 }
@@ -39,7 +39,7 @@ for (const path of packagePaths) {
 		if (content.version) {
 			content.version = newVersion;
 
-			writeFileSync(path, JSON.stringify(content, null, 2) + '\n');
+			writeFileSync(path, `${JSON.stringify(content, null, 2)}\n`);
 			console.log(`✅ Updated: ${path}`);
 		}
 	} catch (err) {
