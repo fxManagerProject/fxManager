@@ -10,15 +10,17 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 } from '@fxmanager/ui/components/sidebar';
-import { User2, ChevronUp, LogOut, X, Moon, Sun } from 'lucide-react';
+import { User2, ChevronUp, LogOut, X, Moon, Sun, User } from 'lucide-react';
 import { useTheme } from '../theme-provider';
 import { Switch } from '@fxmanager/ui/components/switch';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { useNavigate } from 'react-router-dom';
 
 export function NavUser() {
 	const { user, logout } = useAuth();
 	const { setTheme, theme } = useTheme();
+	const navigate = useNavigate();
 	const [toggleState, setToggleState] = useState<boolean>(theme === 'light');
 
 	const toggleTheme = (checked: boolean) => {
@@ -64,6 +66,16 @@ export function NavUser() {
 							onCheckedChange={toggleTheme}
 						/>
 					</div>
+
+					<DropdownMenuItem
+						onClick={() => navigate('/profile')}
+						className="flex items-center justify-between px-1.5 py-1 cursor-pointer"
+					>
+						<div className="flex items-center gap-2">
+							<User className="h-4 w-4" />
+							<span className="text-sm">Profile</span>
+						</div>
+					</DropdownMenuItem>
 
 					<DropdownMenuSeparator />
 

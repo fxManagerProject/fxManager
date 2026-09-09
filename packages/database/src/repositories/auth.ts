@@ -128,6 +128,18 @@ class AuthRepository {
 		return user;
 	}
 
+	async updatePassword(adminId: number, newPassword: string) {
+		const passwordHash = await Bun.password.hash(newPassword, {
+			algorithm: 'bcrypt',
+		});
+
+		return this.db
+			.update(adminUsers)
+			.set({ passwordHash })
+			.where(eq(adminUsers.id, adminId))
+			.run();
+	}
+
 	createSession(adminId: number) {
 		const id = crypto.randomUUID();
 		const now = new Date();
