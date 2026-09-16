@@ -6,6 +6,7 @@
 "area: docs":
   - changed-files:
     - any-glob-to-any-file:
+      - "docs/**"
       - "**/*.md"
 
 "area: core":
