@@ -26,36 +26,30 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          fetch-depth: 0
-
-      - name: Check commits for breaking changes
+      - name: Fetch PR commit messages
         id: check-breaking
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          echo "Scanning commits from $BASE_SHA to $HEAD_SHA..."
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.payload.pull_request.number;
 
-          # Collect all commit messages in the PR
-          COMMITS=$(git log "$BASE_SHA".."$HEAD_SHA" --pretty=format:"%s %b")
+            const commits = await github.paginate(
+              github.rest.pulls.listCommits,
+              { owner, repo, pull_number }
+            );
 
-          echo "Commit messages:"
-          echo "$COMMITS"
+            const commitMessages = commits
+              .map(c => `${c.commit.message}`)
+              .join('\n');
 
-          # Check for breaking change indicators (Conventional Commits spec + common patterns)
-          if echo "$COMMITS" | grep -qiE \
-            'BREAKING[[:space:]]+CHANGE|breaking[[:space:]]+change|!:|feat!|fix!|refactor!|perf!|chore!'; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-            echo "Breaking change detected in commit messages."
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "No breaking changes detected."
-          fi
+            console.log('PR Commit Messages:\n', commitMessages);
+
+            const regex = /BREAKING[ \t]+CHANGE|breaking[ \t]+change|!:|feat!|fix!|refactor!|perf!|chore!/i;
+            const found = regex.test(commitMessages);
+
+            core.setOutput('found', found ? 'true' : 'false');
 
       - name: Add breaking-change label
         if: steps.check-breaking.outputs.found == 'true'
