@@ -8,6 +8,9 @@ import { Card, CardContent } from '@fxmanager/ui/components/card';
 import { Badge } from '@fxmanager/ui/components/badge';
 import { STATUS_VARIANT } from '@/static/server-state';
 import { formatDuration, formatRemaining, isServerRunning } from '@/lib/utils';
+import { compareArtifactBuilds } from '@/lib/artifact-version';
+import { ARTIFACT_STATE } from '@/static/artifact-state';
+import { cn } from '@fxmanager/ui/lib/utils';
 import { Button } from '@fxmanager/ui/components/button';
 import {
 	ArrowUpCircle,
@@ -31,6 +34,7 @@ import { useSchedule } from '@/hooks/use-schedule';
 import { useEffect, useState } from 'react';
 
 const TEMP_PRESETS = [5, 15, 30] as const;
+const ARTIFACTS_URL = 'https://artifacts.jgscripts.com/';
 
 interface ActionButtonProps {
 	Icon: LucideIcon;
@@ -79,6 +83,12 @@ export function ServerStatusCard() {
 	const { state: sideBarState, setOpen } = useSidebar();
 	const { status: schedule, restartIn, skip } = useSchedule();
 	const isCollapsed = sideBarState === 'collapsed';
+	const artifactStatus = compareArtifactBuilds(
+		serverState.version,
+		recommendedArtifact,
+	);
+	const artifactState =
+		artifactStatus === 'unknown' ? null : ARTIFACT_STATE[artifactStatus];
 	const canStart =
 		serverState.status === 'stopped' || serverState.status === 'crashed';
 	const canStop =
@@ -205,25 +215,29 @@ export function ServerStatusCard() {
 						</Button>
 					</div>
 					{serverState.version && (
-						<div className="space-y-3 border-t pt-3">
+						<div className="space-y-2 border-t pt-3">
 							<div className="flex flex-row justify-between">
 								<p>Artifact</p>
 								<p className="font-mono">b{serverState.version}</p>
 							</div>
-							{recommendedArtifact && (
-								<div className="flex flex-row justify-between">
-									<p>Recommended</p>
-									<a
-										href="https://artifacts.jgscripts.com/"
-										target="_blank"
-										rel="noreferrer"
-										className="inline-flex items-center gap-1 font-mono text-primary hover:underline"
-										title="Source: artifacts.jgscripts.com"
-									>
-										b{recommendedArtifact}
-										<ExternalLink className="h-3 w-3" />
-									</a>
-								</div>
+							{/* a state implies a recommended build — the check narrows it to a string */}
+							{recommendedArtifact && artifactState && (
+								<a
+									href={ARTIFACTS_URL}
+									target="_blank"
+									rel="noreferrer"
+									className={cn(
+										'flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition-colors',
+										artifactState.className,
+									)}
+									title="Source: artifacts.jgscripts.com"
+								>
+									<artifactState.Icon className="h-3.5 w-3.5 shrink-0" />
+									<span className="flex-1">
+										{artifactState.label(recommendedArtifact)}
+									</span>
+									<ExternalLink className="h-3 w-3 shrink-0" />
+								</a>
 							)}
 						</div>
 					)}
