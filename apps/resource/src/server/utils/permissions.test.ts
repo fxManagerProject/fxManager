@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, mock } from 'bun:test';
-import { getPermissions } from './permissions'; // Adjust import path as needed
-import { UserPermissions } from '@fxmanager/shared/constants';
+import { getPermissions } from './permissions';
+import {
+	ACE_PREFIX,
+	PERMISSION_ACE_KEYS,
+	UserPermissions,
+} from '@fxmanager/shared/constants';
 
 describe('getPermissions', () => {
 	const originalIsPlayerAceAllowed = globalThis.IsPlayerAceAllowed;
@@ -20,8 +24,10 @@ describe('getPermissions', () => {
 	});
 
 	it('calculates the exact bitmask for a single allowed permission', () => {
+		const targetAce = `${ACE_PREFIX}.${PERMISSION_ACE_KEYS[UserPermissions.KICK]}`;
+
 		globalThis.IsPlayerAceAllowed = mock((src: string, ace: string) => {
-			return src === '1' && ace === 'fxmanager.players.kick';
+			return src === '1' && ace === targetAce;
 		});
 
 		const permissions = getPermissions(1);
@@ -32,11 +38,17 @@ describe('getPermissions', () => {
 	});
 
 	it('combines multiple allowed ACE permissions into a single bitmask', () => {
-		const allowedAces = new Set([
-			'fxmanager.players.kick',
-			'fxmanager.players.ban',
-			'fxmanager.reports.view',
-		]);
+		const targetPermissions = [
+			UserPermissions.KICK,
+			UserPermissions.BAN,
+			UserPermissions.VIEW_REPORT,
+		];
+
+		const allowedAces = new Set(
+			targetPermissions.map(
+				(bit) => `${ACE_PREFIX}.${PERMISSION_ACE_KEYS[bit]}`,
+			),
+		);
 
 		globalThis.IsPlayerAceAllowed = mock((src: string, ace: string) => {
 			return src === '12' && allowedAces.has(ace);
@@ -44,8 +56,7 @@ describe('getPermissions', () => {
 
 		const permissions = getPermissions(12);
 
-		const expected =
-			UserPermissions.KICK | UserPermissions.BAN | UserPermissions.VIEW_REPORT;
+		const expected = targetPermissions.reduce((acc, bit) => acc | bit, 0);
 
 		expect(permissions).toBe(expected);
 		expect(permissions & UserPermissions.KICK).not.toBe(0);
@@ -55,7 +66,13 @@ describe('getPermissions', () => {
 	});
 
 	it('returns a combined sum of all bits when every ACE permission is allowed', () => {
-		globalThis.IsPlayerAceAllowed = mock(() => true);
+		const allAllowedAces = new Set(
+			Object.values(PERMISSION_ACE_KEYS).map((key) => `${ACE_PREFIX}.${key}`),
+		);
+
+		globalThis.IsPlayerAceAllowed = mock((src: string, ace: string) => {
+			return src === '1' && allAllowedAces.has(ace);
+		});
 
 		const permissions = getPermissions(1);
 
