@@ -84,7 +84,10 @@ await Promise.all(
 const toBuild =
 	targetArg === 'all'
 		? Object.entries(targets)
-		: [[targetArg, targets[targetArg as keyof typeof targets]]];
+		: ([[targetArg, targets[targetArg as keyof typeof targets]]] as [
+				string,
+				Build.CompileTarget,
+			][]);
 
 // plugin to remove DEV: labels
 const stripDevLabels = {
@@ -112,13 +115,25 @@ for (const [platform, target] of toBuild) {
 		compile: {
 			target: target as Build.CompileTarget,
 			outfile,
+			windows:
+				platform === 'windows'
+					? {
+							title: 'fxManager',
+							publisher: 'github:fxManagerProject',
+							description: 'A webpanel to maintain your fivem/redm server.',
+							icon: './.github/assets/fxmanager.ico',
+							version: `${version.replace(/[a-zA-Z]+/, '')}`,
+							copyright:
+								'https://github.com/fxManagerProject/fxManager/blob/main/LICENSE',
+						}
+					: undefined,
 		},
 		define: {
 			'process.env.NODE_ENV': JSON.stringify('production'),
 			'process.env.VERSION': JSON.stringify(version),
 		},
 		plugins: [stripDevLabels],
-	};
+	} satisfies Bun.BuildConfig;
 
 	const result = await Bun.build(buildSettings);
 
