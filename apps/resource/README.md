@@ -43,6 +43,11 @@ Use `pnpm build` to build all project files in production mode.
 
 To build and create GitHub releases, tag your commit (e.g. `v1.0.0`) and push it.
 
+## Events
+
+Custom events follow the naming convention described in [EVENTS.md](EVENTS.md). All
+event names are declared as constants in `EVENT_NAMES` (`src/common/types/callbacks.ts`).
+
 ## Layout
 
 - [/dist/](dist)
