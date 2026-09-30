@@ -1,10 +1,9 @@
-import path from 'node:path';
 import { Type, type Static } from '@sinclair/typebox';
 import type { FastifyPluginAsync } from 'fastify';
 import { repo } from '@fxmanager/database';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import type { ApiResponse } from '@fxmanager/shared/types';
-import { COOKIE_NAME, fileExists, isFxManagerSetup } from '../../common/utils';
+import { COOKIE_NAME, isFxManagerSetup } from '../../common/utils';
 import { ConfigManager } from '../../modules/config/manager';
 import { setupTokenManager } from '../../modules/setup/token';
 import type { RouteModule } from '../../types';
@@ -49,23 +48,22 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 		}
 
 		const cfg = ConfigManager.getInstance().getFxServerValues();
-		const cfgPath = path.isAbsolute(cfg.serverConfigFile)
-			? cfg.serverConfigFile
-			: path.join(cfg.serverDataPath, cfg.serverConfigFile);
-
-		const [executable, dataPath, cfgFound] = await Promise.all([
-			fileExists(cfg.executablePath),
-			fileExists(cfg.serverDataPath),
-			fileExists(cfgPath),
-		]);
+		const result = await ConfigManager.getInstance().checkFXServerPaths(
+			cfg.executablePath,
+			cfg.serverDataPath,
+		);
 
 		return {
 			success: true,
 			data: {
-				executable: cfg.executablePath,
-				dataPath: cfg.serverDataPath,
-				cfgPath,
-				found: { executable, dataPath, cfg: cfgFound },
+				executable: result.files.executable,
+				dataPath: result.files.serverdata,
+				cfgPath: result.files.cfg,
+				found: {
+					executable: result.exists.executable,
+					dataPath: result.exists.serverdata,
+					cfg: result.exists.cfg,
+				},
 			},
 		} satisfies ApiResponse<DetectResult>;
 	});
@@ -117,8 +115,18 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 
 			const { username, password, server, customGroups } = request.body;
 
-			repo.settings.set('fxserver.executablePath', server.fxserverPath);
-			repo.settings.set('fxserver.serverDataPath', server.resourcePath);
+			// Normalise the supplied paths before persisting, mirroring what the
+			// /detect + /checkfiles endpoints return
+			const execResult =
+				await ConfigManager.getInstance().validateExecutablePath(
+					server.fxserverPath,
+				);
+			const dataResult = await ConfigManager.getInstance().validateDataPath(
+				server.resourcePath,
+			);
+
+			repo.settings.set('fxserver.executablePath', execResult.path);
+			repo.settings.set('fxserver.serverDataPath', dataResult.path);
 
 			if (customGroups.length > 0) {
 				try {

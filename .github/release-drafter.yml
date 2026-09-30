@@ -1,0 +1,80 @@
+# Release Drafter configuration
+# Docs: https://github.com/release-drafter/release-drafter
+#
+# Keeps a single draft release up to date as pull requests merge into main.
+# The release workflow (release.yaml) publishes that draft, so the release
+# post is never edited after publication (immutable releases).
+
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+categories:
+  - title: '💥 Breaking Changes'
+    semver-increment: major
+    exclusive: true
+    when:
+      - labels:
+          - 'breaking-change'
+      - conventional:
+          type: 'feat'
+          breaking: true
+  - title: '🚀 Features'
+    semver-increment: minor
+    when:
+      - conventional:
+          type: 'feat'
+      - labels:
+          - 'enhancement'
+          - 'feature'
+  - title: '🐛 Bug Fixes'
+    when:
+      - conventional:
+          type: 'fix'
+      - labels:
+          - 'bug'
+          - 'fix'
+  - title: '⚡ Performance'
+    when:
+      - conventional:
+          type: 'perf'
+      - labels:
+          - 'performance'
+  - title: '🧰 Maintenance'
+    when:
+      - conventional:
+          types:
+            [
+              'chore',
+              'ci',
+              'docs',
+              'refactor',
+              'test',
+              'build',
+              'style',
+              'deps',
+              'revert',
+            ]
+      - labels:
+          - 'type: ci'
+          - 'type: config'
+          - 'type: migration'
+  - type: 'pre-exclude'
+    when:
+      labels:
+        - 'skip-changelog'
+
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+change-title-escapes: '\<*_&'
+
+exclude-contributors:
+  - 'dependabot[bot]'
+
+no-new-contributor-template: ''
+
+template: |
+  ## What's Changed
+  $CHANGES
+
+  $NEW_CONTRIBUTORS
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION

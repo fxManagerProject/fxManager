@@ -50,7 +50,7 @@ export function useConsoleSocket({
 
 		const offLines = on<ProcessOutputLine[]>('console', 'lines', ({ data }) => {
 			setLines((prev) => {
-				const lastSeq = prev.length > 0 ? prev[prev.length - 1].seq : -1;
+				const lastSeq = prev.length > 0 ? prev[prev.length - 1]!.seq : -1;
 				const fresh = data.filter((l) => l.seq > lastSeq);
 				if (fresh.length === 0) return prev;
 				const cap = suspendTrimRef.current

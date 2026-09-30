@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Check, ChevronsUpDown, HelpCircle } from 'lucide-react';
+import { Check, ChevronsUpDown, FileQuestion, HelpCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { cn } from '../lib/utils';
 import { Button } from './button';
@@ -72,7 +72,9 @@ export function IconPicker({
 						<CommandEmpty>No icon found.</CommandEmpty>
 						<CommandGroup>
 							{filteredIcons.map((iconName) => {
-								const IconComponent = lucideIconMap[iconName as IconName];
+								const IconComponent =
+									lucideIconMap[iconName as IconName] ?? FileQuestion;
+
 								return (
 									<CommandItem
 										key={iconName}

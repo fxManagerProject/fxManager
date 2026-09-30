@@ -18,9 +18,11 @@
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"erasableSyntaxOnly": true,
 		"noFallthroughCasesInSwitch": true,
-		"noUncheckedSideEffectImports": true
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+		"noUncheckedSideEffectImports": true,
+		"allowUnreachableCode": false
 	},
 	"include": ["vite.config.ts"]
 }

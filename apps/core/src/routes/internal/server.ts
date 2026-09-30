@@ -1,4 +1,3 @@
-import type { ResourceData } from '@fxmanager/shared/types';
 import { resourceAuth } from '../../middleware/resource';
 import type { RouteModule } from '../../types';
 

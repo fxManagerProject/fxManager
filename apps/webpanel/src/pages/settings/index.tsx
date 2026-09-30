@@ -32,6 +32,7 @@ import { cn } from '@fxmanager/ui/lib/utils';
 import { Skeleton } from '@fxmanager/ui/components/skeleton';
 import type { SettingsTabProps } from '@/types/settings';
 import { toast } from 'sonner';
+import OAuthTab from './tabs/oauth';
 
 interface Tab {
 	value: SettingsScope;
@@ -65,6 +66,12 @@ const TABS = [
 		description: 'Schedule automatic server restarts and warn players.',
 		component: RestartsTab,
 	},
+	{
+		value: 'oauth',
+		label: 'Authentication',
+		description: 'Configure authentication providers for your server.',
+		component: OAuthTab,
+	},
 ] satisfies Tab[];
 
 type SettingsCache = {
@@ -72,7 +79,7 @@ type SettingsCache = {
 };
 
 export default function SettingsPage() {
-	const [currentTab, setCurrentTab] = useState<string>(TABS[0].value);
+	const [currentTab, setCurrentTab] = useState<string>(TABS[0]!.value);
 	const [loading, setLoading] = useState(true);
 	const [disabled, setDisabled] = useState(false);
 	const [cache, setCache] = useState<SettingsCache>({});

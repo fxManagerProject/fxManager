@@ -1,6 +1,6 @@
 {
 	"name": "@fxmanager/resource",
-	"version": "0.3.2",
+	"version": "0.4.0",
 	"license": "",
 	"description": "",
 	"type": "module",
@@ -16,6 +16,7 @@
 		"@citizenfx/client": "latest",
 		"@citizenfx/server": "latest",
 		"@communityox/fx-utils": "^0.0.4",
+		"@fxmanager/shared": "workspace:*",
 		"@jgoz/esbuild-plugin-typecheck": "^4.0.3",
 		"@types/node": "^22.13.9",
 		"@types/react": "^18.3.18",

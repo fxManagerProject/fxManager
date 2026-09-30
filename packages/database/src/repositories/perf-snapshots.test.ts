@@ -48,9 +48,9 @@ describe('PerfSnapshotsRepository', () => {
 
 		const rows = repo.listForSession(s.id);
 		expect(rows.length).toBe(1);
-		expect(rows[0].ts).toBe(1234);
-		expect(rows[0].players).toBe(12);
-		expect(rows[0].perf).toEqual(perf);
+		expect(rows[0]!.ts).toBe(1234);
+		expect(rows[0]!.players).toBe(12);
+		expect(rows[0]!.perf).toEqual(perf);
 	});
 
 	it('returns snapshots ordered by ts asc', () => {
@@ -126,7 +126,7 @@ describe('PerfSnapshotsRepository', () => {
 
 		repo.insert({ sessionId: s.id, ts: 1000, players: 0, perf });
 
-		const row = repo.listForSession(s.id)[0];
+		const row = repo.listForSession(s.id)[0]!;
 		expect(row.fxsMemory).toBeNull();
 		expect(row.nodeMemory).toBeNull();
 	});

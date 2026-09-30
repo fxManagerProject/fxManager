@@ -507,7 +507,11 @@ export class ProcessManager {
 				this.emitLine(event);
 
 				if (forceCrash) {
-					this.stop({ forceCrash: true, message: 'The panel can not function properly without the fxManager resource.' });
+					this.stop({
+						forceCrash: true,
+						message:
+							'The panel can not function properly without the fxManager resource.',
+					});
 					return;
 				}
 			}

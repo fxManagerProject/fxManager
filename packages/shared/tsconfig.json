@@ -21,10 +21,11 @@
 		"noUncheckedIndexedAccess": true,
 		"noImplicitOverride": true,
 
-		// Some stricter flags (disabled by default)
-		"noUnusedLocals": false,
-		"noUnusedParameters": false,
-		"noPropertyAccessFromIndexSignature": false,
+		// Linting
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noUncheckedSideEffectImports": true,
+		"allowUnreachableCode": false,
 
 		"types": ["bun"]
 	}

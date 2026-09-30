@@ -61,7 +61,7 @@ describe('PlayerSessionsRepository', () => {
 			.get();
 		repo.open(pid, ss.id, new Date(1_000_000));
 		repo.closeDangling(new Date(9_000_000));
-		const [row] = repo.listSessions(pid, 1, 10).items;
+		const row = repo.listSessions(pid, 1, 10).items[0]!;
 		expect(row.disconnectedAt).toBe(1_500_000);
 		expect(row.durationMs).toBe(500_000);
 		expect(row.endReason).toBe('reconciled');
@@ -71,7 +71,7 @@ describe('PlayerSessionsRepository', () => {
 		const pid = seedPlayer();
 		repo.open(pid, null, new Date(1_000_000));
 		repo.closeDangling(new Date(2_000_000));
-		expect(repo.listSessions(pid, 1, 10).items[0].durationMs).toBe(1_000_000);
+		expect(repo.listSessions(pid, 1, 10).items[0]!.durationMs).toBe(1_000_000);
 	});
 
 	it('getRangeActivity() buckets playtime by start-day and summarises', () => {
@@ -107,6 +107,6 @@ describe('PlayerSessionsRepository', () => {
 		const page = repo.listSessions(pid, 1, 2);
 		expect(page.total).toBe(3);
 		expect(page.items).toHaveLength(2);
-		expect(page.items[0].connectedAt).toBe(3_000_000); // newest first
+		expect(page.items[0]!.connectedAt).toBe(3_000_000); // newest first
 	});
 });

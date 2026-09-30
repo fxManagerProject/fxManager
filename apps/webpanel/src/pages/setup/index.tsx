@@ -18,7 +18,7 @@ export function SetupApp() {
 		username: '',
 		password: '',
 		confirmPassword: '',
-		serverSetupMethod: 'manual',
+		serverSetupMethod: 'installer',
 		fxserverPath: '',
 		resourcePath: '',
 		adminGroups: [],

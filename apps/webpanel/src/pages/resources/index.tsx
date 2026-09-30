@@ -36,7 +36,7 @@ function formatPath(path: string): string {
 
 	const parts = normalized.split(/\/resources\/+/i);
 	if (parts.length > 1) {
-		return parts[parts.length - 1];
+		return parts[parts.length - 1]!;
 	}
 
 	return normalized;

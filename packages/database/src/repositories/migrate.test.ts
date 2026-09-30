@@ -78,7 +78,7 @@ describe('repo.migrate.fromTxAdmin', () => {
 		expect(storedIds).toContain('license:orphan');
 
 		const wl = db.select().from(schema.whitelistedIdentifers).all();
-		expect(wl[0].value).toBe('discord:999');
+		expect(wl[0]!.value).toBe('discord:999');
 	});
 
 	it('is idempotent across runs', () => {

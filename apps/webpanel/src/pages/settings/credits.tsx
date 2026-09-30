@@ -148,7 +148,8 @@ function ContributorCard({
 					</span>
 					{contributor.contributions && (
 						<span className="text-sm font-light italic truncate group-hover:underline decoration-1 underline-offset-2">
-							{formatNumber(contributor.contributions)} contributions
+							{formatNumber(contributor.contributions)} contribution
+							{contributor.contributions > 1 && 's'}
 						</span>
 					)}
 				</div>

@@ -407,7 +407,9 @@ describe('ProcessManager', () => {
 			expect(mockBufferPush).toHaveBeenCalledWith(
 				expect.objectContaining({
 					source: 'stderr',
-					line: expect.stringContaining('fxServer process was forcefully terminated'),
+					line: expect.stringContaining(
+						'fxServer process was forcefully terminated',
+					),
 				}),
 			);
 		});
@@ -424,7 +426,9 @@ describe('ProcessManager', () => {
 			// Verify the custom internal error was injected
 			expect(mockBufferPush).toHaveBeenCalledWith(
 				expect.objectContaining({
-					line: expect.stringContaining('The server can not run without the fxManager resource.'),
+					line: expect.stringContaining(
+						'The server can not run without the fxManager resource.',
+					),
 				}),
 			);
 
@@ -432,7 +436,9 @@ describe('ProcessManager', () => {
 			expect(stopSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
 					forceCrash: true,
-					message: expect.stringContaining('can not function properly without the fxManager resource'),
+					message: expect.stringContaining(
+						'can not function properly without the fxManager resource',
+					),
 				}),
 			);
 		});
