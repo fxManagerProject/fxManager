@@ -20,6 +20,7 @@ import { useRovingFocus } from '~/hooks/useRovingFocus';
 import { useNuiEvent } from '~/hooks/useNuiEvent';
 import { PromptDialog, type PromptDialogProps } from './DialogPrompt';
 import { isEnvBrowser } from '~/utils/misc';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 type NavigationDirection =
 	| 'up'
@@ -52,7 +53,14 @@ type QuickActionItem =
 
 type DialogConfig = Omit<PromptDialogProps, 'isOpen' | 'onClose'>;
 
-export function QuickMenu({ onClose }: { onClose: () => void }) {
+interface QuickMenuProps {
+	onClose: () => void;
+	permissions: number;
+}
+
+export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
+	if (permissions === UserPermissions.NONE) return null;
+
 	const [noclip, setNoclip] = useState(false);
 	const [tags, setTags] = useState(true);
 	const [blips, setBlips] = useState(false);

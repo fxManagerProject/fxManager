@@ -1,11 +1,11 @@
 import { useEffect, useState, type ComponentType } from 'react';
 import { SECTIONS, type SectionKey } from '~/config/sections';
-import { canAccess, type Permissions } from '~/lib/access';
 import { ConsoleSection } from './sections/ConsoleSection';
 import { ResourcesSection } from './sections/ResourcesSection';
 import { PlayersSection } from './sections/PlayersSection';
 import { ReportsSection } from './sections/ReportsSection';
 import { Server } from 'lucide-react';
+import { PermissionManager } from '@fxmanager/shared/utils';
 
 const SECTION_VIEWS: Record<SectionKey, ComponentType> = {
 	console: ConsoleSection,
@@ -15,13 +15,13 @@ const SECTION_VIEWS: Record<SectionKey, ComponentType> = {
 };
 
 interface MainPanelProps {
-	role: Permissions;
+	permissions: number;
 	onClose: () => void;
 }
 
-export function MainPanel({ role, onClose }: MainPanelProps) {
+export function MainPanel({ permissions }: MainPanelProps) {
 	const accessibleSections = SECTIONS.filter((section) =>
-		canAccess(role, section.requires),
+		PermissionManager.has(permissions, section.permission),
 	);
 	const [active, setActive] = useState<SectionKey | undefined>(
 		accessibleSections[0]?.key,
@@ -34,7 +34,7 @@ export function MainPanel({ role, onClose }: MainPanelProps) {
 			setActive(accessibleSections[0]?.key);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [role]);
+	}, [permissions]);
 
 	const ActiveView = active ? SECTION_VIEWS[active] : null;
 
