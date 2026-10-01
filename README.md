@@ -7,12 +7,13 @@
 	<img alt="GitHub latest release" src="https://img.shields.io/github/downloads/fxManagerProject/fxManager/total?logo=github">
 	<img alt="GitHub commits since latest release" src="https://img.shields.io/github/commits-since/fxManagerProject/fxManager/latest">
 	<img alt="GitHub contributors" src="https://img.shields.io/github/contributors/fxManagerProject/fxManager">
+	<img alt="Tests" id="test-coverage" src="https://img.shields.io/badge/coverage-97%25-brightgreen">
 </p>
 <p align="center">
 	<a href="https://fxmanager.dev/docs" target="_blank" style="text-decoration: none;">
 		<img alt="Documentation" src="https://img.shields.io/badge/view-documentation-orange?logo=readthedocs&logoColor=white">
 	</a>
-	<a href="https://discord.gg/WxFGydWfhP" target="_blank" style="text-decoration: none;">
+	<a href="https://discord.gg/5K6CTkFKJR" target="_blank" style="text-decoration: none;">
 		<img alt="Documentation" src="https://img.shields.io/badge/join-discord-5865F2?logo=discord&logoColor=white">
 	</a>
 </p>
@@ -107,6 +108,16 @@ The utility will automatically:
 ## Tooling
 
 **Biome** handles linting and formatting (replacing ESLint and Prettier) using a single, high-performance configuration at the root.
+
+---
+
+## Releasing
+
+Releases are driven by a maintainer - the workflow never commits, pushes, or tags. To cut a new release:
+
+```bash
+bun ./scripts/release.ts v0.3.3
+```
 
 ---
 

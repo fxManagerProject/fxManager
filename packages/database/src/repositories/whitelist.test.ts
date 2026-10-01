@@ -147,8 +147,8 @@ describe('WhitelistRepository Integration Tests', () => {
 			expect(response.items.length).toBe(1);
 
 			// Asserts business logic transformations are executed accurately
-			expect(response.items[0].addedByAdmin).toBe('deleted_admin');
-			expect(response.items[0].playerName).toBe('N/A');
+			expect(response.items[0]!.addedByAdmin).toBe('deleted_admin');
+			expect(response.items[0]!.playerName).toBe('N/A');
 		});
 
 		it('should correctly prioritize and map the system indicator string when flags are high', async () => {
@@ -163,12 +163,12 @@ describe('WhitelistRepository Integration Tests', () => {
 				.run();
 
 			const response = await whitelistRepo.list(1, 10);
-			expect(response.items[0].addedByAdmin).toBe('system');
+			expect(response.items[0]!.addedByAdmin).toBe('system');
 		});
 
 		it('should execute deep multi-table text filtering when passing down search strings', async () => {
 			// Setup a cascading chain: Admin profile + Player + Player Identifier -> Whitelist Link
-			const [admin] = testDb
+			const admin = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'Staff_Alpha',
@@ -176,13 +176,13 @@ describe('WhitelistRepository Integration Tests', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({ name: 'Charlie_Properties' })
 				.returning()
-				.all();
+				.get()!;
 			testDb
 				.insert(playerIdentifiers)
 				.values({
@@ -207,8 +207,8 @@ describe('WhitelistRepository Integration Tests', () => {
 				search: 'Charlie',
 			});
 			expect(searchByName.total).toBe(1);
-			expect(searchByName.items[0].playerName).toBe('Charlie_Properties');
-			expect(searchByName.items[0].addedByAdmin).toBe('Staff_Alpha');
+			expect(searchByName.items[0]!.playerName).toBe('Charlie_Properties');
+			expect(searchByName.items[0]!.addedByAdmin).toBe('Staff_Alpha');
 
 			// Execute search on administrative username substring
 			const searchByAdmin = await whitelistRepo.list(1, 10, {
@@ -222,7 +222,7 @@ describe('WhitelistRepository Integration Tests', () => {
 
 	describe('revoke()', () => {
 		it('should delete a whitelist record completely and return the removed element details', () => {
-			const [inserted] = testDb
+			const inserted = testDb
 				.insert(whitelistedIdentifers)
 				.values({
 					type: 'fivem',
@@ -230,7 +230,7 @@ describe('WhitelistRepository Integration Tests', () => {
 					addedAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			const revoked = whitelistRepo.revoke(inserted.id);
 			expect(revoked).toBeDefined();

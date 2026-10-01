@@ -80,7 +80,7 @@ describe('DisconnectsRepository', () => {
 		repo.recordEvent(b.id, 3500, 'kick');
 		const list = repo.listRecent(10);
 		expect(list.map((s) => s.startedAt)).toEqual([3000, 2000, 1000]);
-		expect(list[0].kick).toBe(1);
+		expect(list[0]!.kick).toBe(1);
 		expect(list.find((s) => s.id === a.id)!.kick).toBe(0);
 		expect(list.find((s) => s.id === c.id)!.kick).toBe(0);
 	});

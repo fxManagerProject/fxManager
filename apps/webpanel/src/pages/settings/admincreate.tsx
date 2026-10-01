@@ -5,7 +5,7 @@ import type {
 	ApiResponse,
 	CreateAdminForm,
 } from '@fxmanager/shared/types';
-import { UserPlus } from 'lucide-react';
+import { Info, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -25,6 +25,8 @@ export default function AdminCreate() {
 		permissions: 0,
 		groupId: null,
 		playerId: null,
+		cfxId: null,
+		discordId: null,
 	});
 
 	async function handleSubmit() {
@@ -90,6 +92,38 @@ export default function AdminCreate() {
 							<PlayerSearch
 								value={formData.playerId}
 								onChange={(playerId) => setFormData({ ...formData, playerId })}
+							/>
+						</div>
+					</div>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
+						<div className="space-y-2">
+							<div className="flex items-center gap-1.5">
+								<Label className="text-sm font-medium">Discord ID</Label>
+								<a
+									href="https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID#h_01HRSTXPS5H5D7JBY2QKKPVKNA"
+									target="_blank"
+									rel="noopener noreferrer"
+									title="How to find your Discord ID"
+									className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center"
+								>
+									<Info className="h-4 w-4" />
+								</a>
+							</div>
+							<Input
+								value={formData.discordId ?? ''}
+								onChange={(e) =>
+									setFormData({ ...formData, discordId: e.target.value })
+								}
+							/>
+						</div>
+
+						<div className="space-y-2">
+							<Label className="text-sm font-medium">Cfx ID</Label>
+							<Input
+								value={formData.cfxId ?? ''}
+								onChange={(e) =>
+									setFormData({ ...formData, cfxId: e.target.value })
+								}
 							/>
 						</div>
 					</div>

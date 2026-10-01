@@ -1,13 +1,4 @@
-import {
-	and,
-	count,
-	desc,
-	eq,
-	gte,
-	isNotNull,
-	isNull,
-	lte,
-} from 'drizzle-orm';
+import { and, count, desc, eq, gte, isNotNull, isNull, lte } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import type {
 	PaginatedResponse,
@@ -140,7 +131,10 @@ class PlayerSessionsRepository {
 			)
 			.all();
 
-		const byDay = new Map<string, { playtimeMs: number; sessionCount: number }>();
+		const byDay = new Map<
+			string,
+			{ playtimeMs: number; sessionCount: number }
+		>();
 		let total = 0;
 		let longest = 0;
 		for (const r of rows) {

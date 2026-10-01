@@ -76,3 +76,12 @@ const SERVER_RUNNING_STATES: ProcessState[] = [
 export function isServerRunning(status?: ProcessState): boolean {
 	return status ? SERVER_RUNNING_STATES.includes(status) : false;
 }
+
+export function formatNumber(num: number): string {
+	if (num < 1000) return num.toString();
+	if (num < 1e6) return `${Math.round(num / 100) / 10}k`;
+	if (num < 1e9) return `${Math.round(num / 100) / 10}M`;
+
+	// Just in case some funny person has a really large number
+	return `${Math.round(num / 100) / 10}B`;
+}

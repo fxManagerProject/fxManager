@@ -1,5 +1,3 @@
-import path from 'node:path';
-import { access } from 'node:fs/promises';
 import { Type, type Static } from '@sinclair/typebox';
 import type { FastifyPluginAsync } from 'fastify';
 import { repo } from '@fxmanager/database';
@@ -15,15 +13,6 @@ interface DetectResult {
 	dataPath: string;
 	cfgPath: string;
 	found: { executable: boolean; dataPath: boolean; cfg: boolean };
-}
-
-async function fileExists(target: string): Promise<boolean> {
-	try {
-		await access(target);
-		return true;
-	} catch {
-		return false;
-	}
 }
 
 const AdminGroupSchema = Type.Object({
@@ -59,23 +48,55 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 		}
 
 		const cfg = ConfigManager.getInstance().getFxServerValues();
-		const cfgPath = path.isAbsolute(cfg.serverConfigFile)
-			? cfg.serverConfigFile
-			: path.join(cfg.serverDataPath, cfg.serverConfigFile);
-
-		const [executable, dataPath, cfgFound] = await Promise.all([
-			fileExists(cfg.executablePath),
-			fileExists(cfg.serverDataPath),
-			fileExists(cfgPath),
-		]);
+		const result = await ConfigManager.getInstance().checkFXServerPaths(
+			cfg.executablePath,
+			cfg.serverDataPath,
+		);
 
 		return {
 			success: true,
 			data: {
-				executable: cfg.executablePath,
-				dataPath: cfg.serverDataPath,
-				cfgPath,
-				found: { executable, dataPath, cfg: cfgFound },
+				executable: result.files.executable,
+				dataPath: result.files.serverdata,
+				cfgPath: result.files.cfg,
+				found: {
+					executable: result.exists.executable,
+					dataPath: result.exists.serverdata,
+					cfg: result.exists.cfg,
+				},
+			},
+		} satisfies ApiResponse<DetectResult>;
+	});
+
+	fastify.post('/checkfiles', async (request, reply) => {
+		if (isFxManagerSetup()) {
+			return reply.code(403).send({ success: false, error: 'Already set up' });
+		}
+
+		if (!setupTokenManager.validate(request.headers['x-setup-token'])) {
+			return reply
+				.code(401)
+				.send({ success: false, error: 'Invalid setup token' });
+		}
+
+		const body = request.body as { fxserverPath: string; dataPath: string };
+
+		const result = await ConfigManager.getInstance().checkFXServerPaths(
+			body.fxserverPath,
+			body.dataPath,
+		);
+
+		return {
+			success: true,
+			data: {
+				executable: result.files.executable,
+				dataPath: result.files.serverdata,
+				cfgPath: result.files.cfg,
+				found: {
+					executable: result.exists.executable,
+					dataPath: result.exists.serverdata,
+					cfg: result.exists.cfg,
+				},
 			},
 		} satisfies ApiResponse<DetectResult>;
 	});
@@ -94,8 +115,18 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 
 			const { username, password, server, customGroups } = request.body;
 
-			repo.settings.set('fxserver.executablePath', server.fxserverPath);
-			repo.settings.set('fxserver.serverDataPath', server.resourcePath);
+			// Normalise the supplied paths before persisting, mirroring what the
+			// /detect + /checkfiles endpoints return
+			const execResult =
+				await ConfigManager.getInstance().validateExecutablePath(
+					server.fxserverPath,
+				);
+			const dataResult = await ConfigManager.getInstance().validateDataPath(
+				server.resourcePath,
+			);
+
+			repo.settings.set('fxserver.executablePath', execResult.path);
+			repo.settings.set('fxserver.serverDataPath', dataResult.path);
 
 			if (customGroups.length > 0) {
 				try {

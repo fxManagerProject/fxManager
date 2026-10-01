@@ -263,7 +263,7 @@ describe('parseTxAdminDb', () => {
 		expect(result.players).toHaveLength(1);
 		expect(result.actions).toHaveLength(1);
 		expect(result.whitelist).toHaveLength(1);
-		expect(result.players[0].name).toBe('P1');
+		expect(result.players[0]!.name).toBe('P1');
 		expect(result.whitelist[0]).toEqual({
 			type: 'discord',
 			value: 'discord:999',

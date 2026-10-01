@@ -13,13 +13,15 @@ export function PerfStatsGrid({
 	samples: PerfSnapshot[];
 	inspect?: PerfInspect | null;
 }) {
+	const lastSample = samples[samples.length - 1];
+
 	const pool: PerfSnapshot[] =
 		inspect?.kind === 'point'
 			? [inspect.snapshot]
 			: inspect?.kind === 'range'
 				? inspect.snapshots
-				: samples.length
-					? [samples[samples.length - 1]]
+				: lastSample
+					? [lastSample]
 					: [];
 
 	const getDominantBucket = (thread: PerfThread) => {

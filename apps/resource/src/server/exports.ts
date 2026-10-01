@@ -68,25 +68,24 @@ exports(
 	},
 );
 
-exports(
-	'hasGroup',
-	(playerId: number | string, groupName: string): boolean => {
-		const slug = slugifyGroupName(groupName);
-		if (!slug) return false;
+exports('hasGroup', (playerId: number | string, groupName: string): boolean => {
+	const slug = slugifyGroupName(groupName);
+	if (!slug) return false;
 
-		return IsPlayerAceAllowed(
-			String(playerId),
-			`${ACE_PREFIX}.group.${slug}`,
-		);
-	},
-);
+	return IsPlayerAceAllowed(String(playerId), `${ACE_PREFIX}.group.${slug}`);
+});
 
 type SelfInfo = {
 	isAdmin: boolean;
 	isMaster: boolean;
 	adminId: number | null;
 	username: string | null;
-	group: { id: number; name: string; colour: string; icon: string | null } | null;
+	group: {
+		id: number;
+		name: string;
+		colour: string;
+		icon: string | null;
+	} | null;
 	permissions: string[];
 };
 

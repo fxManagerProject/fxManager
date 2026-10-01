@@ -59,9 +59,9 @@ describe('AdminsRepository', () => {
 			expect(result.total).toBe(2);
 			expect(result.page).toBe(1);
 			expect(result.pageSize).toBe(20);
-			expect(result.items[0].username).toBe('admin_two');
-			expect(result.items[1].username).toBe('moderator_one');
-			expect(result.items[0].group).toBeDefined();
+			expect(result.items[0]!.username).toBe('admin_two');
+			expect(result.items[1]!.username).toBe('moderator_one');
+			expect(result.items[0]!.group).toBeDefined();
 		});
 
 		it('should filter items accurately when a search query parameter is provided', () => {
@@ -76,13 +76,13 @@ describe('AdminsRepository', () => {
 			const result = adminsRepo.list(1, 10, { search: 'super' });
 
 			expect(result.total).toBe(1);
-			expect(result.items[0].username).toBe('super_admin');
+			expect(result.items[0]!.username).toBe('super_admin');
 		});
 	});
 
 	describe('updatePermissions()', () => {
 		it('should successfully update and sanitize permissions for standard accounts', async () => {
-			const [inserted] = testDb
+			const inserted = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'staff_member',
@@ -91,7 +91,7 @@ describe('AdminsRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			const targetPerms = UserPermissions.KICK | UserPermissions.BAN;
 
@@ -113,7 +113,7 @@ describe('AdminsRepository', () => {
 		});
 
 		it('should enforce a failsafe preventing the acquisition of MASTER privileges', async () => {
-			const [inserted] = testDb
+			const inserted = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'sneaky_mod',
@@ -122,7 +122,7 @@ describe('AdminsRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			const maliciousPerms = UserPermissions.KICK | UserPermissions.MASTER;
 
@@ -136,7 +136,7 @@ describe('AdminsRepository', () => {
 		});
 
 		it('should throw an error and halt execution if attempting to modify a MASTER account', async () => {
-			const [masterAdmin] = testDb
+			const masterAdmin = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'root_owner',
@@ -145,7 +145,7 @@ describe('AdminsRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			expect(
 				adminsRepo.updatePermissions(masterAdmin.id, UserPermissions.NONE),
@@ -166,12 +166,12 @@ describe('AdminsRepository', () => {
 		});
 
 		it('should compile profile configurations without audit logging maps when showAudit parameter is omitted', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(schema.players)
 				.values({ name: 'Linked_User_Name' })
 				.returning()
-				.all();
-			const [admin] = testDb
+				.get()!;
+			const admin = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'profile_tester',
@@ -181,7 +181,7 @@ describe('AdminsRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			const profile = await adminsRepo.getProfile(admin.id);
 
@@ -194,12 +194,12 @@ describe('AdminsRepository', () => {
 
 		it('should pull, merge, and append resolving lookup entities into log matrix records when showAudit is high', async () => {
 			// Prepare relational assets
-			const [targetPlayer] = testDb
+			const targetPlayer = testDb
 				.insert(schema.players)
 				.values({ name: 'Gamer_Tag_One' })
 				.returning()
-				.all();
-			const [admin] = testDb
+				.get()!;
+			const admin = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'audited_admin',
@@ -208,7 +208,7 @@ describe('AdminsRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			// Inject raw sequential operational audit metrics targeting different player profiles
 			testDb
@@ -234,25 +234,25 @@ describe('AdminsRepository', () => {
 			expect(profile?.auditLogs).toHaveLength(2);
 
 			// First audit entry (Most recent: KICK_PLAYER)
-			expect(profile?.auditLogs[0].action).toBe('KICK_PLAYER');
-			expect(profile?.auditLogs[0].admin).toBe('audited_admin');
-			expect(profile?.auditLogs[0].player).toBe('Gamer_Tag_One'); // Successfully resolved join lookup
+			expect(profile!.auditLogs[0]!.action).toBe('KICK_PLAYER');
+			expect(profile!.auditLogs[0]!.admin).toBe('audited_admin');
+			expect(profile!.auditLogs[0]!.player).toBe('Gamer_Tag_One'); // Successfully resolved join lookup
 
 			// Second audit entry (Older execution: WARN_PLAYER)
-			expect(profile?.auditLogs[1].action).toBe('WARN_PLAYER');
-			expect(profile?.auditLogs[1].player).toBeNull(); // Graceful fallback on missing relational records
+			expect(profile!.auditLogs[1]!.action).toBe('WARN_PLAYER');
+			expect(profile!.auditLogs[1]!.player).toBeNull(); // Graceful fallback on missing relational records
 		});
 	});
 
 	describe('updateLinkedPlayer()', () => {
 		it('should successfully update the linked playerId for a standard administrator account', async () => {
 			// Seed a baseline player and admin
-			const [player] = testDb
+			const player = testDb
 				.insert(schema.players)
 				.values({ name: 'Alpha_Player' })
 				.returning()
-				.all();
-			const [admin] = testDb
+				.get()!;
+			const admin = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'standard_mod',
@@ -262,7 +262,7 @@ describe('AdminsRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			const result = await adminsRepo.updateLinkedPlayer(
 				admin.id,
@@ -290,7 +290,7 @@ describe('AdminsRepository', () => {
 		});
 
 		it('should block modification and throw an error if a MASTER admin is handled without the isMaster flag override', async () => {
-			const [masterAdmin] = testDb
+			const masterAdmin = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'owner_account',
@@ -299,7 +299,7 @@ describe('AdminsRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			expect(
 				adminsRepo.updateLinkedPlayer(masterAdmin.id, 5, false), // isMaster = false
@@ -307,12 +307,12 @@ describe('AdminsRepository', () => {
 		});
 
 		it('should bypass the master lock restriction and update successfully if isMaster flag is explicitly true', async () => {
-			const [player] = testDb
+			const player = testDb
 				.insert(schema.players)
 				.values({ name: 'Owner_InGame' })
 				.returning()
-				.all();
-			const [masterAdmin] = testDb
+				.get()!;
+			const masterAdmin = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'owner_account_two',
@@ -321,7 +321,7 @@ describe('AdminsRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			const result = await adminsRepo.updateLinkedPlayer(
 				masterAdmin.id,

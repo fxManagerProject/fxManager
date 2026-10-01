@@ -61,7 +61,7 @@ describe('AuditRepository', () => {
 	describe('list()', () => {
 		// Helper to seed foundational data to keep tests scannable
 		const seedCoreRelations = () => {
-			const [admin] = testDb
+			const admin = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'super_operator',
@@ -69,15 +69,15 @@ describe('AuditRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
-			const [player] = testDb
+			const player = testDb
 				.insert(players)
 				.values({
 					name: 'John_Doe',
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			return { adminId: admin.id, playerId: player.id };
 		};
@@ -109,12 +109,12 @@ describe('AuditRepository', () => {
 			expect(response.items.length).toBe(2);
 
 			// Verify strict descending chronological order (newest entry listed first)
-			expect(response.items[0].action).toBe('player.kick');
-			expect(response.items[0].admin).toBe('super_operator');
-			expect(response.items[0].player).toBe('John_Doe');
-			expect(response.items[0].metadata).toEqual({ reason: 'RDM' });
+			expect(response.items[0]!.action).toBe('player.kick');
+			expect(response.items[0]!.admin).toBe('super_operator');
+			expect(response.items[0]!.player).toBe('John_Doe');
+			expect(response.items[0]!.metadata).toEqual({ reason: 'RDM' });
 
-			expect(response.items[1].action).toBe('server.start');
+			expect(response.items[1]!.action).toBe('server.start');
 		});
 
 		it('should accurately isolate list records based on singular or multiple Action types', async () => {
@@ -132,7 +132,7 @@ describe('AuditRepository', () => {
 			// Match a singular string query
 			const singularResult = await auditRepo.list(1, 10, 'player.warn');
 			expect(singularResult.total).toBe(1);
-			expect(singularResult.items[0].action).toBe('player.warn');
+			expect(singularResult.items[0]!.action).toBe('player.warn');
 
 			// Match an array query condition
 			const arrayResult = await auditRepo.list(1, 10, [
@@ -143,16 +143,16 @@ describe('AuditRepository', () => {
 		});
 
 		it('should search across player fields using fuzzy substring matches', async () => {
-			const [playerTarget] = testDb
+			const playerTarget = testDb
 				.insert(players)
 				.values({ name: 'Dangerous_Gamer' })
 				.returning()
-				.all();
-			const [playerOther] = testDb
+				.get()!;
+			const playerOther = testDb
 				.insert(players)
 				.values({ name: 'Safe_User' })
 				.returning()
-				.all();
+				.get()!;
 
 			testDb
 				.insert(auditLog)
@@ -173,15 +173,15 @@ describe('AuditRepository', () => {
 			const response = await auditRepo.list(1, 10, undefined, 'Dangerous');
 
 			expect(response.total).toBe(1);
-			expect(response.items[0].player).toBe('Dangerous_Gamer');
-			expect(response.items[0].action).toBe('player.ban');
+			expect(response.items[0]!.player).toBe('Dangerous_Gamer');
+			expect(response.items[0]!.action).toBe('player.ban');
 		});
 
 		it('should slice query records precisely according to target Admin identifier sets', async () => {
 			const { adminId: allowedAdmin } = seedCoreRelations();
 
 			// otherAdmin is the full row object here
-			const [otherAdmin] = testDb
+			const otherAdmin = testDb
 				.insert(adminUsers)
 				.values({
 					username: 'stealth_mod',
@@ -189,7 +189,7 @@ describe('AuditRepository', () => {
 					createdAt: new Date(),
 				})
 				.returning()
-				.all();
+				.get()!;
 
 			testDb
 				.insert(auditLog)
@@ -212,8 +212,8 @@ describe('AuditRepository', () => {
 			]);
 
 			expect(response.total).toBe(1);
-			expect(response.items[0].admin).toBe('super_operator');
-			expect(response.items[0].action).toBe('settings.update');
+			expect(response.items[0]!.admin).toBe('super_operator');
+			expect(response.items[0]!.action).toBe('settings.update');
 		});
 
 		it('should bind query constraints between explicit chronological date boundaries', async () => {
@@ -254,7 +254,7 @@ describe('AuditRepository', () => {
 			);
 
 			expect(response.total).toBe(1);
-			expect(response.items[0].action).toBe('server.restart');
+			expect(response.items[0]!.action).toBe('server.restart');
 		});
 
 		it('should return empty values and a total of zero if constraints yield no rows', async () => {
