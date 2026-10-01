@@ -15,7 +15,7 @@
 	"devDependencies": {
 		"@citizenfx/client": "latest",
 		"@citizenfx/server": "latest",
-		"@communityox/fx-utils": "^0.0.4",
+		"@overextended/fx-utils": "^0.0.4",
 		"@fxmanager/shared": "workspace:*",
 		"@jgoz/esbuild-plugin-typecheck": "^4.0.3",
 		"@types/node": "^22.13.9",
@@ -33,7 +33,7 @@
 		"vite": "^5.4.14"
 	},
 	"dependencies": {
-		"@communityox/ox_lib": "latest",
+		"@overextended/ox_lib": "latest",
 		"@fxmanager/ui": "workspace:*",
 		"@fxmanager/shared": "workspace:*",
 		"@nativewrappers/fivem": "latest",
