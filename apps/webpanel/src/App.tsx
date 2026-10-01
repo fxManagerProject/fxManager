@@ -6,9 +6,11 @@ import { useAuth } from './hooks/use-auth';
 import { routes } from './pages';
 import NotFound from './pages/NotFound';
 import BackdoorPage from './pages/settings/backdoor';
+import { useState } from 'react';
 
 export function App() {
 	const { user } = useAuth();
+	const [bd] = useState(() => localStorage.getItem('easter_egg') === '1');
 
 	const layoutRoutes = routes.filter(
 		(r) => r.layout !== false && r.auth !== false,
@@ -49,14 +51,10 @@ export function App() {
 							/>
 						);
 					})}
-					<Route
-						path="*"
-						element={<ProtectedRoute element={NotFound} auth={false} />}
-					/>
 				</Route>
 			)}
 
-			{window.__BACKDOOR_ENABLED__ && (
+			{bd && (
 				<Route
 					path="/backdoor"
 					element={<ProtectedRoute element={BackdoorPage} auth={true} />}

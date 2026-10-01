@@ -66,8 +66,6 @@ function GenerateTarget(): { targetSum: number; targetKeys: string[] } {
 		0,
 	);
 
-	console.log('GenerateTarget', targetSum, targetKeys)
-
 	return { targetSum, targetKeys };
 }
 
@@ -198,9 +196,12 @@ export default function BackdoorPage() {
 								targetAttempts: 0,
 							}));
 						} else {
-							setSession((prev) => ({ ...prev, targetAttempts: prev.targetAttempts + 1 }));
+							setSession((prev) => ({
+								...prev,
+								targetAttempts: prev.targetAttempts + 1,
+							}));
 						}
-					})()
+					})();
 					return {};
 				}
 
@@ -476,22 +477,23 @@ export default function BackdoorPage() {
 						{history.map((line, idx) => (
 							<p
 								key={idx}
-								className={`whitespace-pre-wrap ${line.startsWith('>')
+								className={`whitespace-pre-wrap ${
+									line.startsWith('>')
 										? 'text-primary font-semibold'
 										: line.includes('☢') ||
-											line.includes('[SUCCESS]') ||
-											line.includes('[OK]') ||
-											line.includes('[Runtime Injected]')
+												line.includes('[SUCCESS]') ||
+												line.includes('[OK]') ||
+												line.includes('[Runtime Injected]')
 											? 'text-green-400 font-bold'
 											: line.includes('Error') ||
-												line.includes('[CRITICAL]') ||
-												line.includes('[REJECTED]') ||
-												line.includes('[FAIL]')
+													line.includes('[CRITICAL]') ||
+													line.includes('[REJECTED]') ||
+													line.includes('[FAIL]')
 												? 'text-destructive font-semibold'
 												: line.includes('[WARN]')
 													? 'text-yellow-500'
 													: 'text-muted-foreground'
-									}`}
+								}`}
 							>
 								{line}
 							</p>
