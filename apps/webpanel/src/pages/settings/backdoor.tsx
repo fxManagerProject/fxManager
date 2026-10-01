@@ -111,7 +111,7 @@ export default function BackdoorPage() {
 				Object.keys(commandRegistry)
 					.filter((cmd) => currentSession.unlockedCommands.includes(cmd))
 					.forEach((cmd) => {
-						output(`  ${cmd.padEnd(16)} - ${commandRegistry[cmd].description}`);
+						output(`  ${cmd.padEnd(16)} - ${commandRegistry[cmd]!.description}`);
 					});
 				return {};
 			},
@@ -400,6 +400,8 @@ export default function BackdoorPage() {
 		if (!trimmed || isProcessing) return;
 
 		const parts = trimmed.split(' ');
+		if (!parts[0]) return;
+
 		const commandName = parts[0].toLowerCase();
 		const args = parts.slice(1);
 
