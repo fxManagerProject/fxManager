@@ -111,7 +111,9 @@ export default function BackdoorPage() {
 				Object.keys(commandRegistry)
 					.filter((cmd) => currentSession.unlockedCommands.includes(cmd))
 					.forEach((cmd) => {
-						output(`  ${cmd.padEnd(16)} - ${commandRegistry[cmd]!.description}`);
+						output(
+							`  ${cmd.padEnd(16)} - ${commandRegistry[cmd]!.description}`,
+						);
 					});
 				return {};
 			},
