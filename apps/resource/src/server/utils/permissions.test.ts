@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, mock } from 'bun:test';
-import { getPermissions } from './permissions';
+import { getPermissions, permissionsToAceKeys } from './permissions';
 import {
 	ACE_PREFIX,
 	PERMISSION_ACE_KEYS,
@@ -88,5 +88,69 @@ describe('getPermissions', () => {
 		getPermissions(42);
 
 		expect(mockAceCheck).toHaveBeenCalledWith('42', expect.any(String));
+	});
+});
+
+describe('permissionsToAceKeys', () => {
+	it('returns an empty list for a zero bitfield', () => {
+		expect(permissionsToAceKeys(UserPermissions.NONE)).toEqual([]);
+	});
+
+	it('expands a single permission bit into its ace key', () => {
+		expect(permissionsToAceKeys(UserPermissions.KICK)).toEqual([
+			PERMISSION_ACE_KEYS[UserPermissions.KICK],
+		]);
+	});
+
+	it('expands multiple permission bits into their ace keys', () => {
+		const bitfield =
+			UserPermissions.KICK | UserPermissions.BAN | UserPermissions.AUDIT_LOG;
+
+		const aces = permissionsToAceKeys(bitfield);
+
+		expect(aces).toHaveLength(3);
+		expect(aces).toContain(PERMISSION_ACE_KEYS[UserPermissions.KICK]);
+		expect(aces).toContain(PERMISSION_ACE_KEYS[UserPermissions.BAN]);
+		expect(aces).toContain(PERMISSION_ACE_KEYS[UserPermissions.AUDIT_LOG]);
+	});
+
+	it('collapses the master bit to the bare MASTER ace', () => {
+		const bitfield =
+			UserPermissions.MASTER | UserPermissions.KICK | UserPermissions.BAN;
+
+		expect(permissionsToAceKeys(bitfield)).toEqual(['MASTER']);
+	});
+
+	it('ignores bits without a mapped ace key', () => {
+		// NONE is 0 and unmapped, but it also contributes nothing when OR-ed in;
+		// use an artificial bit that PERMISSION_ACE_KEYS does not map.
+		const unmappedBit = 1 << 29;
+		const bitfield = UserPermissions.WARN | unmappedBit;
+
+		expect(permissionsToAceKeys(bitfield)).toEqual([
+			PERMISSION_ACE_KEYS[UserPermissions.WARN],
+		]);
+	});
+
+	it('round-trips with getPermissions for non-master players', () => {
+		const targetPermissions = [
+			UserPermissions.KICK,
+			UserPermissions.WHITELIST,
+			UserPermissions.CONSOLE_ACCESS,
+		];
+		const allowedAces = new Set(
+			targetPermissions.map(
+				(bit) => `${ACE_PREFIX}.${PERMISSION_ACE_KEYS[bit]}`,
+			),
+		);
+
+		globalThis.IsPlayerAceAllowed = mock((src: string, ace: string) => {
+			return src === '7' && allowedAces.has(ace);
+		});
+
+		const bitfield = getPermissions(7);
+		expect(permissionsToAceKeys(bitfield)).toEqual(
+			targetPermissions.map((bit) => PERMISSION_ACE_KEYS[bit]),
+		);
 	});
 });

@@ -1,8 +1,4 @@
-import {
-	ACE_PREFIX,
-	PERMISSION_ACE_KEYS,
-	UserPermissions,
-} from '@fxmanager/shared/constants';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 export interface CallbackPayload<T = unknown> {
 	requestId: string;
@@ -22,26 +18,23 @@ export const EVENT_NAMES = {
 	CLIENT_TO_SERVER_RES: 'fxmanager:cb:c2s:res',
 	SERVER_TO_CLIENT_REQ: 'fxmanager:cb:s2c:req',
 	SERVER_TO_CLIENT_RES: 'fxmanager:cb:s2c:res',
+
+	/** server -> client notification that the player's permissions changed */
+	S2C_PERMISSIONS_UPDATED: 'fxmanager:s2c:permissions:updated',
 } as const;
 
-export type UserPermissionKey = keyof typeof UserPermissions;
+/** callback names registered on the server and triggered by the client */
+export const CALLBACK_NAMES = {
+	/** fetch the calling player's permission snapshot (bitfield + ace keys) */
+	GET_PERMISSIONS: 'get-permissions',
+} as const;
 
-/** validate whether a player holds a given permission key */
-export function hasPermission(
-	src: number | string,
-	permKey: UserPermissionKey,
-): boolean {
-	const bit = UserPermissions[permKey];
-	if (!bit || bit === UserPermissions.NONE) return false;
+/** bare NUI callback action used for the SendNUIMessage permissions push */
+export const NUI_PERMISSIONS_EVENT = 'permissions';
 
-	// Check master override or specific ACE key
-	if (globalThis.IsPlayerAceAllowed(String(src), ACE_PREFIX)) return true;
-
-	const aceSuffix = PERMISSION_ACE_KEYS[bit];
-	if (!aceSuffix) return false;
-
-	return globalThis.IsPlayerAceAllowed(
-		String(src),
-		`${ACE_PREFIX}.${aceSuffix}`,
-	);
+export interface PermissionSnapshot {
+	/** raw UserPermissions bitfield, see @fxmanager/shared/constants */
+	permissions: number;
 }
+
+export type UserPermissionKey = keyof typeof UserPermissions;

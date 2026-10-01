@@ -3,8 +3,12 @@ import {
 	type CallbackResponse,
 	type UserPermissionKey,
 	EVENT_NAMES,
-	hasPermission,
 } from '@common/types';
+import {
+	ACE_PREFIX,
+	PERMISSION_ACE_KEYS,
+	UserPermissions,
+} from '@fxmanager/shared/constants';
 
 type ServerCallbackHandler<TInput, TOutput> = (
 	source: number,
@@ -29,6 +33,22 @@ export class ServerCallbackManager {
 		this.listenForClientResponses();
 	}
 
+	private hasPermission(
+		src: number | string,
+		permKey: UserPermissionKey,
+	): boolean {
+		const bit = UserPermissions[permKey];
+		if (!bit || bit === UserPermissions.NONE) return false;
+
+		// Check master override or specific ACE key
+		if (IsPlayerAceAllowed(String(src), ACE_PREFIX)) return true;
+
+		const aceSuffix = PERMISSION_ACE_KEYS[bit];
+		if (!aceSuffix) return false;
+
+		return IsPlayerAceAllowed(String(src), `${ACE_PREFIX}.${aceSuffix}`);
+	}
+
 	/**
 	 * Register a callback that clients can invoke.
 	 */
@@ -36,13 +56,13 @@ export class ServerCallbackManager {
 		name: string,
 		handler: ServerCallbackHandler<TInput, TOutput>,
 		options?: {
-			requiredPermission?: UserPermissionKey;
+			permission?: UserPermissionKey;
 			fallback?: TOutput;
 		},
 	): void {
 		this.handlers.set(name, {
 			handler,
-			requiredPermission: options?.requiredPermission,
+			permission: options?.permission,
 			fallback: options?.fallback,
 		});
 	}
@@ -86,15 +106,15 @@ export class ServerCallbackManager {
 				return;
 			}
 
-			const { handler, requiredPermission, fallback } = registration;
+			const { handler, permission, fallback } = registration;
 
 			// Permission Enforcement
-			if (requiredPermission && !hasPermission(src, requiredPermission)) {
+			if (permission && !this.hasPermission(src, permission)) {
 				this.sendResponse(src, {
 					requestId: req.requestId,
 					success: false,
 					data: fallback,
-					error: `Permission denied: Requires ${requiredPermission}`,
+					error: `Permission denied: Requires ${permission}`,
 				});
 				return;
 			}
