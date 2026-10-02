@@ -16,8 +16,7 @@ function setUIState(newState: UIState) {
 			SetNuiFocus(false, false);
 			SendNUIMessage({ action: 'visibility', data: { tab: 'none' } });
 
-			if (uiOpen === UIState.QuickMenu)
-				setQuickMenuVisible(false);
+			if (uiOpen === UIState.QuickMenu) setQuickMenuVisible(false);
 
 			uiOpen = UIState.Closed;
 			break;
@@ -43,7 +42,8 @@ NuiCallback('nuiclose', (_, cb) => {
 });
 
 NuiCallback('nuiToggleMode', (data: { target: 'quick' | 'panel' }, cb) => {
-	const targetState = data.target === 'quick' ? UIState.QuickMenu : UIState.MainPanel;
+	const targetState =
+		data.target === 'quick' ? UIState.QuickMenu : UIState.MainPanel;
 
 	if (uiOpen === targetState) {
 		setUIState(UIState.Closed);
@@ -53,15 +53,32 @@ NuiCallback('nuiToggleMode', (data: { target: 'quick' | 'panel' }, cb) => {
 	cb({});
 });
 
-RegisterCommand('fx-quickmenu', () => {
-	if (permissions.getPermissions() === 0) return;
-	setUIState(uiOpen === UIState.QuickMenu ? UIState.Closed : UIState.QuickMenu);
-}, false);
+RegisterCommand(
+	'fx-quickmenu',
+	() => {
+		if (permissions.getPermissions() === 0) return;
+		setUIState(
+			uiOpen === UIState.QuickMenu ? UIState.Closed : UIState.QuickMenu,
+		);
+	},
+	false,
+);
 
-RegisterCommand('fx-mainpanel', () => {
-	if (permissions.getPermissions() === 0) return;
-	setUIState(uiOpen === UIState.MainPanel ? UIState.Closed : UIState.MainPanel);
-}, false);
+RegisterCommand(
+	'fx-mainpanel',
+	() => {
+		if (permissions.getPermissions() === 0) return;
+		setUIState(
+			uiOpen === UIState.MainPanel ? UIState.Closed : UIState.MainPanel,
+		);
+	},
+	false,
+);
 
-RegisterKeyMapping('fx-quickmenu', 'Open fxManager quick menu', 'keyboard', 'F6');
+RegisterKeyMapping(
+	'fx-quickmenu',
+	'Open fxManager quick menu',
+	'keyboard',
+	'F6',
+);
 RegisterKeyMapping('fx-mainpanel', 'Open fxManager panel', 'keyboard', 'F7');

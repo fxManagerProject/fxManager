@@ -57,11 +57,9 @@ function stopQuickMenuNavigation() {
 NuiCallback('setDialogFocus', (data: { open: boolean }, cb) => {
 	if (data.open) {
 		stopQuickMenuNavigation();
-		console.log('^2setting^7 nui focus for dialog')
 		SetNuiFocus(true, true);
 	} else {
 		SetNuiFocus(false, false);
-		console.log('^1removing^7 nui focus for dialog')
 		startQuickMenuNavigation();
 	}
 	cb({});

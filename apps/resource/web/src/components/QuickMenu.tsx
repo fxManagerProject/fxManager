@@ -65,7 +65,9 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 	const [noclip, setNoclip] = useState(false);
 	const [tags, setTags] = useState(true);
 	const [blips, setBlips] = useState(false);
-	const [activeDialog, setActiveDialogState] = useState<DialogConfig | null>(null);
+	const [activeDialog, setActiveDialogState] = useState<DialogConfig | null>(
+		null,
+	);
 
 	// Helper function that updates local dialog state and syncs NUI focus with client
 	const setActiveDialog = useCallback((config: DialogConfig | null) => {
