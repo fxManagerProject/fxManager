@@ -178,6 +178,9 @@ step('Bumping the version', process.execPath, [
 	normalizedVersion,
 ]);
 
+// cleanup earlier
+step('Running biome format', 'bun', ['run', 'format']);
+
 step('Staging the release changes', 'git', ['add', '-u']);
 
 const stagedFiles = capture('git', ['diff', '--cached', '--name-only'])
@@ -206,7 +209,6 @@ step('Committing the version bump', 'git', [
 	`chore: release ${tag}`,
 ]);
 
-step('Running biome format', 'bun', ['run', 'format']);
 step('Staging biome format changes', 'git', ['add', '-u']);
 
 const formattedFiles = capture('git', ['diff', '--cached', '--name-only'])
