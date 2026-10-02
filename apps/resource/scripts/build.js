@@ -47,11 +47,13 @@ createBuilder(
 			files: ['locales/*.json', ...files],
 			dependencies: ['/server:13068', '/onesync'],
 			metadata: {
-				ui_page: 'dist/web/index.html',
+				// ui_page: 'dist/web/index.html',
+				ui_page: watch ? 'http://localhost:5175' : 'dist/web/index.html',
 				node_version: '22',
 			},
 		});
 	},
 );
 
-if (web && watch) await exec('cd ./web && vite build --watch');
+// if (web && watch) await exec('cd ./web && vite build --watch');
+if (web && watch) await exec('cd ./web && vite dev');

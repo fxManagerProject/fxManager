@@ -36,7 +36,7 @@ const DEPLOY_PATH = process.env.DEPLOY_PATH;
 						dereference: true,
 					});
 				}
-			})
+			}),
 		);
 
 		console.log(`[Watcher] Successfully synced to: ${DEPLOY_PATH}`);
