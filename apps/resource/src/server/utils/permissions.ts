@@ -1,9 +1,11 @@
-import { ACE_PREFIX, PERMISSION_ACE_KEYS } from '@fxmanager/shared/constants';
+import { ACE_PREFIX, PERMISSION_ACE_KEYS, UserPermissions } from '@fxmanager/shared/constants';
 import { PermissionManager } from '@fxmanager/shared/utils';
 
 /** converts the player ace permissions back into a bitfield */
 export function getPermissions(source: number): number {
 	let permissions: number = 0;
+
+	if (IsPlayerAceAllowed(`${source}`, ACE_PREFIX)) return UserPermissions.MASTER;
 
 	for (const [rawBit, rawAce] of Object.entries(PERMISSION_ACE_KEYS)) {
 		const bit = parseInt(rawBit, 10);
