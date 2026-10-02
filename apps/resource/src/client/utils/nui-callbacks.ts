@@ -18,6 +18,8 @@ function isNuiRequestOriginValid(rawHeaders: unknown): boolean {
 	const headers = rawHeaders as Record<string, unknown>;
 	const origin = headers.Origin;
 
+	$DEV: if (typeof origin === 'string' && origin === 'http://localhost:5175') return true;
+
 	return typeof origin === 'string' && VALID_ORIGINS.includes(origin);
 }
 
