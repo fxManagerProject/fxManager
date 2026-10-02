@@ -8,6 +8,7 @@ import {
 import { UserPermissions } from '@fxmanager/shared/constants';
 import { PermissionManager as PM } from '@fxmanager/shared/utils';
 import { ClientCallbacks } from './callbacks';
+import { NuiCallback } from './nui-callbacks';
 
 class PermissionManager {
 	permissions = 0;
@@ -35,12 +36,10 @@ class PermissionManager {
 
 		this.permissions = snapshot.permissions;
 
-		SendNUIMessage(
-			JSON.stringify({
-				action: NUI_PERMISSIONS_EVENT,
-				data: snapshot.permissions,
-			}),
-		);
+		SendNUIMessage({
+			action: NUI_PERMISSIONS_EVENT,
+			data: this.permissions,
+		});
 	}
 
 	getPermissions() {
@@ -53,3 +52,14 @@ class PermissionManager {
 }
 
 export const permissions = new PermissionManager();
+
+NuiCallback('perms', (_, cb) => {
+	cb({ permissions: permissions.getPermissions() });
+});
+
+on('fxmanager:c2c:nuiloaded', () => {
+	SendNUIMessage({
+		action: NUI_PERMISSIONS_EVENT,
+		data: permissions.getPermissions(),
+	});
+});

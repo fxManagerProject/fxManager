@@ -275,7 +275,7 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 			<div
 				role="menu"
 				aria-label="Quick actions"
-				className="w-72 rounded-lg border bg-card/95 text-card-foreground shadow-2xl backdrop-blur-md overflow-hidden"
+				className="w-72 rounded-lg border bg-card/95 text-card-foreground shadow-2xl overflow-hidden"
 			>
 				<header className="flex items-center justify-between gap-2 px-3 py-2 border-b">
 					<div className="flex items-center gap-2">

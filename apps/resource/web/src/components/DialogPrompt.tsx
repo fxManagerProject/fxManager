@@ -74,7 +74,7 @@ export function PromptDialog({
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-150"
 			onKeyDown={handleKeyDown}
 		>
 			<div
@@ -82,7 +82,7 @@ export function PromptDialog({
 				aria-modal="true"
 				aria-labelledby={`${inputId}-title`}
 				aria-describedby={description ? `${inputId}-desc` : undefined}
-				className="w-full max-w-sm rounded-lg border bg-card/95 text-card-foreground shadow-2xl backdrop-blur-md p-4 flex flex-col gap-3"
+				className="w-full max-w-sm rounded-lg border bg-card/95 text-card-foreground shadow-2xl p-4 flex flex-col gap-3"
 			>
 				{/* Title & Description */}
 				<div className="flex flex-col gap-1">
