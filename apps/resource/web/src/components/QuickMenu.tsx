@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Button } from '@fxmanager/ui/components/button';
 import { Switch } from '@fxmanager/ui/components/switch';
 import {
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useRovingFocus } from '~/hooks/useRovingFocus';
 import { useNuiEvent } from '~/hooks/useNuiEvent';
+import { fetchNui } from '~/utils/fetchNui';
 import { PromptDialog, type PromptDialogProps } from './DialogPrompt';
 import { isEnvBrowser } from '~/utils/misc';
 import { UserPermissions } from '@fxmanager/shared/constants';
@@ -64,7 +65,22 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 	const [noclip, setNoclip] = useState(false);
 	const [tags, setTags] = useState(true);
 	const [blips, setBlips] = useState(false);
-	const [activeDialog, setActiveDialog] = useState<DialogConfig | null>(null);
+	const [activeDialog, setActiveDialogState] = useState<DialogConfig | null>(null);
+
+	// Helper function that updates local dialog state and syncs NUI focus with client
+	const setActiveDialog = useCallback((config: DialogConfig | null) => {
+		setActiveDialogState(config);
+		fetchNui('setDialogFocus', { open: config !== null }).catch(() => {});
+	}, []);
+
+	// Cleanup effect: Ensure NUI focus is released if QuickMenu unmounts while a dialog is open
+	useEffect(() => {
+		return () => {
+			if (activeDialog !== null) {
+				fetchNui('setDialogFocus', { open: false }).catch(() => {});
+			}
+		};
+	}, [activeDialog]);
 
 	const items: QuickActionItem[] = [
 		{

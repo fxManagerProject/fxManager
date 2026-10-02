@@ -1,3 +1,3 @@
-import './utils/permissions';
+import './modules';
 
-setTimeout(() => emitNet('fxmanager:c2s:monitoring:player-loaded'));
+emitNet('fxmanager:c2s:monitoring:player-loaded');

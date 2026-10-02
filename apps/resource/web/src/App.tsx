@@ -8,6 +8,7 @@ import { DevTools } from './components/devtools';
 import { NUI_PERMISSIONS_EVENT } from '@common/types';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import { fetchNui } from './utils/fetchNui';
+import { useHotkey } from './hooks/useHotKey';
 
 type Mode = 'quick' | 'panel' | null;
 
@@ -34,6 +35,10 @@ export default function App() {
 	useEffect(() => {
 		fetchNui('nuiloaded');
 	}, []);
+
+	useHotkey('F6', () => fetchNui('nuiToggleMode', { target: 'quick' }));
+	useHotkey('F7', () => fetchNui('nuiToggleMode', { target: 'panel' }));
+	useHotkey('Escape', () => fetchNui('nuiclose'));
 
 	// Use to restrict access, i.e. unprivileged users can only
 	// access reports section
