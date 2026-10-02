@@ -1,3 +1,5 @@
+import { IsInDevelopment } from '@common/utils';
+
 const API_TOKEN = GetConvar('resource-api-token', '');
 const PORT = GetConvarInt('api-port', 3000);
 const HOSTNAME = `127.0.0.1:${PORT}`;
@@ -8,6 +10,7 @@ if (!uuidV4Regex.test(API_TOKEN))
 	throw new Error('An invalid api token was loaded !');
 
 export function censorConvars() {
+	if (IsInDevelopment()) return;
 	SetConvar('resource-api-token', 'REDACTED');
 	SetConvar('api-port', 'REDACTED');
 }

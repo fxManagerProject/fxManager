@@ -23,3 +23,9 @@ export function LoadJsonFile<T = unknown>(path: string): T {
 
 	return resp.then((response) => response.json()) as T;
 }
+
+export function IsInDevelopment() {
+	// build strips the label returning false in prod
+	$DEV: return true;
+	return false;
+}
