@@ -3,6 +3,7 @@
 import fs from 'fs-extra';
 import path from 'node:path';
 import dotenv from 'dotenv';
+
 dotenv.config({
 	path: path.join(__dirname, '../../../.env'),
 });
@@ -16,8 +17,7 @@ const DEPLOY_PATH = process.env.DEPLOY_PATH;
 	}
 
 	try {
-		await fs.remove(DEPLOY_PATH);
-		await fs.ensureDir(DEPLOY_PATH);
+		await fs.emptyDir(DEPLOY_PATH);
 
 		const targets = [
 			'web',
@@ -28,14 +28,17 @@ const DEPLOY_PATH = process.env.DEPLOY_PATH;
 			'fxmanifest.lua',
 		];
 
-		for (const target of targets) {
-			if (await fs.pathExists(target)) {
-				await fs.copy(target, path.join(DEPLOY_PATH, target), {
-					overwrite: true,
-					dereference: true,
-				});
-			}
-		}
+		await Promise.all(
+			targets.map(async (target) => {
+				if (await fs.pathExists(target)) {
+					await fs.copy(target, path.join(DEPLOY_PATH, target), {
+						overwrite: true,
+						dereference: true,
+					});
+				}
+			})
+		);
+
 		console.log(`[Watcher] Successfully synced to: ${DEPLOY_PATH}`);
 	} catch (err) {
 		console.error(`[Watcher] Sync failed: ${err}`);
