@@ -72,11 +72,21 @@ export function NuiCallback<T = unknown, R = Record<string, unknown>>(
 			cb(parsedBody, (responseData: R) => {
 				rawCb({
 					status: 200,
-					body: typeof responseData === 'object' && responseData !== null
-						? JSON.stringify(responseData)
-						: '{}',
+					body:
+						typeof responseData === 'object' && responseData !== null
+							? JSON.stringify(responseData)
+							: '{}',
 				});
 			});
 		},
 	);
 }
+
+let loaded = false;
+NuiCallback('nuiloaded', (_, cb) => {
+	if (!loaded) {
+		emit('fxmanager:c2c:nuiloaded');
+		loaded = true;
+	}
+	cb({});
+});

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MainPanel } from './components/MainPanel';
 import { QuickMenu } from './components/QuickMenu';
 import { useNuiEvent } from './hooks/useNuiEvent';
@@ -7,6 +7,7 @@ import { isEnvBrowser } from './utils/misc';
 import { DevTools } from './components/devtools';
 import { NUI_PERMISSIONS_EVENT } from '@common/types';
 import { UserPermissions } from '@fxmanager/shared/constants';
+import { fetchNui } from './utils/fetchNui';
 
 type Mode = 'quick' | 'panel' | null;
 
@@ -29,6 +30,10 @@ export default function App() {
 	useNuiEvent<{ tab: 'quick' | 'panel' }>('visibility', ({ tab }) => {
 		setMode((m) => (m === tab ? null : tab));
 	});
+
+	useEffect(() => {
+		fetchNui('nuiloaded');
+	}, []);
 
 	// Use to restrict access, i.e. unprivileged users can only
 	// access reports section
