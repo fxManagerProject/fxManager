@@ -84,6 +84,18 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 		};
 	}, [activeDialog]);
 
+	const handleNoclipToggle = useCallback((targetState: boolean) => {
+		fetchNui<{ success: boolean; active: boolean }>('toggle-noclip', {
+			state: targetState,
+		})
+			.then((res) => {
+				setNoclip(res.active);
+			})
+			.catch(() => {
+				setNoclip(false);
+			});
+	}, []);
+
 	const items: QuickActionItem[] = [
 		{
 			type: 'button',
@@ -124,7 +136,7 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 			label: 'No-clip / fly mode',
 			icon: Wind,
 			checked: noclip,
-			onChange: setNoclip,
+			onChange: handleNoclipToggle,
 		},
 		{
 			type: 'toggle',

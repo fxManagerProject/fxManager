@@ -30,6 +30,8 @@ export const UserPermissions = {
 
 	CONFIG_EDITOR: 1 << 19, // 524288 - access & edit server.cfg files
 
+	NOCLIP: 1 << 20, // - game permission
+
 	MASTER: 1 << 30, // 1073741824
 } as const;
 

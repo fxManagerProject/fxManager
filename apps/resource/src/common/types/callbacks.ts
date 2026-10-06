@@ -27,6 +27,7 @@ export const EVENT_NAMES = {
 export const CALLBACK_NAMES = {
 	/** fetch the calling player's permission snapshot (bitfield + ace keys) */
 	GET_PERMISSIONS: 'get-permissions',
+	TOGGLE_NOCLIP: 'toggle-noclip',
 } as const;
 
 /** bare NUI callback action used for the SendNUIMessage permissions push */

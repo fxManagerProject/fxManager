@@ -1,6 +1,9 @@
 import type { PlayerUpdatePackage } from '@fxmanager/shared/types';
 import { QueryManager } from '../utils/query';
 import { getPermissions } from '../utils/permissions';
+import { UserPermissionKey } from '@common/types';
+import { PermissionManager } from '@fxmanager/shared/utils';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 class PlayerManager {
 	private players: Map<string, { permissions: number }> = new Map();
@@ -22,6 +25,25 @@ class PlayerManager {
 		const ids = [...this.players.keys()];
 		for (const id of ids) DropPlayer(id, reason);
 		return ids.length;
+	}
+
+	getPlayer(source: number | string) {
+		return this.players.get(
+			typeof source === 'string' ? source : String(source),
+		);
+	}
+
+	isAllowed(source: number | string, permission: UserPermissionKey) {
+		const player = this.players.get(
+			typeof source === 'string' ? source : String(source),
+		);
+
+		if (!player) return false;
+
+		return PermissionManager.has(
+			player.permissions,
+			UserPermissions[permission],
+		);
 	}
 
 	private startUpdates() {
