@@ -61,6 +61,8 @@ export const PERMISSION_ACE_KEYS: Record<number, string> = {
 	[UserPermissions.AUDIT_LOG]: 'system.audit_log',
 	[UserPermissions.PERFORMANCE]: 'system.performance',
 	[UserPermissions.CONFIG_EDITOR]: 'server.cfg_editor',
+	[UserPermissions.NOCLIP]: 'game.noclip',
+	[UserPermissions.TELEPORT]: 'game.teleport'
 };
 
 export const PERMISSION_LABELS: Record<
@@ -170,5 +172,16 @@ export const PERMISSION_LABELS: Record<
 		label: 'Manage Admins',
 		desc: 'Create, edit, and delete admin users.',
 		category: 'Administration',
+	},
+
+	[UserPermissions.NOCLIP]: {
+		label: 'Noclip',
+		desc: 'Access to noclip in-game.',
+		category: 'Game',
+	},
+	[UserPermissions.TELEPORT]: {
+		label: 'Teleport',
+		desc: 'Teleport to coordinates, map markers, to players.',
+		category: 'Game',
 	},
 };
