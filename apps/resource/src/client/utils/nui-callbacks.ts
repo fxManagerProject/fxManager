@@ -8,6 +8,8 @@
 const VALID_ORIGINS: readonly string[] = [
 	'https://cfx-nui-fxManager',
 	'https://fxManager',
+	'https://cfx-nui-fxmanager',
+	'https://fxmanager',
 ] as const;
 
 function isNuiRequestOriginValid(rawHeaders: unknown): boolean {
