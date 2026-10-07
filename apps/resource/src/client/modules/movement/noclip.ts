@@ -192,9 +192,9 @@ class NoclipController {
 		SetPoliceIgnorePlayer(ped.Handle, true);
 
 		// Speed adjustment via mouse wheel
-		if (Game.isDisabledControlJustPressed(0, Control.SelectNextWeapon)) {
+		if (Game.isDisabledControlJustPressed(0, Control.SelectPrevWeapon)) {
 			this.speedIndex = Math.min(this.speedIndex + 1, SPEED_STEPS.length - 1);
-		} else if (Game.isDisabledControlJustPressed(0, Control.SelectPrevWeapon)) {
+		} else if (Game.isDisabledControlJustPressed(0, Control.SelectNextWeapon)) {
 			this.speedIndex = Math.max(this.speedIndex - 1, 0);
 		}
 
