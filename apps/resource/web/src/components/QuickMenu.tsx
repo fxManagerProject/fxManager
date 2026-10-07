@@ -96,6 +96,16 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 			});
 	}, []);
 
+	const handleTeleportToCoords = useCallback((coordsString: string) => {
+		const [x, y, z] = coordsString.split(', ').map((c) => parseFloat(c));
+
+		fetchNui('teleport-coords', { x, y, z });
+	});
+
+	const handleTeleportToMarker = useCallback(() => {
+		fetchNui('teleport-marker');
+	});
+
 	const items: QuickActionItem[] = [
 		{
 			type: 'button',
@@ -103,7 +113,7 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 			group: 'Movement',
 			label: 'Teleport to marker',
 			icon: MapPin,
-			onSelect: () => console.log('teleport to marker'),
+			onSelect: handleTeleportToMarker,
 		},
 		{
 			type: 'button',
@@ -125,7 +135,7 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 						{ label: 'LS Airport', value: '-1037.6, -2737.8, 13.8' },
 						{ label: 'Sandy Shores', value: '1850.1, 3686.2, 33.8' },
 					],
-					onConfirm: (val) => console.log('Teleporting to:', val),
+					onConfirm: handleTeleportToCoords,
 				});
 			},
 		},

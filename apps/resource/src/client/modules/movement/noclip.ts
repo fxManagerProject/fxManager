@@ -32,6 +32,13 @@ class NoclipController {
 		return this.isNoClipping;
 	}
 
+	public syncPosition(position: Vector3) {
+		if (!this.isNoClipping) return;
+
+		this.currentPosition = position;
+		this.velocity = new Vector3(0, 0, 0);
+	}
+
 	private isControlAlwaysPressed(group: number, control: number): boolean {
 		return (
 			IsControlPressed(group, control) ||
