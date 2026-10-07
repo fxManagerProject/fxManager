@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MainPanel } from './components/MainPanel';
 import { QuickMenu } from './components/QuickMenu';
+import { NoclipControls } from './components/NoclipControls';
 import { useNuiEvent } from './hooks/useNuiEvent';
 import { debugData } from './utils/debugData';
 import { isEnvBrowser } from './utils/misc';
@@ -21,6 +22,7 @@ debugData([
 
 export default function App() {
 	const [mode, setMode] = useState<Mode>(null);
+	const [noclipEnabled, setNoclipEnabled] = useState(false);
 	const [permissions, setPermissions] = useState<number>(
 		isEnvBrowser() ? UserPermissions.MASTER : 0,
 	);
@@ -48,12 +50,17 @@ export default function App() {
 		<>
 			{mode === 'quick' && (
 				<div className="fixed left-6 top-6">
-					<QuickMenu permissions={permissions} onClose={() => setMode(null)} />
+					<QuickMenu
+						permissions={permissions}
+						onClose={() => setMode(null)}
+						onNoclipChange={setNoclipEnabled}
+					/>
 				</div>
 			)}
 			{mode === 'panel' && (
 				<MainPanel permissions={permissions} onClose={() => setMode(null)} />
 			)}
+			<NoclipControls visible={isEnvBrowser() || noclipEnabled} />
 			{isEnvBrowser() && <DevTools />}
 		</>
 	);

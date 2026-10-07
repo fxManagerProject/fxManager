@@ -56,10 +56,15 @@ type DialogConfig = Omit<PromptDialogProps, 'isOpen' | 'onClose'>;
 
 interface QuickMenuProps {
 	onClose: () => void;
+	onNoclipChange: (enabled: boolean) => void;
 	permissions: number;
 }
 
-export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
+export function QuickMenu({
+	onClose,
+	onNoclipChange,
+	permissions,
+}: QuickMenuProps) {
 	if (permissions === UserPermissions.NONE) return null;
 
 	const [noclip, setNoclip] = useState(false);
@@ -84,17 +89,22 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 		};
 	}, [activeDialog]);
 
-	const handleNoclipToggle = useCallback((targetState: boolean) => {
-		fetchNui<{ success: boolean; active: boolean }>('toggle-noclip', {
-			state: targetState,
-		})
-			.then((res) => {
-				setNoclip(res.active);
+	const handleNoclipToggle = useCallback(
+		(targetState: boolean) => {
+			fetchNui<{ success: boolean; active: boolean }>('toggle-noclip', {
+				state: targetState,
 			})
-			.catch(() => {
-				setNoclip(false);
-			});
-	}, []);
+				.then((res) => {
+					setNoclip(res.active);
+					onNoclipChange(res.active);
+				})
+				.catch(() => {
+					setNoclip(false);
+					onNoclipChange(false);
+				});
+		},
+		[onNoclipChange],
+	);
 
 	const handleTeleportToCoords = useCallback((coordsString: string) => {
 		const [x, y, z] = coordsString.split(', ').map((c) => parseFloat(c));
