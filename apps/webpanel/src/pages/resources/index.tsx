@@ -15,6 +15,11 @@ import {
 	SelectValue,
 } from '@fxmanager/ui/components/select';
 import { Skeleton } from '@fxmanager/ui/components/skeleton';
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@fxmanager/ui/components/collapsible';
 import { cn } from '@fxmanager/ui/lib/utils';
 import {
 	LayoutList,
@@ -25,27 +30,261 @@ import {
 	AlertCircle,
 	RefreshCcwIcon,
 	FileQuestionMark,
+	Plus,
+	Minus,
+	ChevronsUpDown,
+	FolderIcon,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from '@fxmanager/ui/components/tooltip';
 
 type FilterValue = 'all' | 'started' | 'stopped';
 
-function formatPath(path: string): string {
-	const normalized = path.replace(/\\/g, '/');
+type ResourceGroupType = {
+	resources: ResourceData[];
+	[key: string]: ResourceData[] | ResourceGroupType;
+};
 
-	const parts = normalized.split(/\/resources\/+/i);
-	if (parts.length > 1) {
-		return parts[parts.length - 1]!;
-	}
+const REGEX_RESOURCE_GROUPS = /\[([^\]]+)\]/g;
 
-	return normalized;
+const STATE_CONFIG = {
+	stopped: {
+		icon: Square,
+		title: 'Server Stopped',
+		description:
+			'The server is currently offline. Start it to view and manage resources.',
+		styles: 'bg-zinc-200 dark:bg-zinc-700/40 text-zinc-600 dark:text-zinc-400',
+		titleStyle: 'text-zinc-900 dark:text-zinc-200',
+	},
+	crashed: {
+		icon: AlertCircle,
+		title: 'Server Crashed',
+		description:
+			'The server process terminated unexpectedly. Check logs for more details.',
+		styles: 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-500',
+		titleStyle: 'text-red-600 dark:text-red-500',
+	},
+	no_resources: {
+		icon: FileQuestionMark,
+		title: 'No Resources',
+		description: 'No resources were found on the server.',
+		styles: 'bg-zinc-200 dark:bg-zinc-700/40 text-zinc-600 dark:text-zinc-400',
+		titleStyle: 'text-zinc-900 dark:text-zinc-200',
+	},
+} as const;
+
+function formatVersion(version: string) {
+	if (version.startsWith('v')) return version;
+	return `v${version}`;
+}
+
+function ResourceCard({
+	resource,
+	handleAction,
+}: {
+	resource: ResourceData;
+	handleAction: (
+		action: 'start' | 'stop' | 'refresh',
+		resource?: string | undefined,
+	) => void;
+}) {
+	const isStarted = resource.status === 'started';
+
+	return (
+		<div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/80 px-3 py-2.5 rounded-md hover:bg-zinc-100/80 dark:hover:bg-zinc-900 transition-colors group">
+			<div className="flex items-center gap-3 min-w-0 flex-1">
+				<div
+					className={cn(
+						'p-1.5 rounded-md shrink-0',
+						isStarted
+							? 'bg-green-500/10 text-green-600 dark:text-green-400'
+							: 'bg-zinc-200/60 dark:bg-zinc-800 text-zinc-500',
+					)}
+				>
+					<Package size={16} />
+				</div>
+
+				<div className="min-w-0 flex-1">
+					<div className="flex items-center gap-2 flex-wrap">
+						<h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+							{resource.name}
+						</h3>
+						{resource.version && (
+							<span className="text-[10px] font-mono bg-zinc-200/70 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-600 dark:text-zinc-400">
+								{formatVersion(resource.version)}
+							</span>
+						)}
+						{resource.author && (
+							<span className="text-xs text-zinc-400 dark:text-zinc-500 hidden lg:flex items-center gap-1">
+								<User size={10} /> {resource.author}
+							</span>
+						)}
+					</div>
+
+					{resource.description && (
+						<p className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-xl">
+							{resource.description}
+						</p>
+					)}
+				</div>
+			</div>
+
+			<div className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-zinc-200 dark:border-zinc-800">
+				<Badge
+					variant={isStarted ? 'success' : 'secondary'}
+					className="h-6 px-2 text-[11px] font-medium capitalize flex items-center gap-1.5 shrink-0"
+				>
+					{isStarted ? (
+						<Play size={10} className="fill-current" />
+					) : (
+						<Square size={10} className="fill-current" />
+					)}
+					{resource.status}
+				</Badge>
+
+				<div className="flex items-center gap-1 bg-zinc-200/50 dark:bg-zinc-800/50 p-0.5 rounded-md border border-zinc-200/80 dark:border-zinc-800">
+					{isStarted ? (
+						<Button
+							variant="ghost"
+							size="icon"
+							className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+							title="Restart Resource"
+							onClick={() => handleAction('start', resource.name)}
+						>
+							<RefreshCcwIcon size={14} />
+						</Button>
+					) : (
+						<Button
+							variant="ghost"
+							size="icon"
+							className="h-7 w-7 text-green-600 dark:text-green-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+							title="Start Resource"
+							onClick={() => handleAction('start', resource.name)}
+						>
+							<Play size={14} />
+						</Button>
+					)}
+
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-7 w-7 text-red-600 dark:text-red-400 disabled:opacity-30 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+						disabled={!isStarted}
+						title="Stop Resource"
+						onClick={() => handleAction('stop', resource.name)}
+					>
+						<Square size={14} />
+					</Button>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function ResourceGroup({
+	name,
+	node,
+	rootElement,
+	handleAction,
+	globalExpand,
+}: {
+	name: string;
+	node: ResourceGroupType;
+	rootElement?: boolean;
+	handleAction: (
+		action: 'start' | 'stop' | 'refresh',
+		resource?: string | undefined,
+	) => void;
+	globalExpand: boolean | null;
+}) {
+	const [collapsed, setCollapsed] = useState<boolean>(false);
+
+	// Synchronize with global expand/collapse toggle changes
+	useEffect(() => {
+		if (globalExpand !== null) {
+			setCollapsed(!globalExpand);
+		}
+	}, [globalExpand]);
+
+	const { resources, ...subcategories } = node;
+	const totalResources = resources?.length || 0;
+
+	return (
+		<div className="my-1">
+			<Collapsible
+				open={!collapsed}
+				onOpenChange={(open) => setCollapsed(!open)}
+			>
+				<CollapsibleTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="w-full h-8 px-2 flex items-center justify-between hover:bg-zinc-100 dark:hover:bg-zinc-800/60 rounded-md transition-colors my-1 group"
+					>
+						<div className="flex items-center gap-2">
+							<FolderIcon />
+							<span className="font-semibold text-xs tracking-wider uppercase text-zinc-600 dark:text-zinc-400">
+								{name}
+							</span>
+							<span className="text-[10px] font-mono bg-zinc-200/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-1.5 py-0.2 rounded-full">
+								{totalResources}
+							</span>
+						</div>
+						{collapsed ? (
+							<Plus className="h-3.5 w-3.5 text-zinc-400" />
+						) : (
+							<Minus className="h-3.5 w-3.5 text-zinc-400" />
+						)}
+					</Button>
+				</CollapsibleTrigger>
+
+				<CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
+					<div className="pl-3 ml-2.5 border-l border-zinc-200 dark:border-zinc-800 space-y-1.5 py-1">
+						{resources && resources.length > 0 && (
+							<div className="flex flex-col gap-1.5">
+								{[...resources]
+									.sort((a, b) => a.name.localeCompare(b.name))
+									.map((res) => (
+										<ResourceCard
+											key={res.name}
+											resource={res}
+											handleAction={handleAction}
+										/>
+									))}
+							</div>
+						)}
+
+						{resources && resources.length === 0 && !rootElement && (
+							<div className="text-xs text-zinc-400 p-2 italic bg-zinc-50/50 dark:bg-zinc-900/20 rounded border border-dash border-zinc-200 dark:border-zinc-800">
+								No resources in this group
+							</div>
+						)}
+
+						{Object.entries(subcategories).map(([subName, subNode]) => (
+							<ResourceGroup
+								key={subName}
+								name={subName}
+								node={subNode as ResourceGroupType}
+								handleAction={handleAction}
+								globalExpand={globalExpand}
+							/>
+						))}
+					</div>
+				</CollapsibleContent>
+			</Collapsible>
+		</div>
+	);
 }
 
 function ResourceCardSkeleton() {
 	const skeletonBg = 'bg-zinc-300 dark:bg-zinc-800/80';
 	return (
-		<div className="bg-zinc-300/50 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-800 p-4 rounded-lg animate-pulse">
+		<div className="bg-zinc-300/50 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-800 p-4 mr-2 rounded-lg animate-pulse">
 			<div className="flex items-start justify-between">
 				<div className="space-y-2 w-full">
 					<div className="flex items-center gap-2">
@@ -87,32 +326,6 @@ function LoadingSkeleton({ blur }: { blur?: boolean }) {
 	);
 }
 
-const STATE_CONFIG = {
-	stopped: {
-		icon: Square,
-		title: 'Server Stopped',
-		description:
-			'The server is currently offline. Start it to view and manage resources.',
-		styles: 'bg-zinc-200 dark:bg-zinc-700/40 text-zinc-600 dark:text-zinc-400',
-		titleStyle: 'text-zinc-900 dark:text-zinc-200',
-	},
-	crashed: {
-		icon: AlertCircle,
-		title: 'Server Crashed',
-		description:
-			'The server process terminated unexpectedly. Check logs for more details.',
-		styles: 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-500',
-		titleStyle: 'text-red-600 dark:text-red-500',
-	},
-	no_resources: {
-		icon: FileQuestionMark,
-		title: 'No Resources',
-		description: 'No resources were found on the server.',
-		styles: 'bg-zinc-200 dark:bg-zinc-700/40 text-zinc-600 dark:text-zinc-400',
-		titleStyle: 'text-zinc-900 dark:text-zinc-200',
-	},
-} as const;
-
 function StateDisplay({ type }: { type: keyof typeof STATE_CONFIG }) {
 	const config = STATE_CONFIG[type];
 	const Icon = config.icon;
@@ -147,6 +360,7 @@ export function ResourceList() {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<FilterValue>('all');
 	const [refreshing, setRefresh] = useState<boolean>(false);
+	const [globalExpand, setGlobalExpand] = useState<boolean | null>(null);
 
 	useEffect(() => {
 		const filtered = resources.filter((res) => {
@@ -165,11 +379,6 @@ export function ResourceList() {
 	function handleSearch({ target }: React.ChangeEvent<HTMLInputElement>) {
 		const { value } = target;
 		setSearchValue(value);
-	}
-
-	function formatVersion(version: string) {
-		if (version.startsWith('v')) return version;
-		return `v${version}`;
 	}
 
 	async function handleAction(
@@ -211,6 +420,38 @@ export function ResourceList() {
 			setRefresh(false);
 		}
 	}
+
+	const resourceGroups = useMemo(() => {
+		return displayedResources.reduce(
+			(acc, cur) => {
+				const groups = [...cur.path.matchAll(REGEX_RESOURCE_GROUPS)]
+					.map((match) => match[1])
+					.filter((i) => typeof i === 'string');
+
+				let location;
+				if (groups.length > 0 && groups[0] !== undefined) {
+					location = acc.other;
+					for (const grp of groups) {
+						if (!Object.hasOwn(location, grp)) {
+							location[grp] = { resources: [] };
+						}
+						location = location[grp];
+					}
+					location = location.resources;
+				} else {
+					location = acc.root;
+				}
+
+				location.push(cur);
+
+				return acc;
+			},
+			{
+				root: [] as ResourceData[],
+				other: {} as Record<string, any>,
+			},
+		);
+	}, [displayedResources]);
 
 	return (
 		<div className="flex flex-col gap-4 text-zinc-900 dark:text-zinc-50 h-full p-4">
@@ -255,9 +496,9 @@ export function ResourceList() {
 						</Select>
 					</div>
 
-					<div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
+					<div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
 						{state.status === 'running' && (
-							<div className="flex items-center gap-6 text-sm">
+							<div className="flex items-center gap-6 text-sm mr-2">
 								<div className="flex flex-col items-center">
 									<span className="text-zinc-500 dark:text-zinc-400">
 										Total
@@ -287,6 +528,25 @@ export function ResourceList() {
 							</div>
 						)}
 
+						<Tooltip>
+							<TooltipTrigger>
+								<Button
+									variant="outline"
+									size="sm"
+									className="h-9 gap-1.5 bg-white dark:bg-zinc-950 text-xs font-medium"
+									onClick={() => setGlobalExpand((prev) => !prev)}
+									disabled={state.status !== 'running'}
+									title="Expand / Collapse All"
+								>
+									<ChevronsUpDown className="h-4 w-4" />
+									<span>Toggle All</span>
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>
+								Collapse / Expand all resource folders
+							</TooltipContent>
+						</Tooltip>
+
 						<Button
 							variant="ghost"
 							size="icon"
@@ -313,103 +573,26 @@ export function ResourceList() {
 					<LoadingSkeleton />
 				) : state.status === 'running' ? (
 					<ScrollArea className="h-full pr-3">
-						<div className="grid gap-4">
-							{displayedResources.length > 0 ? (
-								displayedResources.map((res) => (
-									<div
-										key={res.name}
-										className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 p-4 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors group"
-									>
-										<div className="flex items-start justify-between">
-											<div className="space-y-1">
-												<div className="flex items-center gap-2">
-													<Package
-														size={18}
-														className="text-blue-600 dark:text-blue-400"
-													/>
-													<h3 className="font-bold text-zinc-900 dark:text-zinc-100">
-														{res.name}
-													</h3>
-													{res.version && (
-														<span className="text-xs bg-zinc-200 dark:bg-zinc-800 px-2 py-0.5 rounded text-zinc-600 dark:text-zinc-400">
-															{formatVersion(res.version)}
-														</span>
-													)}
-												</div>
-
-												<p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-													{res.description ||
-														'No description provided for this resource.'}
-												</p>
-
-												<div className="flex gap-4 mt-2 text-xs text-zinc-500 dark:text-zinc-500">
-													{res.author && (
-														<span className="flex items-center gap-1">
-															<User size={12} /> {res.author}
-														</span>
-													)}
-													<span className="font-mono">
-														{formatPath(res.path)}
-													</span>
-												</div>
-											</div>
-
-											<div className="flex flex-col items-center justify-between gap-4 p-2">
-												<Badge
-													variant={
-														res.status === 'started' ? 'success' : 'secondary'
-													}
-													className="w-[6.5rem] flex items-center justify-center gap-2 capitalize py-1"
-												>
-													{res.status === 'started' ? (
-														<Play size={12} fill="currentColor" />
-													) : (
-														<Square size={12} fill="currentColor" />
-													)}
-													{res.status}
-												</Badge>
-
-												<div className="flex gap-2">
-													{res.status === 'stopped' ? (
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8 bg-green-500/10 dark:bg-green-500/20 text-green-700 dark:text-green-400 disabled:bg-transparent hover:text-green-600 dark:hover:text-green-500"
-															title="Start Resource"
-															onClick={() => handleAction('start', res.name)}
-														>
-															<Play size={16} />
-														</Button>
-													) : (
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8 bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 disabled:bg-transparent hover:text-blue-600 dark:hover:text-blue-500"
-															title="Restart Resource"
-															onClick={() => handleAction('start', res.name)}
-														>
-															<RefreshCcwIcon size={16} />
-														</Button>
-													)}
-
-													<Button
-														variant="ghost"
-														size="icon"
-														className="h-8 w-8 bg-red-500/10 dark:bg-red-500/20 text-red-700 dark:text-red-400 disabled:bg-transparent hover:text-red-600 dark:hover:text-red-500"
-														disabled={res.status === 'stopped'}
-														title="Stop Resource"
-														onClick={() => handleAction('stop', res.name)}
-													>
-														<Square size={16} />
-													</Button>
-												</div>
-											</div>
-										</div>
-									</div>
-								))
-							) : (
-								<StateDisplay type={'no_resources'} />
+						<div className="grid gap-2">
+							{resourceGroups.root.length > 0 && (
+								<ResourceGroup
+									node={{ resources: resourceGroups.root }}
+									name="root"
+									rootElement
+									handleAction={handleAction}
+									globalExpand={globalExpand}
+								/>
 							)}
+							{Object.entries(resourceGroups.other).map(([name, node]) => (
+								<ResourceGroup
+									key={name}
+									name={name}
+									node={node}
+									rootElement
+									handleAction={handleAction}
+									globalExpand={globalExpand}
+								/>
+							))}
 						</div>
 					</ScrollArea>
 				) : (
