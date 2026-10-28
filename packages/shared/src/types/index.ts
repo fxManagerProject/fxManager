@@ -15,3 +15,4 @@ export * from './perf';
 export * from './disconnect';
 export * from './session';
 export * from './whitelist';
+export * from './reports';

@@ -77,10 +77,7 @@ export function NuiCallback<T = unknown, R = Record<string, unknown>>(
 			cb(parsedBody, (responseData: R) => {
 				rawCb({
 					status: 200,
-					body:
-						typeof responseData === 'object' && responseData !== null
-							? JSON.stringify(responseData)
-							: '{}',
+					body: JSON.stringify(responseData) ?? '{}',
 				});
 			});
 		},

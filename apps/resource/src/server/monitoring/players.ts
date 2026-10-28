@@ -4,7 +4,6 @@ import { getPermissions } from '../utils/permissions';
 import { type UserPermissionKey } from '@common/types';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
-import { IsInDevelopment } from '@common/utils';
 import { Vector3 } from '@nativewrappers/fivem';
 
 export interface PlayerFilter {
@@ -227,16 +226,5 @@ class PlayerManager {
 
 export const playerManager = new PlayerManager();
 
-if (IsInDevelopment()) {
-	const players = getPlayers();
-
-	for (const id of players) {
-		playerManager.addPlayer(parseInt(id, 10));
-	}
-
-	console.log(
-		'[DEV] PLayerManager: added',
-		players.length,
-		'players to monitor',
-	);
-}
+// Resource restarts must restore monitoring for players who are already connected.
+for (const id of getPlayers()) playerManager.addPlayer(Number(id));

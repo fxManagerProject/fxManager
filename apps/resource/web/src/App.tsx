@@ -35,8 +35,8 @@ export default function App() {
 	/** sends the bitfield permission value */
 	useNuiEvent<number>(NUI_PERMISSIONS_EVENT, setPermissions);
 
-	useNuiEvent<{ tab: 'quick' | 'panel' }>('visibility', ({ tab }) => {
-		setMode((m) => (m === tab ? null : tab));
+	useNuiEvent<{ tab: 'quick' | 'panel' | 'none' }>('visibility', ({ tab }) => {
+		setMode(tab === 'none' ? null : tab);
 	});
 
 	useNotificationEvents();
@@ -50,19 +50,27 @@ export default function App() {
 	useHotkey('F7', () => fetchNui('nuiToggleMode', { target: 'panel' }));
 	useHotkey('Escape', () => fetchNui('nuiclose'));
 
-	// Use to restrict access, i.e. unprivileged users can only
-	// access reports section
-	if (permissions === UserPermissions.NONE) return null;
-
 	return (
 		<>
-			{mode === 'quick' && (
+			{mode === 'quick' && permissions !== UserPermissions.NONE && (
 				<div className="fixed left-6 top-6">
-					<QuickMenu permissions={permissions} onClose={() => setMode(null)} />
+					<QuickMenu
+						permissions={permissions}
+						onClose={() => {
+							setMode(null);
+							void fetchNui('nuiclose');
+						}}
+					/>
 				</div>
 			)}
 			{mode === 'panel' && (
-				<MainPanel permissions={permissions} onClose={() => setMode(null)} />
+				<MainPanel
+					permissions={permissions}
+					onClose={() => {
+						setMode(null);
+						void fetchNui('nuiclose');
+					}}
+				/>
 			)}
 			<NoclipControls
 				visible={(isEnvBrowser() && mode === 'quick') || noclipEnabled}

@@ -32,13 +32,13 @@ export const SECTIONS: SectionConfig[] = [
 		key: 'dashboard',
 		label: 'Dashboard',
 		icon: Activity,
-		permission: UserPermissions.NONE,
+		permission: UserPermissions.PLAYER_MONITORING,
 	},
 	{
 		key: 'players',
 		label: 'Players',
 		icon: Users,
-		permission: UserPermissions.KICK,
+		permission: UserPermissions.PLAYER_MONITORING,
 	},
 	{
 		key: 'console',
@@ -56,6 +56,6 @@ export const SECTIONS: SectionConfig[] = [
 		key: 'reports',
 		label: 'Reports',
 		icon: FileBarChart,
-		permission: UserPermissions.VIEW_REPORT,
+		permission: UserPermissions.NONE,
 	},
 ];

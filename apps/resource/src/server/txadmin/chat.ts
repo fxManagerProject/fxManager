@@ -1,3 +1,5 @@
+export {};
+
 const CHAT_COLOR = [255, 165, 0];
 
 function postChat(message: string): void {

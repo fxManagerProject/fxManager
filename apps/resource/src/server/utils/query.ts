@@ -8,11 +8,13 @@ export async function QueryManager<T>(
 		method,
 		body = null,
 		headers = {},
+		signal = AbortSignal.timeout(10000),
 	}: {
 		endpoint: string;
 		method: 'GET' | 'POST';
 		body?: unknown;
 		headers?: Record<string, string>;
+		signal?: AbortSignal;
 	},
 	external: boolean = false,
 ): Promise<T> {
@@ -23,6 +25,7 @@ export async function QueryManager<T>(
 		// biome-ignore lint/suspicious/noExplicitAny: needed
 		const options: any = {
 			method,
+			signal,
 			headers: {
 				'Content-Type': 'application/json',
 				'x-resource-token': API_TOKEN,

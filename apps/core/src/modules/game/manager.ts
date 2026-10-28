@@ -253,15 +253,21 @@ export class GameManager {
 
 	// region emitting actions
 
-	async dropPlayer(serverId: number, reason: string): Promise<ApiResponse> {
+	async dropPlayer(
+		serverId: number,
+		reason: string,
+		license?: string,
+	): Promise<ApiResponse> {
 		try {
 			const resourceToken = await this.getApiToken();
 			const endpoint = await getServerNetEndpoint();
 			const response = await fetch(`http://${endpoint}/fxManager/drop`, {
+				signal: AbortSignal.timeout(8000),
 				method: 'POST',
 				body: JSON.stringify({
 					serverId,
 					reason,
+					license,
 				}),
 				headers: {
 					Application: 'json/application',

@@ -1,1 +1,2 @@
 import './blips';
+import './tags';

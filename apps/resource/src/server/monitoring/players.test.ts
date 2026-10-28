@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'bun:test';
+import { afterEach, expect, test, mock } from 'bun:test';
 
 type Globalish = Record<string, unknown>;
 const g = globalThis as Globalish;
@@ -6,7 +6,14 @@ const g = globalThis as Globalish;
 g.GetConvar = (key: string, def: string) =>
 	key === 'resource-api-token' ? '00000000-0000-4000-8000-000000000000' : def;
 g.GetConvarInt = (_key: string, def: number) => def;
-g.SetConvar = (_key: string, def: number) => undefined;
+g.SetConvar = (_key: string, _def: number) => undefined;
+
+g.getPlayers = () => ['7'];
+g.GetPlayerName = () => 'Existing player';
+g.IsPlayerAceAllowed = () => false;
+
+mock.module('../utils/query', () => ({ QueryManager: async () => ({}) }));
+mock.module('@nativewrappers/fivem', () => ({ Vector3: {} }));
 
 const { playerManager } = await import('./players');
 
@@ -21,6 +28,10 @@ const originalDropPlayer = g.DropPlayer;
 afterEach(() => {
 	g.DropPlayer = originalDropPlayer;
 	setPlayers([]);
+});
+
+test('restores connected players after a resource restart', () => {
+	expect(playerManager.getPlayers()).toEqual([7]);
 });
 
 test('dropAll disconnects every tracked player with the reason', () => {

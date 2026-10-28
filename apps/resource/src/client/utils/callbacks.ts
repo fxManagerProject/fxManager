@@ -9,6 +9,7 @@ type ClientCallbackHandler<TInput, TOutput> = (
 ) => TOutput | Promise<TOutput>;
 
 export class ClientCallbackManager {
+	private requestSequence = 0;
 	private handlers = new Map<string, ClientCallbackHandler<any, any>>();
 	private pendingRequests = new Map<
 		string,
@@ -39,7 +40,7 @@ export class ClientCallbackManager {
 		options: { timeoutMs?: number; fallback?: TOutput } = {},
 	): Promise<TOutput> {
 		const { timeoutMs = 5000, fallback } = options;
-		const requestId = String(Math.floor(Math.random() * 1000));
+		const requestId = String(++this.requestSequence);
 
 		return new Promise<TOutput>((resolve) => {
 			const timer = setTimeout(() => {
