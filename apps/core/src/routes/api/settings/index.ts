@@ -24,6 +24,7 @@ import { repo } from '@fxmanager/database';
 import { restartScheduler } from '../../../modules/schedule/manager';
 import { ConfigManager } from '../../../modules/config/manager';
 import { oauthManager } from '../../../modules/auth/manager';
+import { incidentRecorder } from '../../../modules/incidents/manager';
 
 interface HookResult {
 	valid: boolean;
@@ -131,10 +132,9 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 			throw new Error('Invalid value');
 		}
 
-		const newValue =
-			hookResult && hookResult?.correctedValue
-				? hookResult.correctedValue
-				: value;
+		const newValue = hookResult?.correctedValue
+			? hookResult.correctedValue
+			: value;
 
 		repo.settings.set(key, newValue);
 
@@ -149,6 +149,7 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 		});
 
 		if (scope === 'restarts') restartScheduler.reload();
+		incidentRecorder.record('config', 'Panel setting updated', { key });
 		if (scope === 'oauth') {
 			oauthManager.reload();
 		}

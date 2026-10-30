@@ -6,6 +6,7 @@ import {
 } from '@fxmanager/shared/types';
 import { wsManager } from '../ws/manager';
 import { classifyDrop } from './classify-drop';
+import { incidentRecorder } from '../incidents/manager';
 
 class DisconnectManager {
 	private live: DisconnectSession | null = null;
@@ -34,6 +35,9 @@ class DisconnectManager {
 	}): void {
 		const category = classifyDrop(payload);
 		if (!category || !this.live) return;
+		incidentRecorder.record('disconnect', `Player disconnected: ${category}`, {
+			category,
+		});
 		this.live[category] += 1;
 		repo.disconnects.recordEvent(this.live.id, Date.now(), category);
 		this.broadcast();

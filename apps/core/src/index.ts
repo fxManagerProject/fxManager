@@ -21,6 +21,7 @@ import { restartScheduler } from './modules/schedule/manager';
 import { setupTokenManager } from './modules/setup/token';
 import { MIGRATE_WORKER_FLAG, runMigrateWorker } from './migrate-worker';
 import open from 'open';
+import { incidentRecorder } from './modules/incidents/manager';
 import { rejectUnknownApi } from './common/api-fallback';
 
 const ip = getIp();
@@ -32,6 +33,7 @@ if (process.argv.includes(MIGRATE_WORKER_FLAG)) {
 }
 
 applyMigrations();
+incidentRecorder.start();
 checkVersion(getCurrentVersion());
 
 const cm = ConfigManager.getInstance();
@@ -232,6 +234,7 @@ const shutdown = async (signal: string) => {
 	} catch (err) {
 		console.error('[core] Error during shutdown', err);
 	} finally {
+		incidentRecorder.stop();
 		process.exit(0);
 	}
 };

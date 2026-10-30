@@ -21,6 +21,7 @@ import {
 import { detectManagedConvars } from '../../modules/config/managed';
 import { resolveCfgContext } from '../../modules/config/service';
 import type { AuthedRequest, RouteModule } from '../../types';
+import { incidentRecorder } from '../../modules/incidents/manager';
 
 async function mtimeMs(filePath: string): Promise<number | null> {
 	try {
@@ -160,6 +161,10 @@ const ConfigEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		});
 
 		let restarted = false;
+		incidentRecorder.record('config', 'Server configuration saved', {
+			path: node.displayPath,
+			restartRequested: !!body.restart,
+		});
 		if (body.restart) {
 			restarted = await pm.restart();
 		}
@@ -210,6 +215,9 @@ const ConfigEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			adminId: admin.id,
 			action: 'config.update',
 			metadata: { path: target.displayPath, created: true },
+		});
+		incidentRecorder.record('config', 'Server configuration file created', {
+			path: target.displayPath,
 		});
 
 		return reply.send({

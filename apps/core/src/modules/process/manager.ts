@@ -20,6 +20,7 @@ import { sessionManager } from '../session/manager';
 import { gameManager } from '../game/manager';
 import { txAdminCompat } from '../txadmin/compat';
 import { repo } from '@fxmanager/database';
+import { incidentRecorder } from '../incidents/manager';
 
 const STARTUP_STALL_MS = 90_000;
 const KILL_GRACE_MS = 5_000;
@@ -282,6 +283,12 @@ export class ProcessManager {
 	}
 
 	private emitLine(raw: RawOutputLine) {
+		incidentRecorder.record(
+			'console',
+			raw.line,
+			{ source: raw.source },
+			raw.ts,
+		);
 		const line = { ...raw, seq: this.lineSeq++ } satisfies ProcessOutputLine;
 		this.buffer.push(line);
 		this.pendingLines.push(line);
@@ -311,6 +318,11 @@ export class ProcessManager {
 
 	// region private methods
 	private setState(status: ProcessState) {
+		incidentRecorder.record(
+			'server',
+			`Server ${this.state.status} → ${status}`,
+			{ previous: this.state.status, status },
+		);
 		const startedAt =
 			status === 'starting'
 				? new Date()
@@ -468,7 +480,7 @@ export class ProcessManager {
 
 		// ToDo: check for better approach, ts error on TextDecoderStream()
 		const lineStream = stream
-			// @ts-ignore
+			// @ts-expect-error
 			.pipeThrough(new TextDecoderStream())
 			.pipeThrough(this.createLineBreakTransformer());
 
@@ -521,6 +533,11 @@ export class ProcessManager {
 	}
 
 	private async onExit(code: number | null) {
+		incidentRecorder.record('server', 'FXServer process exited', {
+			code,
+			previous: this.state.status,
+		});
+		incidentRecorder.flush();
 		this.clearStartupWatchdog();
 		const previous = this.state.status;
 		this.proc = null;
