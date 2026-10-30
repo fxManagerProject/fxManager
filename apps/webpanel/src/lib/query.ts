@@ -1,6 +1,6 @@
-import { ApiError } from '@fxmanager/shared/types';
 import { toast } from 'sonner';
 import { notifyUnauthorized } from './session-expiry';
+import { readApiResponse } from './api-response';
 
 const IS_SECURE = window.location.protocol === 'https:';
 
@@ -36,24 +36,8 @@ export async function QueryService<T>(
 	try {
 		const response = await fetch(url, options);
 
-		if (!response.ok) {
-			if (response.status === 401) notifyUnauthorized();
-
-			let errorData: { message: string };
-			try {
-				errorData = await response.json();
-			} catch {
-				errorData = { message: response.statusText };
-			}
-
-			throw new ApiError(
-				errorData.message || `Request failed with status ${response.status}`,
-				response.status,
-				errorData,
-			);
-		}
-
-		return (await response.json()) as T;
+		if (response.status === 401) notifyUnauthorized();
+		return await readApiResponse<T>(response);
 	} catch (err) {
 		if (showError || import.meta.env.DEV)
 			console.error('QueryService Error:', err);
