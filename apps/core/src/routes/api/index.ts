@@ -11,9 +11,14 @@ import MigrateModule from './migrate';
 import DisconnectsModule from './disconnects';
 import PerfModule from './perf';
 import ConfigModule from './config';
+import IncidentsModule from './incidents';
 import { getContributorsList } from '../../common/contributors';
 
 const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
+	fastify.register(IncidentsModule.handler, {
+		...options,
+		prefix: IncidentsModule.prefix,
+	});
 	fastify.register(SetupModule.handler, {
 		...options,
 		prefix: SetupModule.prefix,

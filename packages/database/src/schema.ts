@@ -313,6 +313,58 @@ export const playerSessions = sqliteTable(
 
 // region Relations
 
+// Independent of server sessions: pruning sessions must not remove incident evidence.
+export const incidentEvents = sqliteTable(
+	'incident_events',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		ts: integer('ts').notNull(),
+		kind: text('kind').notNull(),
+		summary: text('summary').notNull(),
+		data: text('data').notNull(),
+		bytes: integer('bytes').notNull(),
+	},
+	(t) => [index('incident_events_ts_idx').on(t.ts, t.id)],
+);
+
+export const incidents = sqliteTable(
+	'incidents',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		title: text('title').notNull(),
+		description: text('description').notNull(),
+		from: integer('from_ts').notNull(),
+		to: integer('to_ts').notNull(),
+		createdAt: integer('created_at').notNull(),
+		createdBy: integer('created_by').references(() => adminUsers.id, {
+			onDelete: 'set null',
+		}),
+		status: text('status').notNull().default('open'),
+		resolvedAt: integer('resolved_at'),
+		evidence: text('evidence').notNull(),
+		eventCount: integer('event_count').notNull(),
+		bytes: integer('bytes').notNull(),
+	},
+	(t) => [index('incidents_created_idx').on(t.createdAt)],
+);
+
+export const incidentNotes = sqliteTable(
+	'incident_notes',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		incidentId: integer('incident_id')
+			.notNull()
+			.references(() => incidents.id, { onDelete: 'cascade' }),
+		content: text('content').notNull(),
+		createdAt: integer('created_at').notNull(),
+		createdBy: integer('created_by').references(() => adminUsers.id, {
+			onDelete: 'set null',
+		}),
+		bytes: integer('bytes').notNull(),
+	},
+	(t) => [index('incident_notes_incident_idx').on(t.incidentId)],
+);
+
 export const playersRelations = relations(players, ({ many, one }) => ({
 	identifiers: many(playerIdentifiers),
 	bans: many(bans),

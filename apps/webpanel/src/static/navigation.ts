@@ -12,6 +12,7 @@ import {
 	FileCog,
 	UsersRound,
 	ListCheck,
+	Activity,
 } from 'lucide-react';
 import type { NavCategory } from '@/types/sidebar';
 import { UserPermissions } from '@fxmanager/shared/constants';
@@ -46,6 +47,12 @@ const NAV_SERVER: NavCategory = {
 			url: '/perf',
 			icon: ChartBar,
 			permission: UserPermissions.CONSOLE_ACCESS,
+		},
+		{
+			title: 'Incident Center',
+			url: '/incidents',
+			icon: Activity,
+			permission: UserPermissions.INCIDENT_VIEW,
 		},
 	],
 };

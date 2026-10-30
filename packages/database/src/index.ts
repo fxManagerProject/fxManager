@@ -19,6 +19,8 @@ import { createDisconnectsRepository } from './repositories/disconnects';
 import { createServerSessionsRepository } from './repositories/server-sessions';
 import { createPerfSnapshotsRepository } from './repositories/perf-snapshots';
 import { createPlayerSessionsRepository } from './repositories/player-sessions';
+import { IncidentsRepository } from './repositories/incidents';
+export { IncidentInputError } from './repositories/incidents';
 
 export type { Migration } from './migrations/types';
 export type { ImportSummary } from './import/txadmin.importer';
@@ -76,6 +78,7 @@ export function applyMigrations() {
 // region repositories
 
 export const repo = {
+	incidents: new IncidentsRepository(sqlite),
 	players: createPlayersRepository(db),
 	bans: createBansRepository(db),
 	audit: createAuditRepository(db),

@@ -8,6 +8,7 @@ import { diffPerfs, didPerfReset, parseRawPerf } from './parser';
 import { wsManager } from '../ws/manager';
 import { sessionManager } from '../session/manager';
 import { getServerNetEndpoint } from '../../common/fxserver-endpoint';
+import { incidentRecorder } from '../incidents/manager';
 
 const SAMPLE_INTERVAL_MS = 30_000;
 
@@ -72,6 +73,12 @@ class PerfManager {
 		this.lastRaw = raw;
 
 		const sessionId = sessionManager.getCurrentId();
+		incidentRecorder.record(
+			'performance',
+			`Thread performance · ${players} players`,
+			{ players, threads: snapshot.threads },
+			snapshot.ts,
+		);
 		if (sessionId !== null) {
 			try {
 				repo.perfSnapshots.insert({

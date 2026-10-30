@@ -6,6 +6,7 @@ import type {
 import { wsManager } from '../ws/manager';
 import { ConfigManager } from '../config/manager';
 import { getServerNetEndpoint } from '../../common/fxserver-endpoint';
+import { incidentRecorder } from '../incidents/manager';
 
 class ResourceManager {
 	private config = ConfigManager.getInstance();
@@ -90,6 +91,15 @@ class ResourceManager {
 			| { event: 'refresh'; data: ResourceData[] },
 	) {
 		if (payload.event === 'update') {
+			incidentRecorder.record(
+				'resource',
+				`${payload.data.name}: ${payload.data.status}`,
+				{
+					name: payload.data.name,
+					status: payload.data.status,
+					version: payload.data.version,
+				},
+			);
 			const idx = this.resourcelist.findIndex(
 				(res) => res.name === payload.data.name,
 			);

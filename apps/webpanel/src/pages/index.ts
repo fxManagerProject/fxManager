@@ -18,6 +18,7 @@ import ConfigEditor from './settings/configeditor';
 import PerformancePage from './performance';
 import CreditsPage from './settings/credits';
 import ProfilePage from './settings/selfprofile';
+import IncidentsPage from './incidents';
 
 type RouteConfig = {
 	path: string;
@@ -28,6 +29,11 @@ type RouteConfig = {
 };
 
 export const routes: RouteConfig[] = [
+	{
+		path: '/incidents',
+		element: IncidentsPage,
+		permission: UserPermissions.INCIDENT_VIEW,
+	},
 	{ path: '/login', element: LoginPage, auth: false },
 
 	// Server Management
