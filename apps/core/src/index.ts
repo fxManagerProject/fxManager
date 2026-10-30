@@ -21,6 +21,7 @@ import { restartScheduler } from './modules/schedule/manager';
 import { setupTokenManager } from './modules/setup/token';
 import { MIGRATE_WORKER_FLAG, runMigrateWorker } from './migrate-worker';
 import open from 'open';
+import { rejectUnknownApi } from './common/api-fallback';
 
 const ip = getIp();
 
@@ -56,6 +57,11 @@ fastify.register(fastifyCookie, {
 	secret: cookieSecret,
 });
 fastify.register(fastifyWebsocket);
+
+fastify.all('/api', rejectUnknownApi);
+fastify.all('/api/*', rejectUnknownApi);
+fastify.all('/internal', rejectUnknownApi);
+fastify.all('/internal/*', rejectUnknownApi);
 
 if (isProduction) {
 	const distPath = path.join(process.cwd(), './assets');
