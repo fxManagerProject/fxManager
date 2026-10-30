@@ -31,6 +31,9 @@ export const UserPermissions = {
 	CONFIG_EDITOR: 1 << 19, // 524288 - access & edit server.cfg files
 
 	MASTER: 1 << 30, // 1073741824
+	INCIDENT_VIEW: 1 << 20,
+	INCIDENT_MANAGE: 1 << 21,
+	INCIDENT_EXPORT: 1 << 22,
 } as const;
 
 export const ACE_PREFIX = 'fxmanager';
@@ -38,6 +41,9 @@ export const ACE_PREFIX = 'fxmanager';
 // bit -> ace key, checked in-game as `fxmanager.<key>` (MASTER is granted the
 // bare `fxmanager` ace instead, which covers the whole tree)
 export const PERMISSION_ACE_KEYS: Record<number, string> = {
+	[UserPermissions.INCIDENT_VIEW]: 'incidents.view',
+	[UserPermissions.INCIDENT_MANAGE]: 'incidents.manage',
+	[UserPermissions.INCIDENT_EXPORT]: 'incidents.export',
 	[UserPermissions.KICK]: 'players.kick',
 	[UserPermissions.BAN]: 'players.ban',
 	[UserPermissions.WARN]: 'players.warn',
@@ -64,6 +70,21 @@ export const PERMISSION_LABELS: Record<
 	number,
 	{ label: string; desc: string; category: string }
 > = {
+	[UserPermissions.INCIDENT_VIEW]: {
+		label: 'View Incidents',
+		desc: 'Read retained server events and incident evidence, including redacted console output.',
+		category: 'Incidents',
+	},
+	[UserPermissions.INCIDENT_MANAGE]: {
+		label: 'Manage Incidents',
+		desc: 'Create incidents, add notes, resolve and reopen incidents. Requires View Incidents.',
+		category: 'Incidents',
+	},
+	[UserPermissions.INCIDENT_EXPORT]: {
+		label: 'Export Incidents',
+		desc: 'Download redacted diagnostic bundles. Requires View Incidents.',
+		category: 'Incidents',
+	},
 	[UserPermissions.KICK]: {
 		label: 'Kick Players',
 		desc: 'Disconnect players from the server.',

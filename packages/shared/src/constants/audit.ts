@@ -1,4 +1,11 @@
 export const AUDIT_LOG_ACTIONS = {
+	INCIDENT: [
+		'incident.create',
+		'incident.note',
+		'incident.status',
+		'incident.export',
+		'incident.retention',
+	],
 	SERVER: ['server.start', 'server.stop', 'server.restart'],
 	PLAYER: [
 		'player.warn',
