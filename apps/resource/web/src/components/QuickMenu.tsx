@@ -99,7 +99,7 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 	}, []);
 
 	const handleTeleportToCoords = useCallback((coordsString: string) => {
-		const [x, y, z] = coordsString.split(', ').map((c) => parseFloat(c));
+		const [x, y, z] = coordsString.split(',').map((c) => parseFloat(c));
 
 		fetchNui('teleport-coords', { x, y, z });
 	}, []);
@@ -107,6 +107,34 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 	const handleTeleportToMarker = useCallback(() => {
 		fetchNui('teleport-marker');
 	}, []);
+
+	const [monitoringPending, setMonitoringPending] = useState(false);
+	async function toggleMonitoring(kind: 'tags' | 'blips', next: boolean) {
+		if (monitoringPending) return;
+		setMonitoringPending(true);
+		try {
+			const accepted = await fetchNui<boolean>(`moderation-${kind}`, next, {
+				data: true,
+			});
+			if (!accepted)
+				throw new Error('Permission denied or server unavailable.');
+			if (kind === 'tags') setTags(next);
+			else setBlips(next);
+			showNotification({
+				title: `Player ${kind} ${next ? 'enabled' : 'disabled'}`,
+				variant: 'info',
+				duration: 3000,
+			});
+		} catch (error) {
+			showNotification({
+				title: 'Unable to change monitoring',
+				description: error instanceof Error ? error.message : 'Request failed.',
+				variant: 'error',
+			});
+		} finally {
+			setMonitoringPending(false);
+		}
+	}
 
 	const items: QuickActionItem[] = [
 		{
@@ -165,13 +193,7 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 			icon: Tags,
 			checked: tags,
 			onChange: (next) => {
-				fetchNui('moderation-tags', next);
-				setTags(next);
-				showNotification({
-					title: next ? 'Player names enabled' : 'Player names disabled',
-					variant: 'info',
-					duration: 3000,
-				});
+				void toggleMonitoring('tags', next);
 			},
 		},
 		{
@@ -182,13 +204,7 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 			icon: Radar,
 			checked: blips,
 			onChange: (next) => {
-				fetchNui('moderation-blips', next);
-				setBlips(next);
-				showNotification({
-					title: next ? 'Player blips enabled' : 'Player blips disabled',
-					variant: 'info',
-					duration: 3000,
-				});
+				void toggleMonitoring('blips', next);
 			},
 		},
 		{
@@ -482,8 +498,16 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 						return (
 							<div key={item.key}>
 								{item.type === 'toggle' ? (
-									<div
-										className={`flex items-center justify-between rounded px-2.5 py-2 text-xs transition-colors ${
+									<button
+										type="button"
+										role="menuitemcheckbox"
+										aria-checked={item.checked}
+										onClick={() => item.onChange(!item.checked)}
+										disabled={
+											monitoringPending &&
+											(item.key === 'tags' || item.key === 'blips')
+										}
+										className={`flex w-full items-center justify-between rounded px-2.5 py-2 text-xs transition-colors ${
 											isFocused
 												? 'bg-primary text-primary-foreground font-semibold'
 												: 'text-foreground hover:bg-muted/50'
@@ -505,9 +529,10 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 												<div className="h-2 w-2 rounded-full bg-primary" />
 											)}
 										</div>
-									</div>
+									</button>
 								) : (
 									<Button
+										onClick={item.onSelect}
 										variant={isFocused ? 'default' : (item.variant ?? 'ghost')}
 										size="sm"
 										className={`w-full justify-start gap-2 text-xs h-9 ${

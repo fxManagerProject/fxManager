@@ -12,10 +12,20 @@ api.post(
 		schema: z.object({
 			serverId: z.number(),
 			reason: z.string(),
+			license: z.string().optional(),
 		}),
 	},
 	({ body }) => {
-		const { serverId, reason } = body;
+		const { serverId, reason, license } = body;
+		if (
+			license &&
+			GetPlayerIdentifierByType(String(serverId), 'license') !== license
+		) {
+			return {
+				status: 409,
+				body: { success: false, error: 'Player connection changed' },
+			};
+		}
 
 		DropPlayer(String(serverId), reason);
 

@@ -13,12 +13,12 @@ enum UIState {
 let uiOpen: UIState = UIState.Closed;
 
 function setUIState(newState: UIState) {
+	if (uiOpen === UIState.QuickMenu && newState !== UIState.QuickMenu)
+		setQuickMenuVisible(false);
 	switch (newState) {
 		case UIState.Closed:
 			SetNuiFocus(false, false);
 			SendNUIMessage({ action: 'visibility', data: { tab: 'none' } });
-
-			if (uiOpen === UIState.QuickMenu) setQuickMenuVisible(false);
 
 			uiOpen = UIState.Closed;
 			break;
@@ -69,7 +69,6 @@ RegisterCommand(
 RegisterCommand(
 	'fx-mainpanel',
 	() => {
-		if (permissions.getPermissions() === 0) return;
 		setUIState(
 			uiOpen === UIState.MainPanel ? UIState.Closed : UIState.MainPanel,
 		);
@@ -84,3 +83,4 @@ RegisterKeyMapping(
 	'F6',
 );
 RegisterKeyMapping('fx-mainpanel', 'Open fxManager panel', 'keyboard', 'F7');
+import './players';

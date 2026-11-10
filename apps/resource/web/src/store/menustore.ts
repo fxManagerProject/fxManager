@@ -18,7 +18,7 @@ interface MenuState {
 export const useMenuStore = create<MenuState>((set) => ({
 	item: ['Movement', 0],
 	noclip: false,
-	tags: true,
+	tags: false,
 	blips: false,
 	setItem: (group, item) => set({ item: [group, item] }),
 	setNoclip: (noclip) => set({ noclip }),

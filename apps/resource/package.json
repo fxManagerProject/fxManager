@@ -5,6 +5,7 @@
 	"description": "",
 	"type": "module",
 	"scripts": {
+		"typecheck": "tsc --noEmit -p src/client/tsconfig.json && tsc --noEmit -p src/server/tsconfig.json && tsc --noEmit -p web/tsconfig.json",
 		"web:dev": "cd web && vite dev",
 		"build": "bun scripts/build.js",
 		"deploy": "bun scripts/deploy.js",

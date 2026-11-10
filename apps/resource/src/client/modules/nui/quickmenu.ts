@@ -1,4 +1,3 @@
-import { sleep } from '@common/utils';
 import { NuiCallback } from '../../utils/nui-callbacks';
 import { Control } from '@nativewrappers/fivem';
 
@@ -11,7 +10,8 @@ type NavigationDirection =
 	| 'back'
 	| 'reset';
 
-let isQuickMenuOpen = false;
+let navigationTick: number | null = null;
+let isQuickMenuVisible = false;
 
 // Controls to disable while navigating without NUI focus
 const NAV_CONTROLS = [
@@ -31,33 +31,25 @@ function sendNav(direction: NavigationDirection) {
 }
 
 function startQuickMenuNavigation() {
-	isQuickMenuOpen = true;
-
-	setImmediate(async () => {
-		while (isQuickMenuOpen) {
-			// Disable game controls and process inputs
-			for (const { control, direction } of NAV_CONTROLS) {
-				DisableControlAction(0, control, true);
-
-				if (IsDisabledControlJustReleased(0, control)) {
-					sendNav(direction);
-
-					// sleep to avoid detecting long press as multiple presses
-					await sleep(10);
-				}
-			}
-
-			await sleep(0);
+	if (navigationTick !== null) return;
+	navigationTick = setTick(() => {
+		for (const { control, direction } of NAV_CONTROLS) {
+			DisableControlAction(0, control, true);
+			if (IsDisabledControlJustReleased(0, control)) sendNav(direction);
 		}
 	});
 }
 
 function stopQuickMenuNavigation() {
-	isQuickMenuOpen = false;
+	if (navigationTick === null) return;
+	clearTick(navigationTick);
+	navigationTick = null;
 }
 
 // Control NUI focus when a dialog is opened/closed from React
 NuiCallback('setDialogFocus', (data: { open: boolean }, cb) => {
+	if (!isQuickMenuVisible || !data || typeof data.open !== 'boolean')
+		return cb({});
 	if (data.open) {
 		stopQuickMenuNavigation();
 		SetNuiFocus(true, true);
@@ -70,6 +62,7 @@ NuiCallback('setDialogFocus', (data: { open: boolean }, cb) => {
 
 // Sync menu visibility state from your main controller
 export function setQuickMenuVisible(visible: boolean) {
+	isQuickMenuVisible = visible;
 	if (visible) {
 		startQuickMenuNavigation();
 	} else {

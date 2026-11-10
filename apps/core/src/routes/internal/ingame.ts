@@ -250,7 +250,12 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			const expiryDate = expiresAt ? expiresAt.toLocaleString() : 'Permanent';
 			const kickMessage = `You have been banned from the server. Reason: ${body.reason}. Expires: ${expiryDate}`;
 
-			if (online) await gm.dropPlayer(online.serverId, kickMessage);
+			if (online)
+				await gm.dropPlayer(
+					online.serverId,
+					kickMessage,
+					online.identifiers.license,
+				);
 
 			const profile =
 				online ?? (await repo.players.findById(resolved.playerId));
@@ -420,8 +425,19 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			});
 
 			const kickMessage = `You have been kicked from the server. Reason: ${body.reason}`;
-			await gm.dropPlayer(online.serverId, kickMessage);
+			const dropped = await gm.dropPlayer(
+				online.serverId,
+				kickMessage,
+				online.identifiers.license,
+			);
 
+			if (!dropped.success)
+				return reply
+					.code(409)
+					.send({
+						message:
+							'Player could not be disconnected. Refresh the player list and retry.',
+					});
 			void txAdminCompat.emit('playerKicked', {
 				target: online.serverId,
 				author,

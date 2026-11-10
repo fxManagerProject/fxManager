@@ -8,6 +8,7 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 	fastify.post('/ready', () => {
 		pm.setFxServerReady();
+		return { ok: true };
 	});
 };
 

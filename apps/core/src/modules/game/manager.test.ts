@@ -660,9 +660,23 @@ describe('GameManager', () => {
 						Application: 'json/application',
 						'x-resource-token': 'mock-token',
 					},
+					signal: AbortSignal.timeout(8000),
 				},
 			);
 			expect(response).toEqual({ success: true, data: null });
+		});
+
+		it('includes the selected license so a reused server ID cannot disconnect another player', async () => {
+			global.fetch = mock(
+				async () =>
+					({ ok: true, json: async () => ({ success: true }) }) as Response,
+			) as any;
+			await gameManager.dropPlayer(2, 'Reason', 'license:selected');
+			const options = (global.fetch as any).mock.calls[0][1];
+			expect(JSON.parse(options.body)).toMatchObject({
+				serverId: 2,
+				license: 'license:selected',
+			});
 		});
 
 		it('should catch validation error flags gracefully if target router gates declare response failures', async () => {

@@ -1,7 +1,7 @@
 {
 	"extends": "../common/tsconfig.json",
 	"compilerOptions": {
-		"types": ["@citizenfx/client"]
+		"types": ["@citizenfx/client", "bun"]
 	},
 	"include": ["./"]
 }

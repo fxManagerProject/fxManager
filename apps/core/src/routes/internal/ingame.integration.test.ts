@@ -385,6 +385,16 @@ describe('ingame API integration (HTTP)', () => {
 		expect(dropPlayer).not.toHaveBeenCalled();
 	});
 
+	it('does not report a successful kick when the disconnect fails', async () => {
+		dropPlayer.mockResolvedValueOnce({ success: false });
+		const result = await call('POST', '/kick', { target: 2, reason: 'afk' });
+		expect(result.statusCode).toBe(409);
+		expect(mockEmit).not.toHaveBeenCalledWith(
+			'playerKicked',
+			expect.anything(),
+		);
+	});
+
 	it('409s when a longer active ban already exists', async () => {
 		mockAddBan.mockResolvedValueOnce(false as any);
 		const res = await call('POST', '/bans', { target: 2, reason: 'x' });

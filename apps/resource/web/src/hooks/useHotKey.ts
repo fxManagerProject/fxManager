@@ -16,9 +16,11 @@ export function useHotkey(
 			// Don't trigger if user is typing in an input or textarea
 			const target = event.target as HTMLElement;
 			if (
-				target.tagName === 'INPUT' ||
-				target.tagName === 'TEXTAREA' ||
-				target.isContentEditable
+				!['escape', 'f6', 'f7'].includes(targetKey.toLowerCase()) &&
+				(target.tagName === 'INPUT' ||
+					target.tagName === 'TEXTAREA' ||
+					target.tagName === 'SELECT' ||
+					target.isContentEditable)
 			) {
 				return;
 			}

@@ -98,7 +98,7 @@ describe('permissionsToAceKeys', () => {
 
 	it('expands a single permission bit into its ace key', () => {
 		expect(permissionsToAceKeys(UserPermissions.KICK)).toEqual([
-			PERMISSION_ACE_KEYS[UserPermissions.KICK],
+			'players.kick',
 		]);
 	});
 
@@ -109,9 +109,9 @@ describe('permissionsToAceKeys', () => {
 		const aces = permissionsToAceKeys(bitfield);
 
 		expect(aces).toHaveLength(3);
-		expect(aces).toContain(PERMISSION_ACE_KEYS[UserPermissions.KICK]);
-		expect(aces).toContain(PERMISSION_ACE_KEYS[UserPermissions.BAN]);
-		expect(aces).toContain(PERMISSION_ACE_KEYS[UserPermissions.AUDIT_LOG]);
+		expect(aces).toContain('players.kick');
+		expect(aces).toContain('players.ban');
+		expect(aces).toContain('system.audit_log');
 	});
 
 	it('collapses the master bit to the bare MASTER ace', () => {
@@ -128,7 +128,7 @@ describe('permissionsToAceKeys', () => {
 		const bitfield = UserPermissions.WARN | unmappedBit;
 
 		expect(permissionsToAceKeys(bitfield)).toEqual([
-			PERMISSION_ACE_KEYS[UserPermissions.WARN],
+			'players.warn',
 		]);
 	});
 
@@ -149,8 +149,10 @@ describe('permissionsToAceKeys', () => {
 		});
 
 		const bitfield = getPermissions(7);
-		expect(permissionsToAceKeys(bitfield)).toEqual(
-			targetPermissions.map((bit) => PERMISSION_ACE_KEYS[bit]),
-		);
+		expect(permissionsToAceKeys(bitfield)).toEqual([
+			'players.kick',
+			'players.whitelist',
+			'console.write',
+		]);
 	});
 });

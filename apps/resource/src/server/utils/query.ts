@@ -8,21 +8,25 @@ export async function QueryManager<T>(
 		method,
 		body = null,
 		headers = {},
+		signal = AbortSignal.timeout(10000),
 	}: {
 		endpoint: string;
 		method: 'GET' | 'POST';
 		body?: unknown;
 		headers?: Record<string, string>;
+		signal?: AbortSignal;
 	},
 	external: boolean = false,
 ): Promise<T> {
 	const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 	const url = `http://${HOSTNAME}${external ? '' : '/internal'}${cleanEndpoint}`;
+	let options: any;
 
 	try {
 		// biome-ignore lint/suspicious/noExplicitAny: needed
-		const options: any = {
+		options = {
 			method,
+			signal,
 			headers: {
 				'Content-Type': 'application/json',
 				'x-resource-token': API_TOKEN,
@@ -54,6 +58,8 @@ export async function QueryManager<T>(
 		return (await response.json()) as T;
 	} catch (err) {
 		console.error('QueryService Error:', err);
+		console.log('Attempted fetch url:', url);
+		console.log('Attempted fetch options:', options);
 
 		throw err;
 	}

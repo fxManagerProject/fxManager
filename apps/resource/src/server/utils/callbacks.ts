@@ -22,15 +22,21 @@ interface ServerCallbackRegistration<TInput = any, TOutput = any> {
 }
 
 export class ServerCallbackManager {
+	private requestSequence = 0;
+	private traffic = new Map<
+		number,
+		{ start: number; count: number; pending: number }
+	>();
 	private handlers = new Map<string, ServerCallbackRegistration>();
 	private pendingRequests = new Map<
 		string,
-		{ resolve: (val: any) => void; timer: CitizenTimer }
+		{ resolve: (val: any) => void; timer: CitizenTimer; targetSource: number }
 	>();
 
 	constructor() {
 		this.listenForClientRequests();
 		this.listenForClientResponses();
+		on('playerDropped', () => this.traffic.delete(Number(globalThis.source)));
 	}
 
 	private hasPermission(
@@ -77,7 +83,7 @@ export class ServerCallbackManager {
 		options: { timeoutMs?: number; fallback?: TOutput } = {},
 	): Promise<TOutput> {
 		const { timeoutMs = 5000, fallback } = options;
-		const requestId = String(Math.floor(Math.random() * 1000));
+		const requestId = String(++this.requestSequence);
 
 		return new Promise<TOutput>((resolve) => {
 			const timer = setTimeout(() => {
@@ -85,7 +91,7 @@ export class ServerCallbackManager {
 				resolve(fallback as TOutput);
 			}, timeoutMs);
 
-			this.pendingRequests.set(requestId, { resolve, timer });
+			this.pendingRequests.set(requestId, { resolve, timer, targetSource });
 
 			const req: CallbackPayload<TInput> = { requestId, name, payload };
 			emitNet(EVENT_NAMES.SERVER_TO_CLIENT_REQ, targetSource, req);
@@ -94,7 +100,30 @@ export class ServerCallbackManager {
 
 	private listenForClientRequests(): void {
 		onNet(EVENT_NAMES.CLIENT_TO_SERVER_REQ, async (req: CallbackPayload) => {
-			const src = globalThis.source;
+			const src = Number(globalThis.source);
+			if (
+				!Number.isSafeInteger(src) ||
+				src < 1 ||
+				!req ||
+				typeof req !== 'object' ||
+				typeof req.name !== 'string' ||
+				req.name.length > 100 ||
+				typeof req.requestId !== 'string' ||
+				req.requestId.length > 100
+			)
+				return;
+			const license = GetPlayerIdentifierByType(String(src), 'license');
+			const session = this.traffic.get(src) ?? {
+				start: Date.now(),
+				count: 0,
+				pending: 0,
+			};
+			this.traffic.set(src, session);
+			if (Date.now() - session.start >= 1000) {
+				session.start = Date.now();
+				session.count = 0;
+			}
+			if (++session.count > 30 || session.pending >= 8) return;
 			const registration = this.handlers.get(req.name);
 
 			if (!registration) {
@@ -119,28 +148,44 @@ export class ServerCallbackManager {
 				return;
 			}
 
+			session.pending++;
 			try {
 				const result = await handler(src, req.payload);
+				if (
+					this.traffic.get(src) !== session ||
+					GetPlayerIdentifierByType(String(src), 'license') !== license
+				)
+					return;
 				this.sendResponse(src, {
 					requestId: req.requestId,
 					success: true,
 					data: result,
 				});
 			} catch (err: any) {
+				if (
+					this.traffic.get(src) !== session ||
+					GetPlayerIdentifierByType(String(src), 'license') !== license
+				)
+					return;
 				this.sendResponse(src, {
 					requestId: req.requestId,
 					success: false,
 					data: fallback,
 					error: err?.message ?? 'Execution error during callback process.',
 				});
+			} finally {
+				session.pending--;
 			}
 		});
 	}
 
 	private listenForClientResponses(): void {
 		onNet(EVENT_NAMES.SERVER_TO_CLIENT_RES, (res: CallbackResponse) => {
+			if (!res || typeof res !== 'object' || typeof res.requestId !== 'string')
+				return;
 			const pending = this.pendingRequests.get(res.requestId);
-			if (!pending) return;
+			if (!pending || pending.targetSource !== Number(globalThis.source))
+				return;
 
 			clearTimeout(pending.timer);
 			this.pendingRequests.delete(res.requestId);

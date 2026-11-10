@@ -8,7 +8,10 @@ import { DashboardSection } from './panel/DashboardSection';
 import { Server } from 'lucide-react';
 import { PermissionManager } from '@fxmanager/shared/utils';
 
-const SECTION_VIEWS: Record<SectionKey, ComponentType> = {
+const SECTION_VIEWS: Record<
+	SectionKey,
+	ComponentType<{ permissions: number }>
+> = {
 	dashboard: DashboardSection,
 	console: ConsoleSection,
 	resources: ResourcesSection,
@@ -21,7 +24,7 @@ interface MainPanelProps {
 	onClose: () => void;
 }
 
-export function MainPanel({ permissions }: MainPanelProps) {
+export function MainPanel({ permissions, onClose }: MainPanelProps) {
 	const accessibleSections = SECTIONS.filter((section) =>
 		PermissionManager.has(permissions, section.permission),
 	);
@@ -41,7 +44,7 @@ export function MainPanel({ permissions }: MainPanelProps) {
 	const ActiveView = active ? SECTION_VIEWS[active] : null;
 
 	return (
-		<div className="fixed inset-4 flex flex-col rounded-md border bg-card text-card-foreground shadow-sm">
+		<div className="fixed inset-4 mx-auto flex max-w-[1920px] flex-col rounded-md border bg-card text-card-foreground shadow-sm">
 			<header className="flex items-center justify-start gap-2 border-b px-5 py-3">
 				<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
 					<Server />
@@ -51,7 +54,14 @@ export function MainPanel({ permissions }: MainPanelProps) {
 						<span className="text-primary">fx</span>Manager Panel
 					</span>
 				</div>
-				<kbd className="text-xs text-muted-foreground">F7</kbd>
+				<button
+					type="button"
+					onClick={onClose}
+					className="rounded px-3 py-2 text-sm hover:bg-muted"
+					aria-label="Close panel"
+				>
+					Close <kbd className="ml-2 text-xs text-muted-foreground">Esc</kbd>
+				</button>
 			</header>
 
 			<nav className="flex items-center gap-1 border-b px-3 py-2">
@@ -76,8 +86,8 @@ export function MainPanel({ permissions }: MainPanelProps) {
 				)}
 			</nav>
 
-			<div className="flex-1 overflow-y-auto p-4">
-				{ActiveView && <ActiveView />}
+			<div className="min-h-0 flex-1 overflow-y-auto p-5">
+				{ActiveView && <ActiveView permissions={permissions} />}
 			</div>
 		</div>
 	);

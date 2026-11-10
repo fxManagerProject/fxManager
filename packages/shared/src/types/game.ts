@@ -40,7 +40,13 @@ export type PlayerUpdatePackage = Record<string, [number, number, VectorArray]>;
 
 export type ClientPlayerBlipUpdate = Record<
 	string,
-	{ username: string; coords: VectorArray }
+	{
+		username: string;
+		coords: VectorArray;
+		inVehicle?: boolean;
+		dead?: boolean;
+		heading?: number;
+	}
 >;
 
 export interface ResourceData {

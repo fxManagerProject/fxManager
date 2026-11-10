@@ -1,7 +1,7 @@
 {
 	"extends": "../common/tsconfig.json",
 	"compilerOptions": {
-		"types": ["@types/node", "@citizenfx/server"]
+		"types": ["@types/node", "@citizenfx/server", "bun"]
 	},
 	"include": ["./"]
 }
