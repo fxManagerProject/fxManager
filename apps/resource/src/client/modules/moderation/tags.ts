@@ -83,7 +83,7 @@ setInterval(() => {
 		}
 		SetMpGamerTagName(
 			tag.handle,
-			`[${GetPlayerServerId(player)}] ${GetPlayerName(player).replace(/~/g, '').slice(0, 32)} | AR ${GetPedArmour(ped)}`,
+			`[${GetPlayerServerId(player)}] ${GetPlayerName(player).replace(/~/g, '').slice(0, 32)}`,
 		);
 		showTag(tag.handle, NetworkIsPlayerTalking(player));
 	}
