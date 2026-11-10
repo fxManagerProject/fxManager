@@ -1,6 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@fxmanager/ui/components/button';
 import { Input } from '@fxmanager/ui/components/input';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@fxmanager/ui/components/select';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@fxmanager/ui/components/table';
+import { Textarea } from '@fxmanager/ui/components/textarea';
 import { Search, RefreshCw, Users } from 'lucide-react';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import { PermissionManager } from '@fxmanager/shared/utils';
@@ -247,39 +263,51 @@ export function PlayersSection({ permissions }: { permissions: number }) {
 			)}
 			<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
 				<div className="overflow-x-auto rounded-md border">
-					<table className="w-full text-left text-sm">
-						<thead className="bg-muted/40 text-muted-foreground">
-							<tr>
-								<th className="px-4 py-3 font-medium">Player</th>
-								<th className="px-4 py-3 font-medium">Status</th>
+					<Table>
+						<TableHeader className="bg-muted/40 text-muted-foreground">
+							<TableRow>
+								<TableHead className="px-4 py-3 font-medium">Player</TableHead>
+								<TableHead className="px-4 py-3 font-medium">Status</TableHead>
 								{scope === 'online' ? (
 									<>
-										<th className="px-4 py-3 font-medium">Server ID</th>
-										<th className="px-4 py-3 font-medium">Vitals</th>
-										<th className="px-4 py-3 font-medium">Ping</th>
+										<TableHead className="px-4 py-3 font-medium">
+											Server ID
+										</TableHead>
+										<TableHead className="px-4 py-3 font-medium">
+											Vitals
+										</TableHead>
+										<TableHead className="px-4 py-3 font-medium">
+											Ping
+										</TableHead>
 									</>
 								) : (
-									<th className="px-4 py-3 font-medium">Last seen</th>
+									<TableHead className="px-4 py-3 font-medium">
+										Last seen
+									</TableHead>
 								)}
 
-								<th className="px-4 py-3">
+								<TableHead className="px-4 py-3">
 									<span className="sr-only">Actions</span>
-								</th>
-							</tr>
-						</thead>
-						<tbody>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
 							{players.map((player) => (
-								<tr
+								<TableRow
 									key={player.playerId}
-									className={`border-t ${selected?.playerId === player.playerId ? 'bg-secondary' : 'hover:bg-muted/30'}`}
+									className={
+										selected?.playerId === player.playerId
+											? 'bg-secondary'
+											: 'hover:bg-muted/30'
+									}
 								>
-									<td className="max-w-[240px] break-words px-4 py-3 font-medium">
+									<TableCell className="max-w-[240px] break-words px-4 py-3 font-medium">
 										{player.name}
 										<span className="mt-1 block font-mono text-xs font-normal text-muted-foreground">
 											Player #{player.playerId}
 										</span>
-									</td>
-									<td className="px-4 py-3 text-xs">
+									</TableCell>
+									<TableCell className="px-4 py-3 text-xs">
 										<span
 											className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 font-medium ${player.online ? 'border-primary/30 bg-primary/10 text-primary' : 'text-muted-foreground'}`}
 										>
@@ -301,26 +329,26 @@ export function PlayersSection({ permissions }: { permissions: number }) {
 												· Bucket {player.bucket ?? '—'}
 											</span>
 										)}
-									</td>
+									</TableCell>
 									{scope === 'online' ? (
 										<>
-											<td className="px-4 py-3 font-mono tabular-nums">
+											<TableCell className="px-4 py-3 font-mono tabular-nums">
 												#{player.serverId}
-											</td>
-											<td className="px-4 py-3 text-xs tabular-nums">
+											</TableCell>
+											<TableCell className="px-4 py-3 text-xs tabular-nums">
 												{player.health === undefined
 													? '—'
 													: `${Math.max(0, player.health - 100)}/${Math.max(0, (player.maxHealth ?? 200) - 100)} HP`}
 												<span className="mt-1 block text-muted-foreground">
 													{player.armour ?? 0} armour
 												</span>
-											</td>
-											<td className="px-4 py-3 tabular-nums">
+											</TableCell>
+											<TableCell className="px-4 py-3 tabular-nums">
 												{player.ping} ms
-											</td>
+											</TableCell>
 										</>
 									) : (
-										<td className="px-4 py-3 text-sm text-muted-foreground">
+										<TableCell className="px-4 py-3 text-sm text-muted-foreground">
 											{player.online ? (
 												'Connected now'
 											) : (
@@ -334,10 +362,10 @@ export function PlayersSection({ permissions }: { permissions: number }) {
 													{lastSeenLabel(player.lastSeen)}
 												</time>
 											)}
-										</td>
+										</TableCell>
 									)}
 
-									<td className="px-4 py-3 text-right">
+									<TableCell className="px-4 py-3 text-right">
 										<Button
 											variant="outline"
 											size="sm"
@@ -359,11 +387,11 @@ export function PlayersSection({ permissions }: { permissions: number }) {
 										>
 											Manage<span className="sr-only"> {player.name}</span>
 										</Button>
-									</td>
-								</tr>
+									</TableCell>
+								</TableRow>
 							))}
-						</tbody>
-					</table>
+						</TableBody>
+					</Table>
 					{loading ? (
 						<div
 							role="status"
@@ -453,74 +481,80 @@ export function PlayersSection({ permissions }: { permissions: number }) {
 									requires an online player.
 								</p>
 							)}
-							<label className="flex flex-col gap-2 text-sm font-medium">
-								Action
-								<select
-									className="h-10 rounded-md border bg-background px-3"
-									value={action}
-									disabled={pending}
-									onChange={(event) =>
-										setAction(
-											event.target.value as PlayerActionPayload['action'],
-										)
-									}
-								>
-									<option value="" disabled>
-										Choose action
-									</option>
-									{ACTIONS.filter((item) =>
-										PermissionManager.has(permissions, item.permission),
-									).map((item) => (
-										<option
-											value={item.key}
-											key={item.key}
-											disabled={item.key === 'kick' && !connected}
-										>
-											{item.label}
-										</option>
-									))}
-								</select>
-							</label>
-							{action === 'ban' && (
-								<label className="flex flex-col gap-2 text-sm font-medium">
-									Ban duration
-									<select
-										className="h-10 rounded-md border bg-background px-3"
-										value={duration}
+							<div className="flex flex-col gap-4">
+								<div className="flex flex-col gap-2 text-sm font-medium">
+									<span>Action</span>
+									<Select
+										value={action}
 										disabled={pending}
-										onChange={(event) =>
-											setDuration(Number(event.target.value))
+										onValueChange={(val) =>
+											setAction(val as PlayerActionPayload['action'])
 										}
 									>
-										<option value={3600}>1 hour</option>
-										<option value={86400}>1 day</option>
-										<option value={604800}>7 days</option>
-										<option value={2592000}>30 days</option>
-										<option value={0}>Permanent</option>
-									</select>
-								</label>
-							)}
-							<label className="flex flex-col gap-2 text-sm font-medium">
-								Reason
-								<textarea
-									required
-									maxLength={500}
-									rows={4}
-									className="resize-y rounded-md border bg-background p-3 font-normal"
-									placeholder="Explain the rule violation…"
-									value={reason}
-									disabled={pending}
-									onChange={(event) => setReason(event.target.value)}
-								/>
-							</label>
-							<p className="text-xs text-muted-foreground">
-								{action === 'warn'
-									? 'Records a warning in the player history.'
-									: action === 'kick'
-										? 'Disconnects this player immediately.'
-										: `Disconnects this player and blocks rejoining ${duration === 0 ? 'permanently' : 'for the selected duration'}.`}{' '}
-								Your action and reason are recorded.
-							</p>
+										<SelectTrigger className="h-10 w-full">
+											<SelectValue placeholder="Choose action" />
+										</SelectTrigger>
+										<SelectContent>
+											{ACTIONS.filter((item) =>
+												PermissionManager.has(permissions, item.permission),
+											).map((item) => (
+												<SelectItem
+													value={item.key}
+													key={item.key}
+													disabled={item.key === 'kick' && !connected}
+												>
+													{item.label}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+
+								{action === 'ban' && (
+									<div className="flex flex-col gap-2 text-sm font-medium">
+										<span>Ban duration</span>
+										<Select
+											value={String(duration)}
+											disabled={pending}
+											onValueChange={(val) => setDuration(Number(val))}
+										>
+											<SelectTrigger className="h-10 w-full">
+												<SelectValue placeholder="Select duration" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="3600">1 hour</SelectItem>
+												<SelectItem value="86400">1 day</SelectItem>
+												<SelectItem value="604800">7 days</SelectItem>
+												<SelectItem value="2592000">30 days</SelectItem>
+												<SelectItem value="0">Permanent</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+								)}
+
+								<div className="flex flex-col gap-2 text-sm font-medium">
+									<span>Reason</span>
+									<Textarea
+										required
+										maxLength={500}
+										rows={4}
+										className="resize-y font-normal"
+										placeholder="Explain the rule violation…"
+										value={reason}
+										disabled={pending}
+										onChange={(event) => setReason(event.target.value)}
+									/>
+								</div>
+
+								<p className="text-xs text-muted-foreground">
+									{action === 'warn'
+										? 'Records a warning in the player history.'
+										: action === 'kick'
+											? 'Disconnects this player immediately.'
+											: `Disconnects this player and blocks rejoining ${duration === 0 ? 'permanently' : 'for the selected duration'}.`}{' '}
+									Your action and reason are recorded.
+								</p>
+							</div>
 							<Button
 								type="submit"
 								variant={action === 'warn' ? 'default' : 'destructive'}
