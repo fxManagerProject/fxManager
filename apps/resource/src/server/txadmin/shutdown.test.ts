@@ -1,4 +1,4 @@
-import { expect, spyOn, test } from 'bun:test';
+import { expect, mock, spyOn, test } from 'bun:test';
 
 type Globalish = Record<string, unknown>;
 const g = globalThis as Globalish;
@@ -6,11 +6,22 @@ const g = globalThis as Globalish;
 g.GetConvar = (key: string, def: string) =>
 	key === 'resource-api-token' ? '00000000-0000-4000-8000-000000000000' : def;
 g.GetConvarInt = (_key: string, def: number) => def;
+g.IsDuplicityVersion = () => true;
+g.GetCurrentResourceName = () => 'fxManager';
+g.getPlayers = () => [];
 
 const handlers: Record<string, (data: unknown) => void> = {};
 g.on = (event: string, cb: (data: unknown) => void) => {
 	handlers[event] = cb;
 };
+
+mock.module('@nativewrappers/fivem', () => ({
+	Vector3: {
+		fromArray: (arr: [number, number, number]) => ({
+			toArray: () => arr,
+		}),
+	},
+}));
 
 const { playerManager } = await import('../monitoring');
 await import('./shutdown');
