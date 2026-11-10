@@ -297,7 +297,7 @@ export function PlayersSection({ permissions }: { permissions: number }) {
 									key={player.playerId}
 									className={
 										selected?.playerId === player.playerId
-											? 'bg-secondary'
+											? 'bg-secondary hover:bg-secondary'
 											: 'hover:bg-muted/30'
 									}
 								>
