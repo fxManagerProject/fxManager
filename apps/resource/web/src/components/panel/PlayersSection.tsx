@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@fxmanager/ui/components/button';
 import { Input } from '@fxmanager/ui/components/input';
+import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
 import {
 	Select,
 	SelectContent,
@@ -417,170 +418,185 @@ export function PlayersSection({ permissions }: { permissions: number }) {
 						</p>
 					)}
 				</div>
-				<aside className="rounded-md border p-4" aria-label="Selected player">
-					{!selected ? (
-						<div className="flex flex-col gap-3 py-6 text-sm text-muted-foreground">
-							<Users className="size-6" />
-							<h3 className="font-semibold text-foreground">Select a player</h3>
-							<p>
-								Choose Manage to warn, kick, or ban. Only actions allowed by
-								your role are available.
-							</p>
-						</div>
-					) : (
-						<form
-							onSubmit={(event) => {
-								event.preventDefault();
-								void submit();
-							}}
-							className="flex flex-col gap-4"
-						>
-							<div>
-								<h3 className="break-words text-lg font-semibold">
-									{selected.name}
-								</h3>
-								<p className="text-sm text-muted-foreground">
-									{connected
-										? `Online · Server ID #${liveSelected?.serverId}`
-										: 'Offline'}{' '}
-									· Player #{selected.playerId}
-								</p>
-							</div>
-							{liveSelected?.online && (
-								<dl className="grid grid-cols-2 gap-3 border-y py-3 text-xs">
+
+				<aside
+					className="sticky top-4 flex h-[63vh] flex-col rounded-md border overflow-hidden"
+					aria-label="Selected player"
+				>
+					<ScrollArea className="h-full w-full">
+						<div className="p-4">
+							{!selected ? (
+								<div className="flex flex-col gap-3 py-6 text-sm text-muted-foreground">
+									<Users className="size-6" />
+									<h3 className="font-semibold text-foreground">
+										Select a player
+									</h3>
+									<p>
+										Choose Manage to warn, kick, or ban. Only actions allowed by
+										your role are available.
+									</p>
+								</div>
+							) : (
+								<form
+									onSubmit={(event) => {
+										event.preventDefault();
+										void submit();
+									}}
+									className="flex flex-col gap-4"
+								>
 									<div>
-										<dt className="text-muted-foreground">Health</dt>
-										<dd className="mt-1 font-medium">
-											{liveSelected.health === undefined
-												? '—'
-												: Math.max(0, liveSelected.health - 100)}{' '}
-											/ {Math.max(0, (liveSelected.maxHealth ?? 200) - 100)}
-										</dd>
+										<h3 className="break-words text-lg font-semibold">
+											{selected.name}
+										</h3>
+										<p className="text-sm text-muted-foreground">
+											{connected
+												? `Online · Server ID #${liveSelected?.serverId}`
+												: 'Offline'}{' '}
+											· Player #{selected.playerId}
+										</p>
 									</div>
-									<div>
-										<dt className="text-muted-foreground">Armour</dt>
-										<dd className="mt-1 font-medium">
-											{liveSelected.armour ?? 0}
-										</dd>
+									{liveSelected?.online && (
+										<dl className="grid grid-cols-2 gap-3 border-y py-3 text-xs">
+											<div>
+												<dt className="text-muted-foreground">Health</dt>
+												<dd className="mt-1 font-medium">
+													{liveSelected.health === undefined
+														? '—'
+														: Math.max(0, liveSelected.health - 100)}{' '}
+													/ {Math.max(0, (liveSelected.maxHealth ?? 200) - 100)}
+												</dd>
+											</div>
+											<div>
+												<dt className="text-muted-foreground">Armour</dt>
+												<dd className="mt-1 font-medium">
+													{liveSelected.armour ?? 0}
+												</dd>
+											</div>
+											<div>
+												<dt className="text-muted-foreground">Connection</dt>
+												<dd className="mt-1 font-medium">
+													{liveSelected.ping} ms
+												</dd>
+											</div>
+											<div>
+												<dt className="text-muted-foreground">
+													Routing bucket
+												</dt>
+												<dd className="mt-1 font-medium">
+													{liveSelected.bucket ?? '—'}
+												</dd>
+											</div>
+										</dl>
+									)}
+									{!connected && (
+										<p className="text-sm text-muted-foreground">
+											Last seen: {lastSeenLabel(liveSelected?.lastSeen)}.
+											Kicking requires an online player.
+										</p>
+									)}
+									<div className="flex flex-col gap-4">
+										<div className="flex flex-col gap-2 text-sm font-medium">
+											<span>Action</span>
+											<Select
+												value={action}
+												disabled={pending}
+												onValueChange={(val) =>
+													setAction(val as PlayerActionPayload['action'])
+												}
+											>
+												<SelectTrigger className="h-10 w-full">
+													<SelectValue placeholder="Choose action" />
+												</SelectTrigger>
+												<SelectContent>
+													{ACTIONS.filter((item) =>
+														PermissionManager.has(permissions, item.permission),
+													).map((item) => (
+														<SelectItem
+															value={item.key}
+															key={item.key}
+															disabled={item.key === 'kick' && !connected}
+														>
+															{item.label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										</div>
+
+										{action === 'ban' && (
+											<div className="flex flex-col gap-2 text-sm font-medium">
+												<span>Ban duration</span>
+												<Select
+													value={String(duration)}
+													disabled={pending}
+													onValueChange={(val) => setDuration(Number(val))}
+												>
+													<SelectTrigger className="h-10 w-full">
+														<SelectValue placeholder="Select duration" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="3600">1 hour</SelectItem>
+														<SelectItem value="86400">1 day</SelectItem>
+														<SelectItem value="604800">7 days</SelectItem>
+														<SelectItem value="2592000">30 days</SelectItem>
+														<SelectItem value="0">Permanent</SelectItem>
+													</SelectContent>
+												</Select>
+											</div>
+										)}
+
+										<div className="flex flex-col gap-2 text-sm font-medium">
+											<span>Reason</span>
+											<Textarea
+												required
+												maxLength={500}
+												rows={3}
+												className="resize-none font-normal"
+												placeholder="Explain the rule violation…"
+												value={reason}
+												disabled={pending}
+												onChange={(event) => setReason(event.target.value)}
+											/>
+										</div>
+
+										<p className="text-xs text-muted-foreground">
+											{action === 'warn'
+												? 'Records a warning in the player history.'
+												: action === 'kick'
+													? 'Disconnects this player immediately.'
+													: `Disconnects this player and blocks rejoining ${duration === 0 ? 'permanently' : 'for the selected duration'}.`}{' '}
+											Your action and reason are recorded.
+										</p>
 									</div>
-									<div>
-										<dt className="text-muted-foreground">Connection</dt>
-										<dd className="mt-1 font-medium">{liveSelected.ping} ms</dd>
-									</div>
-									<div>
-										<dt className="text-muted-foreground">Routing bucket</dt>
-										<dd className="mt-1 font-medium">
-											{liveSelected.bucket ?? '—'}
-										</dd>
-									</div>
-								</dl>
-							)}
-							{!connected && (
-								<p className="text-sm text-muted-foreground">
-									Last seen: {lastSeenLabel(liveSelected?.lastSeen)}. Kicking
-									requires an online player.
-								</p>
-							)}
-							<div className="flex flex-col gap-4">
-								<div className="flex flex-col gap-2 text-sm font-medium">
-									<span>Action</span>
-									<Select
-										value={action}
-										disabled={pending}
-										onValueChange={(val) =>
-											setAction(val as PlayerActionPayload['action'])
+									<Button
+										type="submit"
+										variant={action === 'warn' ? 'default' : 'destructive'}
+										disabled={
+											pending ||
+											(action === 'kick' && !connected) ||
+											!reason.trim() ||
+											!ACTIONS.some(
+												(item) =>
+													item.key === action &&
+													PermissionManager.has(permissions, item.permission),
+											)
 										}
 									>
-										<SelectTrigger className="h-10 w-full">
-											<SelectValue placeholder="Choose action" />
-										</SelectTrigger>
-										<SelectContent>
-											{ACTIONS.filter((item) =>
-												PermissionManager.has(permissions, item.permission),
-											).map((item) => (
-												<SelectItem
-													value={item.key}
-													key={item.key}
-													disabled={item.key === 'kick' && !connected}
-												>
-													{item.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-
-								{action === 'ban' && (
-									<div className="flex flex-col gap-2 text-sm font-medium">
-										<span>Ban duration</span>
-										<Select
-											value={String(duration)}
-											disabled={pending}
-											onValueChange={(val) => setDuration(Number(val))}
-										>
-											<SelectTrigger className="h-10 w-full">
-												<SelectValue placeholder="Select duration" />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="3600">1 hour</SelectItem>
-												<SelectItem value="86400">1 day</SelectItem>
-												<SelectItem value="604800">7 days</SelectItem>
-												<SelectItem value="2592000">30 days</SelectItem>
-												<SelectItem value="0">Permanent</SelectItem>
-											</SelectContent>
-										</Select>
-									</div>
-								)}
-
-								<div className="flex flex-col gap-2 text-sm font-medium">
-									<span>Reason</span>
-									<Textarea
-										required
-										maxLength={500}
-										rows={4}
-										className="resize-y font-normal"
-										placeholder="Explain the rule violation…"
-										value={reason}
+										{pending ? 'Submitting…' : `Confirm ${action}`}
+									</Button>
+									<Button
+										type="button"
+										variant="ghost"
 										disabled={pending}
-										onChange={(event) => setReason(event.target.value)}
-									/>
-								</div>
-
-								<p className="text-xs text-muted-foreground">
-									{action === 'warn'
-										? 'Records a warning in the player history.'
-										: action === 'kick'
-											? 'Disconnects this player immediately.'
-											: `Disconnects this player and blocks rejoining ${duration === 0 ? 'permanently' : 'for the selected duration'}.`}{' '}
-									Your action and reason are recorded.
-								</p>
-							</div>
-							<Button
-								type="submit"
-								variant={action === 'warn' ? 'default' : 'destructive'}
-								disabled={
-									pending ||
-									(action === 'kick' && !connected) ||
-									!reason.trim() ||
-									!ACTIONS.some(
-										(item) =>
-											item.key === action &&
-											PermissionManager.has(permissions, item.permission),
-									)
-								}
-							>
-								{pending ? 'Submitting…' : `Confirm ${action}`}
-							</Button>
-							<Button
-								type="button"
-								variant="ghost"
-								disabled={pending}
-								onClick={() => setSelected(null)}
-							>
-								Cancel
-							</Button>
-						</form>
-					)}
+										onClick={() => setSelected(null)}
+									>
+										Cancel
+									</Button>
+								</form>
+							)}
+						</div>
+						<ScrollBar orientation="vertical" />
+					</ScrollArea>
 				</aside>
 			</div>
 		</section>
