@@ -660,6 +660,7 @@ describe('GameManager', () => {
 						Application: 'json/application',
 						'x-resource-token': 'mock-token',
 					},
+					signal: AbortSignal.timeout(8000),
 				},
 			);
 			expect(response).toEqual({ success: true, data: null });
