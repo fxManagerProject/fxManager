@@ -20,10 +20,11 @@ export async function QueryManager<T>(
 ): Promise<T> {
 	const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 	const url = `http://${HOSTNAME}${external ? '' : '/internal'}${cleanEndpoint}`;
+	let options: any;
 
 	try {
 		// biome-ignore lint/suspicious/noExplicitAny: needed
-		const options: any = {
+		options = {
 			method,
 			signal,
 			headers: {
@@ -57,6 +58,8 @@ export async function QueryManager<T>(
 		return (await response.json()) as T;
 	} catch (err) {
 		console.error('QueryService Error:', err);
+		console.log('Attempted fetch url:', url);
+		console.log('Attempted fetch options:', options);
 
 		throw err;
 	}
