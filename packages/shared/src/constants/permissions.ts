@@ -203,6 +203,6 @@ export const PERMISSION_LABELS: Record<
 	[UserPermissions.PLAYER_MONITORING]: {
 		label: 'Player Monitoring',
 		desc: 'Ability to monitor players in-game.',
-		category: 'Game'
-	}
+		category: 'Game',
+	},
 };

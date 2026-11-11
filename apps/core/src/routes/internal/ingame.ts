@@ -432,12 +432,10 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			);
 
 			if (!dropped.success)
-				return reply
-					.code(409)
-					.send({
-						message:
-							'Player could not be disconnected. Refresh the player list and retry.',
-					});
+				return reply.code(409).send({
+					message:
+						'Player could not be disconnected. Refresh the player list and retry.',
+				});
 			void txAdminCompat.emit('playerKicked', {
 				target: online.serverId,
 				author,

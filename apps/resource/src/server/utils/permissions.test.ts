@@ -127,9 +127,7 @@ describe('permissionsToAceKeys', () => {
 		const unmappedBit = 1 << 29;
 		const bitfield = UserPermissions.WARN | unmappedBit;
 
-		expect(permissionsToAceKeys(bitfield)).toEqual([
-			'players.warn',
-		]);
+		expect(permissionsToAceKeys(bitfield)).toEqual(['players.warn']);
 	});
 
 	it('round-trips with getPermissions for non-master players', () => {
