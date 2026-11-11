@@ -1,0 +1,44 @@
+name: Agent Records
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "agent-changes/**"
+  push:
+    branches: [main]
+    paths:
+      - "agent-changes/**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Agent Records
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Validate record fields and filenames
+        run: |
+          status=0
+          for file in agent-changes/*.md; do
+            case "$file" in
+              agent-changes/README.md|agent-changes/TEMPLATE.md) continue ;;
+            esac
+
+            if ! [[ "$file" =~ -[0-9]{4}-[0-9]{2}-[0-9]{2}(-[0-9]+)?\.md$ ]]; then
+              echo "::error file=$file::Filename must end with <branch>-YYYY-MM-DD.md"
+              status=1
+            fi
+
+            for field in "Agent" "Task" "Changed" "Agent read" "Developer review" "Summary" "Checks" "Known gaps"; do
+              if ! grep -q "^- \*\*$field:\*\*" "$file"; then
+                echo "::error file=$file::Missing field: $field"
+                status=1
+              fi
+            done
+          done
+          exit $status
