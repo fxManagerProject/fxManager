@@ -14,6 +14,7 @@ import {
 	Server,
 	ChevronLeft,
 	ChevronRight,
+	MapPinned,
 } from 'lucide-react';
 import { useRovingFocus } from '~/hooks/useRovingFocus';
 import { useNuiEvent } from '~/hooks/useNuiEvent';
@@ -23,6 +24,7 @@ import { isEnvBrowser } from '~/utils/misc';
 import { UserPermissions } from '@fxmanager/shared/constants';
 import { showNotification } from '~/store/notifications';
 import { useMenuStore } from '~/store/menustore';
+import { setClipboard } from '~/lib/utils';
 
 type NavigationDirection =
 	| 'up'
@@ -108,6 +110,30 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 		fetchNui('teleport-marker');
 	}, []);
 
+	const handleCopyCoords = useCallback(() => {
+		fetchNui<string>('copy-coords', {}, { data: '0, 0, 0, 0' }).then(
+			(coords) => {
+				console.log('coords:', coords);
+				const success = setClipboard(coords);
+
+				showNotification(
+					success
+						? {
+								title: `Copied coordinates`,
+								variant: 'info',
+								duration: 3000,
+							}
+						: {
+								title: `Failed to copy coordinates`,
+								description: 'This would be a Cfx issue not fxManager.',
+								variant: 'error',
+								duration: 3000,
+							},
+				);
+			},
+		);
+	}, []);
+
 	const [monitoringPending, setMonitoringPending] = useState(false);
 	async function toggleMonitoring(kind: 'tags' | 'blips', next: boolean) {
 		if (monitoringPending) return;
@@ -137,6 +163,14 @@ export function QuickMenu({ onClose, permissions }: QuickMenuProps) {
 	}
 
 	const items: QuickActionItem[] = [
+		{
+			type: 'button',
+			key: 'copy_coords',
+			group: 'Movement',
+			label: 'Copy coordinates',
+			icon: MapPinned,
+			onSelect: handleCopyCoords,
+		},
 		{
 			type: 'button',
 			key: 'teleport_marker',
